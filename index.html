@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOTO Analyser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,600;1,9..40,700&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ──────────────────────────────────────────────── */
+:root {
+  --bg:        #f4f2ed;
+  --surface:   #ffffff;
+  --surface2:  #eeece7;
+  --border:    rgba(0,0,0,0.08);
+  --text:      #0e0e0e;
+  --muted:     #888880;
+  --gold:      #c9991f;
+  --gold-soft: #f5e9c8;
+  --red:       #c0392b;
+  --blue:      #2563eb;
+  --green:     #16a34a;
+  --shadow:    0 2px 20px rgba(0,0,0,0.07);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+  --radius:    12px;
+  --ff-head:   'Bebas Neue', sans-serif;
+  --ff-body:   'DM Sans', sans-serif;
+}
+[data-theme="dark"] {
+  --bg:        #0c0c0c;
+  --surface:   #181818;
+  --surface2:  #222222;
+  --border:    rgba(255,255,255,0.07);
+  --text:      #f0ede6;
+  --muted:     #666660;
+  --gold:      #d4a843;
+  --gold-soft: #2a2010;
+  --shadow:    0 2px 20px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* ── RESET ───────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--ff-body);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  transition:background .35s,color .35s;
+  overflow-x:hidden;
+}
+
+/* ── GRID TEXTURE ─────────────────────────────────────────── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:52px 52px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── LAYOUT ──────────────────────────────────────────────── */
+.site-wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 20px 80px;}
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:28px 0 0;
+}
+.logo{
+  font-family:var(--ff-head);
+  font-size:clamp(28px,5vw,44px);
+  letter-spacing:.06em;
+  line-height:1;
+}
+.logo span{color:var(--gold);}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.draw-pill{
+  display:flex;align-items:center;gap:7px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:100px;
+  padding:6px 14px;
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  box-shadow:var(--shadow);
+}
+.draw-pill .dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--gold);
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+
+/* theme toggle */
+.toggle{
+  display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
+}
+.toggle-lbl{font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+.toggle-track{
+  width:42px;height:22px;background:var(--surface2);
+  border-radius:100px;position:relative;
+  border:1px solid var(--border);
+  transition:background .3s;
+}
+.toggle-knob{
+  position:absolute;top:2px;left:2px;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--text);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),background .3s;
+}
+[data-theme="dark"] .toggle-knob{transform:translateX(20px);background:var(--gold);}
+
+/* ── HERO / COUNTDOWN ─────────────────────────────────────── */
+.hero{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:32px;
+  align-items:center;
+  padding:40px 0 32px;
+  border-bottom:1px solid var(--border);
+}
+@media(max-width:700px){.hero{grid-template-columns:1fr;}}
+.hero-left .eyebrow{
+  font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;
+}
+.hero-left h2{
+  font-family:var(--ff-head);
+  font-size:clamp(40px,8vw,80px);
+  line-height:.9;letter-spacing:.04em;
+  margin-bottom:12px;
+}
+.hero-left h2 em{color:var(--gold);font-style:normal;}
+.next-draw-date{
+  font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.04em;
+}
+
+/* Flip clock */
+.clock{display:flex;align-items:flex-end;gap:clamp(6px,2vw,16px);}
+.clock-unit{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.flip-pair{display:flex;gap:4px;}
+.flip-card{
+  width:clamp(38px,7vw,64px);
+  height:clamp(52px,9.5vw,86px);
+  position:relative;
+}
+.flip-inner{
+  width:100%;height:100%;
+  border-radius:7px;overflow:hidden;
+  background:var(--surface);
+  box-shadow:var(--shadow);
+  position:relative;
+}
+.f-top,.f-bot{
+  position:absolute;left:0;right:0;height:50%;
+  display:flex;justify-content:center;overflow:hidden;
+  background:var(--surface);
+  transition:background .35s;
+}
+.f-top{top:0;align-items:flex-end;border-radius:7px 7px 0 0;}
+.f-bot{bottom:0;align-items:flex-start;border-radius:0 0 7px 7px;}
+.f-top::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--border);z-index:5;}
+.f-top::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.04),transparent);pointer-events:none;}
+.f-bot::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.06),transparent);pointer-events:none;}
+.f-dig{
+  font-family:var(--ff-head);
+  font-size:clamp(38px,7.5vw,74px);
+  color:var(--text);line-height:1;
+  user-select:none;transition:color .35s;
+}
+.f-top .f-dig{transform:translateY(50%);}
+.f-bot .f-dig{transform:translateY(-50%);}
+.flip-card.flipping .f-top{animation:fTop .28s ease-in forwards;}
+.flip-card.flipping .f-bot{animation:fBot .28s ease-out .28s forwards;}
+@keyframes fTop{to{transform:rotateX(-90deg);}}
+@keyframes fBot{from{transform:rotateX(90deg);}to{transform:rotateX(0deg);}}
+.clk-lbl{font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
+.colon{
+  font-family:var(--ff-head);font-size:clamp(28px,5vw,52px);
+  color:var(--muted);opacity:.4;padding-bottom:20px;
+  animation:cblink 1s step-end infinite;
+}
+@keyframes cblink{0%,100%{opacity:.4}50%{opacity:.1}}
+
+/* ── SECTION TITLES ──────────────────────────────────────── */
+.section{margin-top:48px;}
+.section-head{
+  display:flex;align-items:baseline;gap:12px;
+  margin-bottom:24px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+}
+.section-head h3{
+  font-family:var(--ff-head);
+  font-size:clamp(22px,4vw,32px);
+  letter-spacing:.05em;
+}
+.section-head .sub{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.1em;text-transform:uppercase;}
+
+/* ── UPLOAD / STATUS BAR ─────────────────────────────────── */
+.csv-bar{
+  display:flex;align-items:center;gap:12px;
+  flex-wrap:wrap;
+  background:var(--surface);
+  border:1px dashed var(--border);
+  border-radius:var(--radius);
+  padding:16px 20px;
+  margin-top:32px;
+  box-shadow:var(--shadow);
+}
+.csv-bar label{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--text);color:var(--bg);
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  padding:8px 18px;border-radius:100px;cursor:pointer;
+  transition:opacity .2s;
+  white-space:nowrap;
+}
+.csv-bar label:hover{opacity:.8;}
+.csv-bar input[type=file]{display:none;}
+#csv-status{font-size:12px;font-weight:600;color:var(--muted);flex:1;}
+.csv-hint{font-size:11px;color:var(--muted);width:100%;}
+.csv-hint code{
+  background:var(--surface2);padding:2px 6px;border-radius:4px;
+  font-size:10px;letter-spacing:.04em;
+}
+
+/* ── NUMBER GRID (frequency) ─────────────────────────────── */
+.num-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(52px,1fr));
+  gap:8px;
+}
+.num-cell{
+  aspect-ratio:1;border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--surface);
+  border:1px solid var(--border);
+  cursor:default;
+  transition:transform .15s,box-shadow .15s;
+  position:relative;overflow:hidden;
+}
+.num-cell:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.num-cell .n{font-family:var(--ff-head);font-size:22px;line-height:1;letter-spacing:.02em;}
+.num-cell .cnt{font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--muted);margin-top:1px;}
+/* heat fill */
+.num-cell::after{
+  content:'';position:absolute;inset:0;border-radius:10px;
+  background:var(--heat-color,transparent);
+  opacity:var(--heat-opacity,0);
+  pointer-events:none;
+  transition:opacity .4s;
+}
+
+/* ── BARS (gap analysis) ─────────────────────────────────── */
+.bar-list{display:flex;flex-direction:column;gap:8px;}
+.bar-row{display:flex;align-items:center;gap:12px;}
+.bar-num{
+  font-family:var(--ff-head);font-size:20px;
+  width:32px;text-align:right;flex-shrink:0;
+}
+.bar-track{flex:1;height:10px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:100px;background:var(--gold);transition:width .6s ease;}
+.bar-val{font-size:11px;font-weight:600;color:var(--muted);width:60px;flex-shrink:0;}
+
+/* ── CO-OCCURRENCE ────────────────────────────────────────── */
+.pair-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;
+}
+.pair-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:var(--shadow);
+  transition:transform .15s;
+}
+.pair-card:hover{transform:translateY(-2px);}
+.pair-nums{display:flex;gap:8px;align-items:center;}
+.ball{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--gold-soft);border:2px solid var(--gold);
+  font-family:var(--ff-head);font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);
+}
+.pair-times{font-size:11px;font-weight:600;color:var(--muted);text-align:right;}
+.pair-times strong{display:block;font-size:20px;font-family:var(--ff-head);color:var(--text);line-height:1;}
+
+/* ── PICKER ──────────────────────────────────────────────── */
+.picker-controls{
+  display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;align-items:center;
+}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 20px;border-radius:100px;
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;border:none;transition:opacity .2s,transform .1s;
+}
+.btn:hover{opacity:.85;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--text);color:var(--bg);}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.btn-ghost.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+
+.picker-mode-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+
+.pick-result{
+  display:flex;flex-wrap:wrap;gap:12px;
+  min-height:60px;align-items:center;
+  padding:20px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  margin-bottom:12px;
+}
+.pick-ball{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--gold-soft);border:2px solid var(--gold);
+  font-family:var(--ff-head);font-size:26px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);
+  animation:ballPop .25s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes ballPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.pick-empty{font-size:13px;color:var(--muted);font-weight:600;}
+
+.pick-note{font-size:12px;color:var(--muted);font-style:italic;}
+
+/* ── STATS CARDS ─────────────────────────────────────────── */
+.stat-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px;
+  margin-bottom:32px;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);
+}
+.stat-card .s-val{
+  font-family:var(--ff-head);font-size:clamp(28px,5vw,40px);
+  letter-spacing:.03em;line-height:1;color:var(--text);
+}
+.stat-card .s-lbl{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+.footer{
+  margin-top:80px;
+  padding-top:24px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-left{font-size:11px;color:var(--muted);letter-spacing:.06em;}
+.footer-right{font-size:11px;color:var(--muted);}
+
+/* ── NO DATA STATE ────────────────────────────────────────── */
+.no-data{
+  text-align:center;padding:48px 20px;
+  color:var(--muted);font-size:13px;font-weight:600;letter-spacing:.05em;
+}
+.no-data .icon{font-size:32px;margin-bottom:12px;}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media(max-width:600px){
+  .topbar{padding-top:20px;}
+  .draw-pill{display:none;}
+  .hero{padding:28px 0 24px;}
+  .pair-grid{grid-template-columns:1fr 1fr;}
+  .stat-row{grid-template-columns:1fr 1fr;}
+  .num-grid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));}
+  .clock{gap:6px;}
+}
+
+/* ── ENTRY ANIM ──────────────────────────────────────────── */
+.fade-up{opacity:0;transform:translateY(16px);animation:fu .5s ease forwards;}
+@keyframes fu{to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <!-- TOPBAR -->
+  <nav class="topbar fade-up">
+    <div class="logo">TOTO <span>ANALYSER</span></div>
+    <div class="topbar-right">
+      <div class="draw-pill"><div class="dot"></div><span id="pill-text">Next Draw</span></div>
+      <div class="toggle" onclick="toggleTheme()">
+        <span class="toggle-lbl" id="theme-lbl">Day</span>
+        <div class="toggle-track"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero fade-up" style="animation-delay:.1s">
+    <div class="hero-left">
+      <div class="eyebrow">Singapore Pools · 6/49</div>
+      <h2>NEXT<br>DRAW <em>IN</em></h2>
+      <div class="next-draw-date" id="draw-date-str">—</div>
+    </div>
+    <div class="clock" id="clock">
+      <div class="clock-unit" id="cu-days">
+        <div class="flip-pair">
+          <div class="flip-card" id="fd1"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fd1t">0</div></div><div class="f-bot"><div class="f-dig" id="fd1b">0</div></div></div></div>
+          <div class="flip-card" id="fd2"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fd2t">0</div></div><div class="f-bot"><div class="f-dig" id="fd2b">0</div></div></div></div>
+        </div>
+        <div class="clk-lbl">Days</div>
+      </div>
+      <div class="colon">:</div>
+      <div class="clock-unit">
+        <div class="flip-pair">
+          <div class="flip-card" id="fh1"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fh1t">0</div></div><div class="f-bot"><div class="f-dig" id="fh1b">0</div></div></div></div>
+          <div class="flip-card" id="fh2"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fh2t">0</div></div><div class="f-bot"><div class="f-dig" id="fh2b">0</div></div></div></div>
+        </div>
+        <div class="clk-lbl">Hrs</div>
+      </div>
+      <div class="colon">:</div>
+      <div class="clock-unit">
+        <div class="flip-pair">
+          <div class="flip-card" id="fm1"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fm1t">0</div></div><div class="f-bot"><div class="f-dig" id="fm1b">0</div></div></div></div>
+          <div class="flip-card" id="fm2"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fm2t">0</div></div><div class="f-bot"><div class="f-dig" id="fm2b">0</div></div></div></div>
+        </div>
+        <div class="clk-lbl">Min</div>
+      </div>
+      <div class="colon">:</div>
+      <div class="clock-unit">
+        <div class="flip-pair">
+          <div class="flip-card" id="fs1"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fs1t">0</div></div><div class="f-bot"><div class="f-dig" id="fs1b">0</div></div></div></div>
+          <div class="flip-card" id="fs2"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fs2t">0</div></div><div class="f-bot"><div class="f-dig" id="fs2b">0</div></div></div></div>
+        </div>
+        <div class="clk-lbl">Sec</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSV LOADER -->
+  <div class="csv-bar fade-up" style="animation-delay:.2s">
+    <label>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Load CSV
+      <input type="file" id="csv-input" accept=".csv">
+    </label>
+    <span id="csv-status">No data loaded — upload your toto.csv to begin</span>
+    <div class="csv-hint">
+      Expected columns: <code>Draw No.</code> &nbsp;·&nbsp; <code>Date</code> &nbsp;·&nbsp; <code>Winning Numbers</code> (space-separated, e.g. <code>3 14 22 31 37 45</code>) &nbsp;·&nbsp; <code>Additional Number</code>
+    </div>
+  </div>
+
+  <!-- STATS OVERVIEW -->
+  <div class="section fade-up" style="animation-delay:.25s" id="sec-stats">
+    <div class="stat-row" id="stat-row">
+      <div class="stat-card"><div class="s-val" id="st-draws">—</div><div class="s-lbl">Total Draws</div></div>
+      <div class="stat-card"><div class="s-val" id="st-span">—</div><div class="s-lbl">Years of Data</div></div>
+      <div class="stat-card"><div class="s-val" id="st-hot">—</div><div class="s-lbl">Hottest Number</div></div>
+      <div class="stat-card"><div class="s-val" id="st-cold">—</div><div class="s-lbl">Coldest Number</div></div>
+      <div class="stat-card"><div class="s-val" id="st-chi">—</div><div class="s-lbl">χ² Bias Score</div></div>
+    </div>
+  </div>
+
+  <!-- FREQUENCY HEATMAP -->
+  <div class="section fade-up" style="animation-delay:.3s">
+    <div class="section-head">
+      <h3>Frequency Heatmap</h3>
+      <span class="sub">All 49 numbers · darker = more frequent</span>
+    </div>
+    <div class="num-grid" id="freq-grid">
+      <div class="no-data"><div class="icon">📊</div>Load CSV to see frequency data</div>
+    </div>
+  </div>
+
+  <!-- GAP ANALYSIS -->
+  <div class="section fade-up" style="animation-delay:.35s">
+    <div class="section-head">
+      <h3>Overdue Tracker</h3>
+      <span class="sub">Draws since last appearance</span>
+    </div>
+    <div id="gap-wrap">
+      <div class="no-data"><div class="icon">📅</div>Load CSV to see gap analysis</div>
+    </div>
+  </div>
+
+  <!-- CO-OCCURRENCE -->
+  <div class="section fade-up" style="animation-delay:.4s">
+    <div class="section-head">
+      <h3>Top Pairs</h3>
+      <span class="sub">Numbers that appear together most</span>
+    </div>
+    <div class="pair-grid" id="pair-grid">
+      <div class="no-data"><div class="icon">🔗</div>Load CSV to see pair combinations</div>
+    </div>
+  </div>
+
+  <!-- SMART PICKER -->
+  <div class="section fade-up" style="animation-delay:.45s">
+    <div class="section-head">
+      <h3>Smart Picker</h3>
+      <span class="sub">Generate a set based on analysis</span>
+    </div>
+    <div class="picker-controls">
+      <span class="picker-mode-label">Mode:</span>
+      <button class="btn btn-ghost active" id="mode-hot" onclick="setMode('hot')">🔥 Hot Weighted</button>
+      <button class="btn btn-ghost" id="mode-cold" onclick="setMode('cold')">❄️ Cold Weighted</button>
+      <button class="btn btn-ghost" id="mode-mixed" onclick="setMode('mixed')">⚖️ Balanced</button>
+      <button class="btn btn-ghost" id="mode-rand" onclick="setMode('rand')">🎲 Pure Random</button>
+      <button class="btn btn-primary" onclick="generatePick()" style="margin-left:auto">Generate ↻</button>
+    </div>
+    <div class="pick-result" id="pick-result">
+      <span class="pick-empty">Load CSV then hit Generate</span>
+    </div>
+    <div class="pick-note" id="pick-note"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer fade-up" style="animation-delay:.5s">
+    <div class="footer-left">TOTO Analyser · For entertainment only · Please gamble responsibly</div>
+    <div class="footer-right">Draws: Mon &amp; Thu · 6:30 PM SGT</div>
+  </div>
+
+</div><!-- /site-wrap -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════════
+function toggleTheme(){
+  const d=document.documentElement;
+  const dark=d.getAttribute('data-theme')==='dark';
+  d.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('theme-lbl').textContent=dark?'Day':'Night';
+  localStorage.setItem('toto-theme',dark?'light':'dark');
+}
+(function(){
+  const s=localStorage.getItem('toto-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',s);
+  document.getElementById('theme-lbl').textContent=s==='dark'?'Night':'Day';
+})();
+
+// ═══════════════════════════════════════════════════════════
+// COUNTDOWN
+// ═══════════════════════════════════════════════════════════
+function nextDraw(){
+  const drawDays=[1,4]; // Mon,Thu in SGT
+  const now=new Date();
+  for(let i=0;i<=7;i++){
+    const c=new Date(now);
+    c.setUTCDate(c.getUTCDate()+i);
+    c.setUTCHours(10,30,0,0); // 18:30 SGT = 10:30 UTC
+    const sgt=new Date(c.getTime()+8*3600000);
+    if(drawDays.includes(sgt.getUTCDay())&&c>now) return c;
+  }
+}
+let _nextDraw=nextDraw();
+document.getElementById('draw-date-str').textContent=
+  _nextDraw.toLocaleDateString('en-SG',{timeZone:'Asia/Singapore',weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · 6:30 PM SGT';
+
+const _prev={};
+function setFlip(id,ch){
+  const s=String(ch);
+  if(_prev[id]===s) return;
+  _prev[id]=s;
+  document.getElementById(id+'t').textContent=s;
+  document.getElementById(id+'b').textContent=s;
+  const el=document.getElementById(id.replace(/[tb]$/,''));
+  el.classList.remove('flipping');void el.offsetWidth;
+  el.classList.add('flipping');
+  setTimeout(()=>el.classList.remove('flipping'),650);
+}
+function pad2(n){return String(Math.floor(n)).padStart(2,'0');}
+function tick(){
+  const now=new Date();
+  let diff=_nextDraw-now;
+  if(diff<=0){_nextDraw=nextDraw();diff=_nextDraw-now;}
+  const t=Math.floor(diff/1000);
+  const d=Math.floor(t/86400),h=Math.floor((t%86400)/3600),m=Math.floor((t%3600)/60),s=t%60;
+  const ds=pad2(d),hs=pad2(h),ms=pad2(m),ss=pad2(s);
+  setFlip('fd1',ds[0]);setFlip('fd2',ds[1]);
+  setFlip('fh1',hs[0]);setFlip('fh2',hs[1]);
+  setFlip('fm1',ms[0]);setFlip('fm2',ms[1]);
+  setFlip('fs1',ss[0]);setFlip('fs2',ss[1]);
+  document.getElementById('cu-days').style.display=d===0?'none':'flex';
+}
+tick();setInterval(tick,1000);
+
+// ═══════════════════════════════════════════════════════════
+// CSV PARSING
+// ═══════════════════════════════════════════════════════════
+let draws=[]; // [{date,nums:[],add:n}]
+
+document.getElementById('csv-input').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>parseCSV(ev.target.result);
+  r.readAsText(f);
+});
+
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2){setStatus('CSV appears empty.',true);return;}
+
+  // Detect header
+  const header=lines[0].toLowerCase();
+  const hasHeader=/draw|date|number/i.test(header);
+  const data=hasHeader?lines.slice(1):lines;
+
+  const parsed=[];
+  for(const line of data){
+    if(!line.trim()) continue;
+    // Try comma-separated first, then tab
+    const cols=line.includes('\t')?line.split('\t'):line.split(',');
+    if(cols.length<3) continue;
+
+    // Attempt to find winning numbers — look for a column with 6 space-separated integers
+    let nums=null,add=null,date=null;
+    for(let i=0;i<cols.length;i++){
+      const c=cols[i].trim().replace(/"/g,'');
+      const parts=c.split(/\s+/).map(Number).filter(n=>n>=1&&n<=49);
+      if(parts.length===6){nums=parts;add=Number((cols[i+1]||'').trim().replace(/"/g,''))||null;break;}
+      if(parts.length===7){nums=parts.slice(0,6);add=parts[6];break;}
+    }
+    // Date: look for something date-like
+    for(const c of cols){
+      const cl=c.trim().replace(/"/g,'');
+      if(/\d{4}/.test(cl)&&/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2}[\/\-]\d{1,2}/i.test(cl)){
+        date=cl;break;
+      }
+      if(/\d{2}[\/\-]\d{2}[\/\-]\d{4}/.test(cl)){date=cl;break;}
+    }
+    if(nums) parsed.push({date:date||'',nums,add});
+  }
+
+  if(!parsed.length){
+    setStatus('Could not parse any draws. Check format hint below.',true);
+    return;
+  }
+
+  // Filter post-Oct 2014 only (6/49 era)
+  const filtered=parsed.filter(d=>{
+    if(!d.date) return true;
+    const y=parseInt(d.date.match(/\d{4}/)?.[0]||'0');
+    return y>=2014;
+  });
+
+  draws=filtered.length>0?filtered:parsed;
+  setStatus(`✓ Loaded ${draws.length} draws`);
+  buildAll();
+}
+
+function setStatus(msg,err=false){
+  const el=document.getElementById('csv-status');
+  el.textContent=msg;
+  el.style.color=err?'var(--red)':'var(--green)';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANALYSIS HELPERS
+// ═══════════════════════════════════════════════════════════
+function freqMap(){
+  const m={};
+  for(let i=1;i<=49;i++) m[i]=0;
+  for(const d of draws) for(const n of d.nums) m[n]++;
+  return m;
+}
+
+function gapMap(){
+  // draws are assumed oldest-first; scan from end to find last seen
+  const last={};
+  for(let i=draws.length-1;i>=0;i--){
+    for(const n of draws[i].nums){
+      if(last[n]===undefined) last[n]=draws.length-1-i;
+    }
+  }
+  for(let i=1;i<=49;i++) if(last[i]===undefined) last[i]=draws.length;
+  return last;
+}
+
+function pairMap(){
+  const m={};
+  for(const d of draws){
+    const s=[...d.nums].sort((a,b)=>a-b);
+    for(let i=0;i<s.length;i++)
+      for(let j=i+1;j<s.length;j++){
+        const k=`${s[i]}-${s[j]}`;
+        m[k]=(m[k]||0)+1;
+      }
+  }
+  return m;
+}
+
+function chiSquared(freq){
+  const total=draws.length*6;
+  const expected=total/49;
+  let chi=0;
+  for(let i=1;i<=49;i++) chi+=Math.pow((freq[i]||0)-expected,2)/expected;
+  return chi;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUILD UI
+// ═══════════════════════════════════════════════════════════
+function buildAll(){
+  buildStats();
+  buildFreq();
+  buildGap();
+  buildPairs();
+  generatePick();
+}
+
+function buildStats(){
+  const fm=freqMap();
+  const vals=Object.entries(fm);
+  const hotE=vals.reduce((a,b)=>b[1]>a[1]?b:a);
+  const coldE=vals.reduce((a,b)=>b[1]<a[1]?b:a);
+  const chi=chiSquared(fm).toFixed(1);
+
+  document.getElementById('st-draws').textContent=draws.length;
+
+  // year span
+  const years=draws.map(d=>parseInt((d.date.match(/\d{4}/)||['0'])[0])).filter(Boolean);
+  const span=years.length?(Math.max(...years)-Math.min(...years)+1)+'y':'—';
+  document.getElementById('st-span').textContent=span;
+
+  document.getElementById('st-hot').textContent=hotE[0];
+  document.getElementById('st-cold').textContent=coldE[0];
+  document.getElementById('st-chi').textContent=chi;
+}
+
+function buildFreq(){
+  const fm=freqMap();
+  const vals=Object.values(fm);
+  const minF=Math.min(...vals),maxF=Math.max(...vals);
+  const grid=document.getElementById('freq-grid');
+  grid.innerHTML='';
+  for(let i=1;i<=49;i++){
+    const f=fm[i]||0;
+    const heat=(f-minF)/(maxF-minF||1);
+    const cell=document.createElement('div');
+    cell.className='num-cell';
+    cell.title=`${i}: appeared ${f} times`;
+    cell.style.setProperty('--heat-color','var(--gold)');
+    cell.style.setProperty('--heat-opacity', (heat*.55+.05).toFixed(2));
+    cell.innerHTML=`<div class="n">${i}</div><div class="cnt">${f}×</div>`;
+    grid.appendChild(cell);
+  }
+}
+
+function buildGap(){
+  const gm=gapMap();
+  const sorted=Object.entries(gm).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  const maxGap=sorted[0][1];
+  const wrap=document.getElementById('gap-wrap');
+  wrap.innerHTML='<div class="bar-list" id="bar-list"></div>';
+  const list=document.getElementById('bar-list');
+  for(const [n,g] of sorted){
+    const pct=(g/maxGap*100).toFixed(1);
+    const row=document.createElement('div');
+    row.className='bar-row';
+    row.innerHTML=`
+      <div class="bar-num">${n}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="bar-val">${g} draw${g!==1?'s':''} ago</div>`;
+    list.appendChild(row);
+  }
+}
+
+function buildPairs(){
+  const pm=pairMap();
+  const top=Object.entries(pm).sort((a,b)=>b[1]-a[1]).slice(0,24);
+  const grid=document.getElementById('pair-grid');
+  grid.innerHTML='';
+  for(const [key,cnt] of top){
+    const [a,b]=key.split('-');
+    const card=document.createElement('div');
+    card.className='pair-card';
+    card.innerHTML=`
+      <div class="pair-nums">
+        <div class="ball">${a}</div>
+        <div class="ball">${b}</div>
+      </div>
+      <div class="pair-times"><strong>${cnt}</strong>times</div>`;
+    grid.appendChild(card);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SMART PICKER
+// ═══════════════════════════════════════════════════════════
+let _mode='hot';
+function setMode(m){
+  _mode=m;
+  ['hot','cold','mixed','rand'].forEach(x=>{
+    document.getElementById('mode-'+x).classList.toggle('active',x===m);
+  });
+}
+
+function weightedSample(weights,n){
+  // weights: {num: weight}
+  const keys=Object.keys(weights).map(Number);
+  const total=Object.values(weights).reduce((a,b)=>a+b,0);
+  const chosen=new Set();
+  let attempts=0;
+  while(chosen.size<n&&attempts<10000){
+    attempts++;
+    let r=Math.random()*total,cum=0;
+    for(const k of keys){
+      cum+=weights[k];
+      if(r<cum){chosen.add(k);break;}
+    }
+  }
+  return [...chosen].sort((a,b)=>a-b);
+}
+
+function generatePick(){
+  if(!draws.length){
+    document.getElementById('pick-result').innerHTML='<span class="pick-empty">Load a CSV first</span>';
+    return;
+  }
+  const fm=freqMap();
+  let picked;
+  let note='';
+
+  if(_mode==='rand'){
+    const pool=Array.from({length:49},(_,i)=>i+1);
+    picked=pool.sort(()=>Math.random()-.5).slice(0,6).sort((a,b)=>a-b);
+    note='Pure random — equal probability for all numbers.';
+  } else if(_mode==='hot'){
+    picked=weightedSample(fm,6);
+    note='Weighted toward numbers that have appeared most frequently.';
+  } else if(_mode==='cold'){
+    const inv={};for(let i=1;i<=49;i++) inv[i]=1/(fm[i]||.5);
+    picked=weightedSample(inv,6);
+    note='Weighted toward numbers that appear least — the "overdue" theory.';
+  } else {
+    // mixed: half hot half cold
+    const hot=Object.entries(fm).sort((a,b)=>b[1]-a[1]).slice(0,20).map(e=>Number(e[0]));
+    const cold=Object.entries(fm).sort((a,b)=>a[1]-b[1]).slice(0,20).map(e=>Number(e[0]));
+    const pool=new Set([...hot.slice(0,10),...cold.slice(0,10)]);
+    const arr=[...pool].sort(()=>Math.random()-.5);
+    picked=arr.slice(0,6).sort((a,b)=>a-b);
+    note='Balanced mix of hot and cold numbers.';
+  }
+
+  const res=document.getElementById('pick-result');
+  res.innerHTML='';
+  picked.forEach((n,i)=>{
+    const b=document.createElement('div');
+    b.className='pick-ball';
+    b.textContent=n;
+    b.style.animationDelay=(i*.06)+'s';
+    res.appendChild(b);
+  });
+  document.getElementById('pick-note').textContent=note;
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTO-LOAD toto.csv FROM SAME FOLDER (works on GitHub Pages)
+// ═══════════════════════════════════════════════════════════
+(async function autoLoad(){
+  try{
+    const r=await fetch('./toto.csv');
+    if(!r.ok) return; // no file, wait for manual upload
+    const txt=await r.text();
+    parseCSV(txt);
+    document.getElementById('csv-status').textContent='✓ Auto-loaded toto.csv from folder';
+  } catch(e){
+    // Silent fail — user will upload manually
+  }
+})();
+</script>
+</body>
+</html>
