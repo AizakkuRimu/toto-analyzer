@@ -1,0 +1,94 @@
+{
+  "picks": [
+    {
+      "date": "2026-06-14",
+      "numbers": [
+        3,
+        6,
+        15,
+        29,
+        30,
+        41
+      ],
+      "audit": {
+        "trioA": {
+          "numbers": [
+            1,
+            15,
+            32
+          ],
+          "globalAppearances": 7,
+          "rank": 1
+        },
+        "anchorNumber": {
+          "number": 15,
+          "last10Appearances": 1,
+          "trioARank": "highest in last 10"
+        },
+        "trioB": {
+          "numbers": [
+            6,
+            15,
+            30
+          ],
+          "globalAppearances": 7,
+          "derivedFromAnchor": 15
+        },
+        "initialCombo": [
+          3,
+          6,
+          15,
+          29,
+          30,
+          41
+        ],
+        "duplicateCheckPassed": true,
+        "duplicateLoopIterations": 1,
+        "recencyCheck": {
+          "last3Draws": [
+            [
+              14,
+              16,
+              21,
+              22,
+              35,
+              38
+            ],
+            [
+              10,
+              15,
+              28,
+              39,
+              40,
+              46
+            ],
+            [
+              3,
+              5,
+              20,
+              23,
+              26,
+              27
+            ]
+          ],
+          "overlappingNumbers": [
+            3,
+            15
+          ],
+          "overlapCount": 2,
+          "replacementTriggered": false
+        },
+        "finalCombo": [
+          3,
+          6,
+          15,
+          29,
+          30,
+          41
+        ],
+        "totalIterations": 1,
+        "generatedAt": "2026-06-14T01:54:31.735Z"
+      }
+    }
+  ]
+}
