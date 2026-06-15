@@ -1,0 +1,2693 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOTO Analyser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,600;1,9..40,700&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ──────────────────────────────────────────────── */
+:root {
+  --bg:        #f4f2ed;
+  --surface:   #ffffff;
+  --surface2:  #eeece7;
+  --border:    rgba(0,0,0,0.08);
+  --text:      #0e0e0e;
+  --muted:     #888880;
+  --gold:      #c9991f;
+  --gold-soft: #f5e9c8;
+  --red:       #c0392b;
+  --blue:      #2563eb;
+  --green:     #16a34a;
+  --shadow:    0 2px 20px rgba(0,0,0,0.07);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+  --radius:    12px;
+  --ff-head:   'Bebas Neue', sans-serif;
+  --ff-body:   'DM Sans', sans-serif;
+}
+[data-theme="dark"] {
+  --bg:        #0c0c0c;
+  --surface:   #181818;
+  --surface2:  #222222;
+  --border:    rgba(255,255,255,0.07);
+  --text:      #f0ede6;
+  --muted:     #666660;
+  --gold:      #d4a843;
+  --gold-soft: #2a2010;
+  --shadow:    0 2px 20px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* ── RESET ───────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;}
+/* Smooth theme transition on everything */
+*, *::before, *::after { transition: background-color .35s, color .35s, border-color .35s, box-shadow .35s; }
+/* But not layout/transform transitions — override back */
+.flip-card.flipping .f-top, .flip-card.flipping .f-bot,
+.toggle-knob, .btn, .num-cell, .pair-card { transition: none; }
+.toggle-knob { transition: transform .3s cubic-bezier(.34,1.56,.64,1), background-color .3s !important; }
+.btn { transition: opacity .2s, transform .1s !important; }
+.num-cell { transition: transform .15s, box-shadow .15s, background-color .35s !important; }
+body{
+  font-family:var(--ff-body);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── GRID TEXTURE ─────────────────────────────────────────── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:52px 52px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── LAYOUT ──────────────────────────────────────────────── */
+.site-wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 20px 80px;}
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:28px 0 0;
+}
+.logo{
+  font-family:var(--ff-head);
+  font-size:clamp(28px,5vw,44px);
+  letter-spacing:.06em;
+  line-height:1;
+}
+.logo span{color:var(--gold);}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.draw-pill{
+  display:flex;align-items:center;gap:7px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:100px;
+  padding:6px 14px;
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  box-shadow:var(--shadow);
+}
+.draw-pill .dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--gold);
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+
+/* theme toggle */
+.toggle{
+  display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
+}
+.toggle-lbl{font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+.toggle-track{
+  width:42px;height:22px;background:var(--surface2);
+  border-radius:100px;position:relative;
+  border:1px solid var(--border);
+  transition:background .3s;
+}
+.toggle-knob{
+  position:absolute;top:2px;left:2px;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--text);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),background .3s;
+}
+[data-theme="dark"] .toggle-knob{transform:translateX(20px);background:var(--gold);}
+
+/* ── HERO / COUNTDOWN ─────────────────────────────────────── */
+.hero{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:32px;
+  align-items:center;
+  padding:40px 0 32px;
+  border-bottom:1px solid var(--border);
+}
+@media(max-width:700px){.hero{grid-template-columns:1fr;}}
+.hero-left .eyebrow{
+  font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;
+}
+.hero-left h2{
+  font-family:var(--ff-head);
+  font-size:clamp(40px,8vw,80px);
+  line-height:.9;letter-spacing:.04em;
+  margin-bottom:12px;
+}
+.hero-left h2 em{color:var(--gold);font-style:normal;}
+.next-draw-date{
+  font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.04em;
+}
+
+/* Flip clock */
+.clock{display:flex;align-items:flex-end;gap:clamp(6px,2vw,16px);}
+.clock-unit{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.flip-pair{display:flex;gap:4px;}
+.flip-card{
+  width:clamp(38px,7vw,64px);
+  height:clamp(52px,9.5vw,86px);
+  position:relative;
+}
+.flip-inner{
+  width:100%;height:100%;
+  border-radius:7px;overflow:hidden;
+  background:var(--surface);
+  box-shadow:var(--shadow);
+  position:relative;
+}
+.f-top,.f-bot{
+  position:absolute;left:0;right:0;height:50%;
+  display:flex;justify-content:center;overflow:hidden;
+  background:var(--surface);
+  transition:background .35s;
+}
+.f-top{top:0;align-items:flex-end;border-radius:7px 7px 0 0;}
+.f-bot{bottom:0;align-items:flex-start;border-radius:0 0 7px 7px;}
+.f-top::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--border);z-index:5;}
+.f-top::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.04),transparent);pointer-events:none;}
+.f-bot::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.06),transparent);pointer-events:none;}
+.f-dig{
+  font-family:var(--ff-head);
+  font-size:clamp(38px,7.5vw,74px);
+  color:var(--text);line-height:1;
+  user-select:none;transition:color .35s;
+}
+.f-top .f-dig{transform:translateY(50%);}
+.f-bot .f-dig{transform:translateY(-50%);}
+.flip-card.flipping .f-top{animation:fTop .28s ease-in forwards;}
+.flip-card.flipping .f-bot{animation:fBot .28s ease-out .28s forwards;}
+@keyframes fTop{to{transform:rotateX(-90deg);}}
+@keyframes fBot{from{transform:rotateX(90deg);}to{transform:rotateX(0deg);}}
+.clk-lbl{font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
+.colon{
+  font-family:var(--ff-head);font-size:clamp(28px,5vw,52px);
+  color:var(--muted);opacity:.4;padding-bottom:20px;
+  animation:cblink 1s step-end infinite;
+}
+@keyframes cblink{0%,100%{opacity:.4}50%{opacity:.1}}
+
+/* ── SECTION TITLES ──────────────────────────────────────── */
+.section{margin-top:48px;}
+.section-head{
+  display:flex;align-items:baseline;gap:12px;
+  margin-bottom:24px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+}
+.section-head h3{
+  font-family:var(--ff-head);
+  font-size:clamp(22px,4vw,32px);
+  letter-spacing:.05em;
+}
+.section-head .sub{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.1em;text-transform:uppercase;}
+
+/* ── UPLOAD / STATUS BAR ─────────────────────────────────── */
+.csv-bar{
+  display:flex;align-items:center;gap:12px;
+  flex-wrap:wrap;
+  background:var(--surface);
+  border:1px dashed var(--border);
+  border-radius:var(--radius);
+  padding:16px 20px;
+  margin-top:32px;
+  box-shadow:var(--shadow);
+}
+.csv-bar label{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--text);color:var(--bg);
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  padding:8px 18px;border-radius:100px;cursor:pointer;
+  transition:opacity .2s;
+  white-space:nowrap;
+}
+.csv-bar label:hover{opacity:.8;}
+.csv-bar input[type=file]{display:none;}
+#csv-status{font-size:12px;font-weight:600;color:var(--muted);flex:1;}
+.csv-hint{font-size:11px;color:var(--muted);width:100%;}
+.csv-hint code{
+  background:var(--surface2);padding:2px 6px;border-radius:4px;
+  font-size:10px;letter-spacing:.04em;
+}
+
+/* ── NUMBER GRID (frequency) ─────────────────────────────── */
+.num-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(52px,1fr));
+  gap:8px;
+}
+.num-cell{
+  aspect-ratio:1;border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--surface);
+  border:1px solid var(--border);
+  cursor:default;
+  transition:transform .15s,box-shadow .15s;
+  position:relative;overflow:hidden;
+}
+.num-cell:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.num-cell .n{font-family:var(--ff-head);font-size:22px;line-height:1;letter-spacing:.02em;}
+.num-cell .cnt{font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--muted);margin-top:1px;}
+/* heat fill */
+.num-cell::after{
+  content:'';position:absolute;inset:0;border-radius:10px;
+  background:var(--heat-color,transparent);
+  opacity:var(--heat-opacity,0);
+  pointer-events:none;
+  transition:opacity .4s;
+}
+
+/* ── BARS (gap analysis) ─────────────────────────────────── */
+.bar-list{display:flex;flex-direction:column;gap:8px;}
+.bar-row{display:flex;align-items:center;gap:12px;}
+.bar-num{
+  font-family:var(--ff-head);font-size:20px;
+  width:32px;text-align:right;flex-shrink:0;
+}
+.bar-track{flex:1;height:10px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:100px;background:var(--gold);transition:width .6s ease;}
+.bar-val{font-size:11px;font-weight:600;color:var(--muted);width:60px;flex-shrink:0;}
+
+/* ── CO-OCCURRENCE ────────────────────────────────────────── */
+.pair-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;
+}
+.pair-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:var(--shadow);
+  transition:transform .15s;
+}
+.pair-card:hover{transform:translateY(-2px);}
+.pair-nums{display:flex;gap:8px;align-items:center;}
+.ball{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--gold-soft);border:2px solid var(--gold);
+  font-family:var(--ff-head);font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);
+}
+.pair-times{font-size:11px;font-weight:600;color:var(--muted);text-align:right;}
+.pair-times strong{display:block;font-size:20px;font-family:var(--ff-head);color:var(--text);line-height:1;}
+
+/* ── PICKER ──────────────────────────────────────────────── */
+.picker-controls{
+  display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;align-items:center;
+}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 20px;border-radius:100px;
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;border:none;transition:opacity .2s,transform .1s;
+}
+.btn:hover{opacity:.85;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--text);color:var(--bg);}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.btn-ghost.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+
+.picker-mode-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+
+.pick-result{
+  display:flex;flex-wrap:wrap;gap:12px;
+  min-height:60px;align-items:center;
+  padding:20px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  margin-bottom:12px;
+}
+.pick-ball{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--gold-soft);border:2px solid var(--gold);
+  font-family:var(--ff-head);font-size:26px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);
+  animation:ballPop .25s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes ballPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.pick-empty{font-size:13px;color:var(--muted);font-weight:600;}
+
+.pick-note{font-size:12px;color:var(--muted);font-style:italic;}
+
+/* ── STATS CARDS ─────────────────────────────────────────── */
+.stat-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px;
+  margin-bottom:32px;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);
+}
+.stat-card .s-val{
+  font-family:var(--ff-head);font-size:clamp(28px,5vw,40px);
+  letter-spacing:.03em;line-height:1;color:var(--text);
+}
+.stat-card .s-lbl{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+.footer{
+  margin-top:80px;
+  padding-top:24px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-left{font-size:11px;color:var(--muted);letter-spacing:.06em;}
+.footer-right{font-size:11px;color:var(--muted);}
+
+/* ── NO DATA STATE ────────────────────────────────────────── */
+.no-data{
+  text-align:center;padding:48px 20px;
+  color:var(--muted);font-size:13px;font-weight:600;letter-spacing:.05em;
+}
+.no-data .icon{font-size:32px;margin-bottom:12px;}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media(max-width:600px){
+  .topbar{padding-top:20px;}
+  .draw-pill{display:none;}
+  .hero{padding:28px 0 24px;}
+  .pair-grid{grid-template-columns:1fr 1fr;}
+  .stat-row{grid-template-columns:1fr 1fr;}
+  .num-grid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));}
+  .clock{gap:6px;}
+}
+
+/* ── ENTRY ANIM ──────────────────────────────────────────── */
+.fade-up{opacity:0;transform:translateY(16px);animation:fu .5s ease forwards;}
+@keyframes fu{to{opacity:1;transform:none}}
+
+/* ── DRAW VIEWER ─────────────────────────────────────────── */
+.viewer-controls{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.viewer-search{
+  flex:1;min-width:180px;max-width:320px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:100px;padding:8px 16px;
+  font-family:var(--ff-body);font-size:12px;font-weight:600;
+  color:var(--text);outline:none;
+  transition:border-color .2s;
+}
+.viewer-search::placeholder{color:var(--muted);}
+.viewer-search:focus{border-color:var(--gold);}
+.viewer-page-info{
+  font-size:11px;font-weight:600;letter-spacing:.08em;
+  color:var(--muted);margin-left:auto;
+}
+.draw-table-wrap{
+  overflow-x:auto;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+}
+.draw-table{width:100%;border-collapse:collapse;font-size:12px;}
+.draw-table th{
+  padding:10px 14px;
+  font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);text-align:left;
+  border-bottom:2px solid var(--border);
+  white-space:nowrap;
+  background:var(--surface2);
+}
+.draw-table th:first-child{border-radius:var(--radius) 0 0 0;}
+.draw-table th:last-child{border-radius:0 var(--radius) 0 0;}
+.draw-table td{
+  padding:8px 14px;border-bottom:1px solid var(--border);
+  vertical-align:middle;white-space:nowrap;
+}
+.draw-table tr:last-child td{border-bottom:none;}
+.draw-table tr:hover td{background:var(--surface2);}
+.draw-table .td-draw{
+  font-family:var(--ff-head);font-size:16px;
+  color:var(--muted);
+}
+.draw-table .td-date{
+  font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.03em;
+}
+.draw-balls{display:flex;gap:5px;align-items:center;}
+.db{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--gold-soft);border:1.5px solid var(--gold);
+  font-family:var(--ff-head);font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);flex-shrink:0;
+}
+.db.db-add{
+  background:var(--surface2);border-color:var(--border);
+  color:var(--muted);
+}
+.db-sep{width:6px;height:1px;background:var(--border);border-radius:1px;flex-shrink:0;}
+.viewer-pagination{
+  display:flex;align-items:center;gap:6px;
+  margin-top:12px;flex-wrap:wrap;
+}
+.pg-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:32px;height:32px;padding:0 8px;
+  border-radius:8px;font-size:11px;font-weight:600;letter-spacing:.06em;
+  cursor:pointer;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);
+  transition:background .15s,color .15s,border-color .15s;
+}
+.pg-btn:hover{background:var(--surface2);}
+.pg-btn.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+.sort-toggle{
+  display:flex;gap:0;border:1px solid var(--border);border-radius:100px;overflow:hidden;
+  background:var(--surface);
+}
+.sort-btn{
+  padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:.06em;
+  cursor:pointer;border:none;background:transparent;color:var(--muted);
+  transition:background .15s,color .15s;white-space:nowrap;
+}
+.sort-btn:hover{background:var(--surface2);}
+.sort-btn.active{background:var(--gold);color:#fff;}
+.sort-btn:first-child{border-radius:100px 0 0 100px;}
+.sort-btn:last-child{border-radius:0 100px 100px 0;}
+
+/* ── DUPLICATE CHECKER ────────────────────────────────────── */
+.dup-summary{
+  display:flex;gap:12px;flex-wrap:wrap;
+  margin-bottom:20px;
+}
+.dup-stat{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 20px;
+  box-shadow:var(--shadow);flex:1;min-width:130px;
+}
+.dup-stat .ds-val{
+  font-family:var(--ff-head);font-size:clamp(26px,4vw,36px);
+  line-height:1;color:var(--text);
+}
+.dup-stat .ds-lbl{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.dup-none{
+  text-align:center;padding:40px 20px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+}
+.dup-none .dn-icon{font-size:36px;margin-bottom:12px;}
+.dup-none .dn-title{
+  font-family:var(--ff-head);font-size:22px;letter-spacing:.04em;
+  margin-bottom:6px;color:var(--green);
+}
+.dup-none .dn-sub{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.05em;}
+.dup-match{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  overflow:hidden;margin-bottom:12px;
+}
+.dup-match-head{
+  padding:12px 16px;background:var(--gold-soft);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.dup-tag{
+  font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  padding:3px 8px;border-radius:100px;
+  background:var(--gold);color:#fff;
+}
+.dup-tag.dup-tag-full{background:var(--red);color:#fff;}
+.dup-match-nums{display:flex;gap:5px;align-items:center;flex:1;}
+.dup-match-rows{padding:4px 0;}
+.dup-match-row{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  font-size:12px;
+}
+.dup-match-row:last-child{border-bottom:none;}
+.dup-draw-no{font-family:var(--ff-head);font-size:17px;color:var(--muted);width:52px;flex-shrink:0;}
+.dup-draw-date{font-weight:600;color:var(--muted);font-size:11px;letter-spacing:.03em;min-width:100px;}
+.dup-no-data{
+  text-align:center;padding:40px 20px;
+  color:var(--muted);font-size:13px;font-weight:600;letter-spacing:.05em;
+}
+/* ── PICK HISTORY CHECK ──────────────────────────────────── */
+.chk-result{
+  border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);background:var(--surface);
+  box-shadow:var(--shadow);
+}
+.chk-never{
+  text-align:center;padding:28px 20px;
+  border-color:var(--green);
+}
+.chk-icon{font-size:32px;margin-bottom:8px;}
+.chk-title{
+  font-family:var(--ff-head);font-size:20px;letter-spacing:.04em;
+  color:var(--green);margin-bottom:4px;
+}
+.chk-sub{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.04em;}
+.chk-found{border-color:var(--red);}
+.chk-header{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 16px;background:rgba(239,68,68,.08);
+  border-bottom:1px solid var(--border);
+}
+.chk-badge{
+  font-size:11px;font-weight:700;letter-spacing:.08em;
+  padding:4px 10px;border-radius:100px;
+  background:var(--red);color:#fff;
+}
+
+/* ── DUPLICATE TABS ──────────────────────────────────────── */
+.dup-tabs{
+  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;
+}
+.dup-tab-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 13px;border-radius:100px;
+  font-size:11px;font-weight:600;letter-spacing:.05em;
+  cursor:pointer;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);
+  transition:background .15s,color .15s,border-color .15s;
+}
+.dup-tab-btn:hover{background:var(--surface2);}
+.dup-tab-btn.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+.dup-tab-cnt{
+  font-size:9px;font-weight:700;letter-spacing:.06em;
+  background:rgba(0,0,0,.15);border-radius:100px;
+  padding:1px 5px;
+}
+.dup-tab-btn.active .dup-tab-cnt{background:rgba(255,255,255,.25);}
+
+/* highlighted / dimmed balls inside match rows */
+.db-hi{
+  background:var(--gold-soft)!important;
+  border-color:var(--gold)!important;
+  color:var(--gold)!important;
+  font-weight:700;
+}
+.db-dim{
+  background:transparent!important;
+  border-color:var(--border)!important;
+  color:var(--muted)!important;
+  opacity:.45;
+}
+.db-hi-add{
+  background:var(--gold-soft)!important;
+  border-color:var(--gold)!important;
+  color:var(--gold)!important;
+  font-weight:700;
+}
+
+@media(max-width:600px){
+  .draw-table .td-draw,.draw-table .td-date{font-size:10px;}
+  .db{width:24px;height:24px;font-size:12px;}
+}
+
+/* ── ADMIN UNLOCK ────────────────────────────────────────── */
+.sp-admin-lock{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:14px 18px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  margin-bottom:16px;
+}
+.sp-admin-lock input{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;
+  font-family:var(--ff-body);font-size:12px;font-weight:600;
+  color:var(--text);outline:none;width:220px;
+  transition:border-color .2s;
+}
+.sp-admin-lock input:focus{border-color:var(--gold);}
+.sp-admin-lock input::placeholder{color:var(--muted);}
+.sp-admin-badge{
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  padding:4px 10px;border-radius:100px;
+  background:var(--gold);color:#fff;
+}
+
+.sp-config{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px 24px;
+  box-shadow:var(--shadow);margin-bottom:20px;
+}
+.sp-config-title{
+  font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:14px;
+}
+.sp-config-fields{display:flex;gap:12px;flex-wrap:wrap;}
+.sp-field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px;}
+.sp-field label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+.sp-field input{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;
+  font-family:var(--ff-body);font-size:12px;font-weight:600;
+  color:var(--text);outline:none;
+  transition:border-color .2s;
+}
+.sp-field input:focus{border-color:var(--gold);}
+.sp-field input::placeholder{color:var(--muted);}
+
+.sp-gate{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:12px 16px;border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--border);
+  box-shadow:var(--shadow);margin-bottom:16px;
+  font-size:12px;font-weight:600;letter-spacing:.03em;
+}
+.sp-gate .gate-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.sp-gate.gate-pass{border-color:var(--green);}
+.sp-gate.gate-pass .gate-dot{background:var(--green);}
+.sp-gate.gate-fail{border-color:var(--red);}
+.sp-gate.gate-fail .gate-dot{background:var(--red);}
+.sp-gate.gate-wait{border-color:var(--muted);}
+.sp-gate.gate-wait .gate-dot{background:var(--muted);}
+
+.sp-pick-display{
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  padding:24px;min-height:80px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  margin-bottom:12px;
+}
+.sp-pick-ball{
+  width:58px;height:58px;border-radius:50%;
+  background:var(--gold-soft);border:2px solid var(--gold);
+  font-family:var(--ff-head);font-size:28px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);
+  animation:ballPop .28s cubic-bezier(.34,1.56,.64,1) both;
+}
+.sp-pick-empty{font-size:13px;color:var(--muted);font-weight:600;}
+
+.sp-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+
+/* Audit trail */
+.sp-audit{
+  border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;background:var(--surface);box-shadow:var(--shadow);
+}
+.sp-audit-toggle{
+  width:100%;padding:13px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface2);border:none;cursor:pointer;
+  font-family:var(--ff-body);font-size:11px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  transition:background .15s;
+}
+.sp-audit-toggle:hover{background:var(--surface);}
+.sp-audit-toggle .chevron{transition:transform .25s;}
+.sp-audit-toggle.open .chevron{transform:rotate(180deg);}
+.sp-audit-body{display:none;padding:20px;}
+.sp-audit-body.open{display:block;}
+
+.sp-audit-phase{margin-bottom:18px;}
+.sp-audit-phase-title{
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.sp-audit-phase-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.sp-audit-row{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:6px 0;border-bottom:1px solid var(--border);
+  font-size:12px;
+}
+.sp-audit-row:last-child{border-bottom:none;}
+.sp-audit-key{font-weight:600;color:var(--muted);min-width:180px;flex-shrink:0;}
+.sp-audit-val{color:var(--text);word-break:break-all;}
+.sp-audit-val .hi{color:var(--gold);font-weight:700;}
+.sp-audit-val .ok{color:var(--green);font-weight:700;}
+.sp-audit-val .warn{color:var(--red);font-weight:700;}
+
+.sp-trio-balls{display:flex;gap:5px;align-items:center;}
+.sp-trio-balls .ball-sm{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--gold-soft);border:1.5px solid var(--gold);
+  font-family:var(--ff-head);font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);
+}
+.sp-trio-balls .ball-sm.anchor{
+  background:var(--gold);color:#fff;
+}
+.sp-trio-balls .ball-sm.replaced{
+  background:rgba(192,57,43,.12);border-color:var(--red);color:var(--red);
+}
+
+.sp-log-wrap{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:12px 14px;max-height:200px;overflow-y:auto;
+  font-size:11px;line-height:1.7;color:var(--muted);
+  font-family:monospace;margin-top:12px;
+}
+.sp-log-wrap .log-ok{color:var(--green);}
+.sp-log-wrap .log-warn{color:var(--gold);}
+.sp-log-wrap .log-err{color:var(--red);}
+</style>
+</head>
+<body>
+<div class="site-wrap">
+
+  <!-- TOPBAR -->
+  <nav class="topbar fade-up">
+    <div class="logo">TOTO <span>ANALYSER</span></div>
+    <div class="topbar-right">
+      <div class="draw-pill"><div class="dot"></div><span id="pill-text">Next Draw</span></div>
+      <div class="toggle" onclick="toggleTheme()">
+        <span class="toggle-lbl" id="theme-lbl">Day</span>
+        <div class="toggle-track"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero fade-up" style="animation-delay:.1s">
+    <div class="hero-left">
+      <div class="eyebrow">Singapore Pools · 6/49</div>
+      <h2>NEXT<br>DRAW <em>IN</em></h2>
+      <div class="next-draw-date" id="draw-date-str">—</div>
+    </div>
+    <div class="clock" id="clock">
+      <div class="clock-unit" id="cu-days">
+        <div class="flip-pair">
+          <div class="flip-card" id="fd1"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fd1t">0</div></div><div class="f-bot"><div class="f-dig" id="fd1b">0</div></div></div></div>
+          <div class="flip-card" id="fd2"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fd2t">0</div></div><div class="f-bot"><div class="f-dig" id="fd2b">0</div></div></div></div>
+        </div>
+        <div class="clk-lbl">Days</div>
+      </div>
+      <div class="colon">:</div>
+      <div class="clock-unit">
+        <div class="flip-pair">
+          <div class="flip-card" id="fh1"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fh1t">0</div></div><div class="f-bot"><div class="f-dig" id="fh1b">0</div></div></div></div>
+          <div class="flip-card" id="fh2"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fh2t">0</div></div><div class="f-bot"><div class="f-dig" id="fh2b">0</div></div></div></div>
+        </div>
+        <div class="clk-lbl">Hrs</div>
+      </div>
+      <div class="colon">:</div>
+      <div class="clock-unit">
+        <div class="flip-pair">
+          <div class="flip-card" id="fm1"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fm1t">0</div></div><div class="f-bot"><div class="f-dig" id="fm1b">0</div></div></div></div>
+          <div class="flip-card" id="fm2"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fm2t">0</div></div><div class="f-bot"><div class="f-dig" id="fm2b">0</div></div></div></div>
+        </div>
+        <div class="clk-lbl">Min</div>
+      </div>
+      <div class="colon">:</div>
+      <div class="clock-unit">
+        <div class="flip-pair">
+          <div class="flip-card" id="fs1"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fs1t">0</div></div><div class="f-bot"><div class="f-dig" id="fs1b">0</div></div></div></div>
+          <div class="flip-card" id="fs2"><div class="flip-inner"><div class="f-top"><div class="f-dig" id="fs2t">0</div></div><div class="f-bot"><div class="f-dig" id="fs2b">0</div></div></div></div>
+        </div>
+        <div class="clk-lbl">Sec</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSV LOADER -->
+  <div class="csv-bar fade-up" style="animation-delay:.2s">
+    <label>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Load CSV
+      <input type="file" id="csv-input" accept=".csv">
+    </label>
+    <span id="csv-status">No data loaded — upload your toto.csv to begin</span>
+    <div class="csv-hint">
+      Expected columns: <code>Draw</code> &nbsp;&middot;&nbsp; <code>Date</code> &nbsp;&middot;&nbsp; <code>Winning Number 1</code> &hellip; <code>Winning Number 6</code> &nbsp;&middot;&nbsp; <code>Additional Number</code> &nbsp;&middot;&nbsp; (extra columns like Low, High, Division prizes are fine and ignored)
+    </div>
+  </div>
+
+  <!-- STATS OVERVIEW -->
+  <div class="section fade-up" style="animation-delay:.25s" id="sec-stats">
+    <div class="stat-row" id="stat-row">
+      <div class="stat-card"><div class="s-val" id="st-draws">—</div><div class="s-lbl">Total Draws</div></div>
+      <div class="stat-card"><div class="s-val" id="st-span">—</div><div class="s-lbl">Years of Data</div></div>
+      <div class="stat-card"><div class="s-val" id="st-hot">—</div><div class="s-lbl">Hottest Number</div></div>
+      <div class="stat-card"><div class="s-val" id="st-cold">—</div><div class="s-lbl">Coldest Number</div></div>
+      <div class="stat-card"><div class="s-val" id="st-chi">—</div><div class="s-lbl">χ² Bias Score</div></div>
+    </div>
+  </div>
+
+  <!-- FREQUENCY HEATMAP -->
+  <div class="section fade-up" style="animation-delay:.3s">
+    <div class="section-head">
+      <h3>Frequency Heatmap</h3>
+      <span class="sub">All 49 numbers · darker = more frequent</span>
+    </div>
+    <div class="num-grid" id="freq-grid">
+      <div class="no-data"><div class="icon">📊</div>Load CSV to see frequency data</div>
+    </div>
+  </div>
+
+  <!-- GAP ANALYSIS -->
+  <div class="section fade-up" style="animation-delay:.35s">
+    <div class="section-head">
+      <h3>Overdue Tracker</h3>
+      <span class="sub">Draws since last appearance</span>
+    </div>
+    <div id="gap-wrap">
+      <div class="no-data"><div class="icon">📅</div>Load CSV to see gap analysis</div>
+    </div>
+  </div>
+
+  <!-- CO-OCCURRENCE -->
+  <div class="section fade-up" style="animation-delay:.4s">
+    <div class="section-head">
+      <h3>Top Pairs</h3>
+      <span class="sub">Numbers that appear together most</span>
+    </div>
+    <div class="pair-grid" id="pair-grid">
+      <div class="no-data"><div class="icon">🔗</div>Load CSV to see pair combinations</div>
+    </div>
+  </div>
+
+  <!-- SMARTPICK SYSTEM -->
+  <div class="section fade-up" style="animation-delay:.43s" id="sec-smartpick">
+    <div class="section-head">
+      <h3>SmartPick System</h3>
+      <span class="sub">Deterministic daily pick · stored on GitHub · admin only</span>
+    </div>
+
+    <!-- GitHub Config -->
+    <div class="sp-config">
+      <div class="sp-config-title">GitHub Storage Config</div>
+      <div class="sp-config-fields">
+        <div class="sp-field">
+          <label>Owner / Repo <span style="font-weight:400;text-transform:none;letter-spacing:0;">(for fetching picks)</span></label>
+          <input type="text" id="sp-repo" placeholder="username/repo-name">
+        </div>
+        <div class="sp-field">
+          <label>Branch</label>
+          <input type="text" id="sp-branch" value="main" placeholder="main">
+        </div>
+        <div class="sp-field">
+          <label>JSON file path</label>
+          <input type="text" id="sp-path" value="daily_picks.json" placeholder="daily_picks.json">
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px 14px;background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;font-size:11px;font-weight:600;color:var(--gold);letter-spacing:.04em;">
+        🔒 PAT lives in Vercel env vars — never in the browser. Writes go via <code style="background:rgba(0,0,0,.08);padding:1px 5px;border-radius:3px;">/api/save-pick</code>.
+      </div>
+    </div>
+
+    <!-- Gate Status -->
+    <div class="sp-gate gate-wait" id="sp-gate">
+      <div class="gate-dot"></div>
+      <span id="sp-gate-msg">Load CSV and enter GitHub config to check date gate.</span>
+    </div>
+
+    <!-- Pick Display -->
+    <div class="sp-pick-display" id="sp-pick-display">
+      <span class="sp-pick-empty" id="sp-pick-empty">Today's pick will appear here once generated or fetched from GitHub.</span>
+    </div>
+
+    <!-- Admin Unlock -->
+    <div class="sp-admin-lock" id="sp-admin-lock">
+      <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);">🔒 Admin</span>
+      <input type="password" id="sp-admin-pw" placeholder="Enter admin password to unlock" autocomplete="off">
+      <button class="btn btn-ghost" onclick="spUnlock()">Unlock</button>
+      <span id="sp-admin-status" style="font-size:11px;font-weight:600;color:var(--muted);"></span>
+    </div>
+
+    <!-- Actions -->
+    <div class="sp-actions">
+      <button class="btn btn-ghost" id="sp-fetch-btn" onclick="spFetch()">
+        ↓ Fetch from GitHub
+      </button>
+      <button class="btn btn-primary" id="sp-gen-btn" onclick="spGenerate()" disabled style="opacity:.45;cursor:not-allowed;">
+        ⚡ Generate Today's Pick
+      </button>
+      <span id="sp-action-msg" style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.04em;"></span>
+    </div>
+
+    <!-- Audit Trail -->
+    <div class="sp-audit" id="sp-audit" style="display:none;">
+      <button class="sp-audit-toggle" id="sp-audit-toggle" onclick="spToggleAudit()">
+        <span>▸ How was this pick generated?</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="sp-audit-body" id="sp-audit-body"></div>
+    </div>
+
+    <!-- Generation Log -->
+    <div class="sp-log-wrap" id="sp-log" style="display:none;margin-top:12px;"></div>
+  </div>
+
+  <!-- SMART PICKER -->
+  <div class="section fade-up" style="animation-delay:.45s">
+    <div class="section-head">
+      <h3>Smart Picker</h3>
+      <span class="sub">Composite score: frequency + recency + pair affinity + gap cycle</span>
+    </div>
+
+    <!-- MODE TABS -->
+    <div class="picker-controls">
+      <span class="picker-mode-label">Mode:</span>
+      <button class="btn btn-ghost active" id="mode-logic" onclick="setMode('logic')">🧠 Logic Score</button>
+      <button class="btn btn-ghost" id="mode-hot" onclick="setMode('hot')">🔥 Hot Only</button>
+      <button class="btn btn-ghost" id="mode-overdue" onclick="setMode('overdue')">📅 Overdue Only</button>
+      <button class="btn btn-ghost" id="mode-rand" onclick="setMode('rand')">🎲 Random</button>
+      <button class="btn btn-primary" onclick="generatePick()" style="margin-left:auto">Generate ↻</button>
+    </div>
+
+    <!-- WEIGHT SLIDERS (logic mode only) -->
+    <div id="sliders-wrap" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:20px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">📊 All-time Freq</span>
+          <span style="font-size:12px;font-weight:600;" id="w-freq-val">50%</span>
+        </div>
+        <input type="range" id="w-freq" min="0" max="100" value="50" oninput="syncSliders()" style="width:100%;accent-color:var(--gold);">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">📅 Overdue</span>
+          <span style="font-size:12px;font-weight:600;" id="w-gap-val">0%</span>
+        </div>
+        <input type="range" id="w-gap" min="0" max="100" value="0" oninput="syncSliders()" style="width:100%;accent-color:var(--gold);">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">🔗 Pair Affinity</span>
+          <span style="font-size:12px;font-weight:600;" id="w-pair-val">0%</span>
+        </div>
+        <input type="range" id="w-pair" min="0" max="100" value="0" oninput="syncSliders()" style="width:100%;accent-color:var(--gold);">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">🔄 Gap Cycle</span>
+          <span style="font-size:12px;font-weight:600;" id="w-cycle-val">0%</span>
+        </div>
+        <input type="range" id="w-cycle" min="0" max="100" value="0" oninput="syncSliders()" style="width:100%;accent-color:var(--gold);">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">🕐 Recent Window</span>
+          <span style="font-size:12px;font-weight:600;" id="w-recent-val">0%</span>
+        </div>
+        <input type="range" id="w-recent" min="0" max="100" value="0" oninput="syncSliders()" style="width:100%;accent-color:var(--gold);">
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">Last <input id="recent-window" type="number" min="10" max="500" value="200" oninput="syncSliders()" style="width:48px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:10px;padding:1px 4px;text-align:center;"> draws</div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">🔺 Virgin Trios</span>
+          <span style="font-size:12px;font-weight:600;" id="w-virgin-val">50%</span>
+        </div>
+        <input type="range" id="w-virgin" min="0" max="100" value="50" oninput="syncSliders()" style="width:100%;accent-color:var(--gold);">
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">3-number combos never drawn together</div>
+      </div>
+    </div>
+    <div style="margin-bottom:16px;padding:10px 14px;background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;font-size:11px;font-weight:600;color:var(--gold);letter-spacing:.04em;">
+      ⚡ Defaults calibrated to last draw · Virgin Trios + Freq → 3/6 match
+    </div>
+
+    <!-- RESULT -->
+    <div class="pick-result" id="pick-result">
+      <span class="pick-empty">Load CSV then hit Generate</span>
+    </div>
+    <div class="pick-note" id="pick-note"></div>
+
+    <!-- HISTORY CHECK -->
+    <div id="pick-check-wrap" style="display:none;margin-top:16px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn btn-ghost" onclick="checkPickHistory(false)">&#128269; Check 6 Numbers</button>
+        <button class="btn btn-ghost" onclick="checkPickHistory(true)">&#128269; Check 6 + Additional</button>
+      </div>
+      <div id="pick-check-result"></div>
+    </div>
+
+    <!-- SCORE BREAKDOWN TABLE -->
+    <div id="score-table-wrap" style="display:none;margin-top:20px;overflow-x:auto;">
+      <table id="score-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);">
+            <th style="text-align:left;padding:8px 12px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);">No.</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);">Freq</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);">Overdue</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);">Pairs</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);">Cycle</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);">Recent</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);">Virgin🔺</th>
+            <th style="text-align:right;padding:8px 12px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);">Total Score</th>
+          </tr>
+        </thead>
+        <tbody id="score-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DRAW HISTORY VIEWER -->
+  <div class="section fade-up" style="animation-delay:.48s">
+    <div class="section-head">
+      <h3>Draw History</h3>
+      <span class="sub">All draws · winning numbers + additional</span>
+    </div>
+    <div id="viewer-wrap">
+      <div class="no-data"><div class="icon">📋</div>Load CSV to browse draw history</div>
+    </div>
+  </div>
+
+  <!-- DUPLICATE DRAW CHECKER -->
+  <div class="section fade-up" style="animation-delay:.5s">
+    <div class="section-head">
+      <h3>Duplicate Detector</h3>
+      <span class="sub">Has any 6-number combination ever repeated?</span>
+    </div>
+    <div id="dup-wrap">
+      <div class="no-data"><div class="icon">🔍</div>Load CSV to check for duplicate draws</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer fade-up" style="animation-delay:.55s">
+    <div class="footer-left">TOTO Analyser · For entertainment only · Please gamble responsibly</div>
+    <div class="footer-right">Draws: Mon &amp; Thu · 6:30 PM SGT</div>
+  </div>
+
+</div><!-- /site-wrap -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════════
+function toggleTheme(){
+  const d=document.documentElement;
+  const dark=d.getAttribute('data-theme')==='dark';
+  d.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('theme-lbl').textContent=dark?'Day':'Night';
+  localStorage.setItem('toto-theme',dark?'light':'dark');
+}
+(function(){
+  const s=localStorage.getItem('toto-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',s);
+  document.getElementById('theme-lbl').textContent=s==='dark'?'Night':'Day';
+})();
+
+// ═══════════════════════════════════════════════════════════
+// COUNTDOWN
+// ═══════════════════════════════════════════════════════════
+function nextDraw(){
+  const drawDays=[1,4]; // Mon,Thu in SGT
+  const now=new Date();
+  for(let i=0;i<=7;i++){
+    const c=new Date(now);
+    c.setUTCDate(c.getUTCDate()+i);
+    c.setUTCHours(10,30,0,0); // 18:30 SGT = 10:30 UTC
+    const sgt=new Date(c.getTime()+8*3600000);
+    if(drawDays.includes(sgt.getUTCDay())&&c>now) return c;
+  }
+}
+let _nextDraw=nextDraw();
+document.getElementById('draw-date-str').textContent=
+  _nextDraw.toLocaleDateString('en-SG',{timeZone:'Asia/Singapore',weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · 6:30 PM SGT';
+
+const _prev={};
+function setFlip(id,ch){
+  const s=String(ch);
+  if(_prev[id]===s) return;
+  _prev[id]=s;
+  document.getElementById(id+'t').textContent=s;
+  document.getElementById(id+'b').textContent=s;
+  const el=document.getElementById(id.replace(/[tb]$/,''));
+  el.classList.remove('flipping');void el.offsetWidth;
+  el.classList.add('flipping');
+  setTimeout(()=>el.classList.remove('flipping'),650);
+}
+function pad2(n){return String(Math.floor(n)).padStart(2,'0');}
+function tick(){
+  const now=new Date();
+  let diff=_nextDraw-now;
+  if(diff<=0){_nextDraw=nextDraw();diff=_nextDraw-now;}
+  const t=Math.floor(diff/1000);
+  const d=Math.floor(t/86400),h=Math.floor((t%86400)/3600),m=Math.floor((t%3600)/60),s=t%60;
+  const ds=pad2(d),hs=pad2(h),ms=pad2(m),ss=pad2(s);
+  setFlip('fd1',ds[0]);setFlip('fd2',ds[1]);
+  setFlip('fh1',hs[0]);setFlip('fh2',hs[1]);
+  setFlip('fm1',ms[0]);setFlip('fm2',ms[1]);
+  setFlip('fs1',ss[0]);setFlip('fs2',ss[1]);
+  document.getElementById('cu-days').style.display=d===0?'none':'flex';
+}
+tick();setInterval(tick,1000);
+
+// ═══════════════════════════════════════════════════════════
+// CSV PARSING
+// ═══════════════════════════════════════════════════════════
+let draws=[]; // [{date,nums:[],add:n}]
+
+document.getElementById('csv-input').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>parseCSV(ev.target.result);
+  r.readAsText(f);
+});
+
+function splitLine(line){
+  // Handles comma-separated with optional quotes, and tab-separated
+  if(line.includes('\t')) return line.split('\t').map(c=>c.trim().replace(/^"|"$/g,''));
+  const cols=[];
+  let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){inQ=!inQ;}
+    else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+    else cur+=ch;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2){setStatus('CSV appears empty.',true);return;}
+
+  const headerLine=lines[0];
+  const headers=splitLine(headerLine).map(h=>h.toLowerCase().trim());
+  const hasHeader=/draw|date|number/i.test(headerLine);
+  const data=hasHeader?lines.slice(1):lines;
+
+  // Map column indices from your exact header format:
+  // Draw | Date | Winning Number 1..6 | Additional Number | ...
+  let iDraw=-1, iDate=-1, iNums=[], iAdd=-1;
+
+  if(hasHeader){
+    // Find the column index of "Winning Number 1" first
+    let winStart = -1;
+    headers.forEach((h,i)=>{
+      if(/draw/i.test(h)&&!/number/i.test(h)) iDraw=i;
+      if(/date/i.test(h)) iDate=i;
+      const m=h.match(/winning number\s*(\d+)/i);
+      if(m){
+        const n=parseInt(m[1])-1;
+        iNums[n]=i;
+        if(n===0) winStart=i;
+      }
+      if(/additional number/i.test(h)) iAdd=i;
+    });
+    // If only 1 winning-number header found (merged label style like "Winning Number 1,2,3,4,5,6")
+    // fill iNums[1..5] as consecutive columns after winStart
+    if(winStart>=0 && iNums.filter(x=>x>=0).length===1){
+      for(let k=1;k<6;k++) iNums[k]=winStart+k;
+      // Additional Number is the next column after the 6 winning numbers
+      if(iAdd<0) iAdd=winStart+6;
+    }
+  }
+
+  const useHeaderMode = iNums.length===6;
+
+  const parsed=[];
+  for(const line of data){
+    if(!line.trim()) continue;
+    const cols=splitLine(line);
+    if(cols.length<3) continue;
+
+    let nums=null, add=null, date=null;
+
+    if(useHeaderMode){
+      // Use mapped column indices
+      nums=iNums.map(idx=>parseInt(cols[idx]||'')).filter(n=>n>=1&&n<=49);
+      if(nums.length!==6) nums=null;
+      if(iAdd>=0) add=parseInt(cols[iAdd])||null;
+      if(iDate>=0) date=(cols[iDate]||'').trim()||null;
+    } else {
+      // Fallback: scan for 6 consecutive numeric columns in range 1-49
+      for(let i=0;i<cols.length-5;i++){
+        const chunk=cols.slice(i,i+6).map(c=>parseInt(c));
+        if(chunk.every(n=>n>=1&&n<=49)&&new Set(chunk).size===6){
+          nums=chunk;
+          add=parseInt(cols[i+6])||null;
+          break;
+        }
+      }
+      // Date fallback
+      for(const c of cols){
+        if(/\d{4}/.test(c)&&(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/i.test(c)||/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}/.test(c))){
+          date=c;break;
+        }
+      }
+    }
+
+    // Capture draw number from col A
+    const drawNo = iDraw>=0 ? parseInt(cols[iDraw])||null : parseInt(cols[0])||null;
+    if(nums&&nums.length===6) parsed.push({drawNo,date:date||'',nums,add});
+  }
+
+  if(!parsed.length){
+    setStatus('Could not parse any draws. Check format hint below.',true);
+    return;
+  }
+
+  // Keep only draws from draw 2993 (2014-10-02) onwards — start of 6/49 era
+  // Column A = draw number, stored as d.drawNo; cut at 2993 inclusive
+  const CUTOFF_DRAW = 2993;
+  const filtered = parsed.filter(d => !d.drawNo || d.drawNo >= CUTOFF_DRAW);
+
+  draws = filtered.length > 0 ? filtered : parsed;
+  const skipped = parsed.length - draws.length;
+  setStatus(`✓ Loaded ${draws.length} draws (6/49 era)${skipped > 0 ? ` · skipped ${skipped} pre-2014 rows` : ''}`);
+  buildAll();
+}
+
+function setStatus(msg,err=false){
+  const el=document.getElementById('csv-status');
+  el.textContent=msg;
+  el.style.color=err?'var(--red)':'var(--green)';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANALYSIS HELPERS
+// ═══════════════════════════════════════════════════════════
+function freqMap(){
+  const m={};
+  for(let i=1;i<=49;i++) m[i]=0;
+  for(const d of draws) for(const n of d.nums) m[n]++;
+  return m;
+}
+
+function gapMap(){
+  // draws[0] is newest (CSV is newest-first); scan from front to find draws since last seen
+  const last={};
+  for(let i=0;i<draws.length;i++){
+    for(const n of draws[i].nums){
+      if(last[n]===undefined) last[n]=i; // i=0 means appeared in most recent draw
+    }
+  }
+  for(let i=1;i<=49;i++) if(last[i]===undefined) last[i]=draws.length;
+  return last;
+}
+
+function pairMap(){
+  const m={};
+  for(const d of draws){
+    const s=[...d.nums].sort((a,b)=>a-b);
+    for(let i=0;i<s.length;i++)
+      for(let j=i+1;j<s.length;j++){
+        const k=`${s[i]}-${s[j]}`;
+        m[k]=(m[k]||0)+1;
+      }
+  }
+  return m;
+}
+
+function chiSquared(freq){
+  const total=draws.length*6;
+  const expected=total/49;
+  let chi=0;
+  for(let i=1;i<=49;i++) chi+=Math.pow((freq[i]||0)-expected,2)/expected;
+  return chi;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUILD UI
+// ═══════════════════════════════════════════════════════════
+function buildAll(){
+  _virginTrioCache = null; // invalidate cache on new data
+  buildStats();
+  buildFreq();
+  buildGap();
+  buildPairs();
+  generatePick();
+  buildViewer();
+  buildDuplicates();
+}
+
+function buildStats(){
+  const fm=freqMap();
+  const vals=Object.entries(fm);
+  const hotE=vals.reduce((a,b)=>b[1]>a[1]?b:a);
+  const coldE=vals.reduce((a,b)=>b[1]<a[1]?b:a);
+  const chi=chiSquared(fm).toFixed(1);
+
+  document.getElementById('st-draws').textContent=draws.length;
+
+  // year span
+  const years=draws.map(d=>parseInt((d.date.match(/\d{4}/)||['0'])[0])).filter(Boolean);
+  const span=years.length?(Math.max(...years)-Math.min(...years)+1)+'y':'—';
+  document.getElementById('st-span').textContent=span;
+
+  document.getElementById('st-hot').textContent=hotE[0];
+  document.getElementById('st-cold').textContent=coldE[0];
+  document.getElementById('st-chi').textContent=chi;
+}
+
+function buildFreq(){
+  const fm=freqMap();
+  const vals=Object.values(fm);
+  const minF=Math.min(...vals),maxF=Math.max(...vals);
+  const grid=document.getElementById('freq-grid');
+  grid.innerHTML='';
+  for(let i=1;i<=49;i++){
+    const f=fm[i]||0;
+    const heat=(f-minF)/(maxF-minF||1);
+    const cell=document.createElement('div');
+    cell.className='num-cell';
+    cell.title=`${i}: appeared ${f} times`;
+    // Higher heat = more gold fill (lighter/warmer), lower heat = plain white
+    cell.style.setProperty('--heat-color','var(--gold)');
+    cell.style.setProperty('--heat-opacity', (heat*.6).toFixed(2));
+    cell.innerHTML=`<div class="n">${i}</div><div class="cnt">${f}×</div>`;
+    grid.appendChild(cell);
+  }
+}
+
+function buildGap(){
+  const gm=gapMap();
+  const sorted=Object.entries(gm).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  const maxGap=sorted[0][1];
+  const wrap=document.getElementById('gap-wrap');
+  wrap.innerHTML='<div class="bar-list" id="bar-list"></div>';
+  const list=document.getElementById('bar-list');
+  for(const [n,g] of sorted){
+    const pct=(g/maxGap*100).toFixed(1);
+    const row=document.createElement('div');
+    row.className='bar-row';
+    row.innerHTML=`
+      <div class="bar-num">${n}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="bar-val">${g} draw${g!==1?'s':''} ago</div>`;
+    list.appendChild(row);
+  }
+}
+
+function buildPairs(){
+  const pm=pairMap();
+  const top=Object.entries(pm).sort((a,b)=>b[1]-a[1]).slice(0,24);
+  const grid=document.getElementById('pair-grid');
+  grid.innerHTML='';
+  for(const [key,cnt] of top){
+    const [a,b]=key.split('-');
+    const card=document.createElement('div');
+    card.className='pair-card';
+    card.innerHTML=`
+      <div class="pair-nums">
+        <div class="ball">${a}</div>
+        <div class="ball">${b}</div>
+      </div>
+      <div class="pair-times"><strong>${cnt}</strong>times</div>`;
+    grid.appendChild(card);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SMART PICKER — COMPOSITE LOGIC SCORE
+// ═══════════════════════════════════════════════════════════
+let _mode='logic';
+
+function setMode(m){
+  _mode=m;
+  ['logic','hot','overdue','rand'].forEach(x=>{
+    document.getElementById('mode-'+x).classList.toggle('active',x===m);
+  });
+  // show sliders only in logic mode
+  document.getElementById('sliders-wrap').style.display = m==='logic' ? 'grid' : 'none';
+  document.getElementById('score-table-wrap').style.display = 'none';
+}
+
+function syncSliders(){
+  ['freq','gap','pair','cycle','recent','virgin'].forEach(k=>{
+    document.getElementById('w-'+k+'-val').textContent =
+      document.getElementById('w-'+k).value + '%';
+  });
+}
+
+// Recent-window frequency map (last N draws)
+function recentFreqMap(){
+  const win = parseInt(document.getElementById('recent-window')?.value)||200;
+  const recent = draws.slice(0, win); // draws[0] is newest
+  const rf={};
+  for(let i=1;i<=49;i++) rf[i]=0;
+  for(const d of recent) for(const n of d.nums) rf[n]++;
+  return rf;
+}
+
+// Virgin trio map: for each number, count 3-combos including it that have NEVER appeared
+// Outliers (46-49) are capped at the next-highest value so they don't dominate
+let _virginTrioCache = null;
+function virginTrioMap(){
+  if(_virginTrioCache) return _virginTrioCache;
+  // Build trio set from all draws
+  const trioSeen = new Set();
+  for(const d of draws){
+    const s = [...d.nums].sort((a,b)=>a-b);
+    for(let i=0;i<s.length-2;i++)
+      for(let j=i+1;j<s.length-1;j++)
+        for(let k=j+1;k<s.length;k++)
+          trioSeen.add(s[i]+'-'+s[j]+'-'+s[k]);
+  }
+  // Count virgin trios per number
+  const raw={};
+  for(let i=1;i<=49;i++){
+    let cnt=0;
+    for(let j=1;j<=49;j++){ if(j===i) continue;
+      for(let k=j+1;k<=49;k++){ if(k===i) continue;
+        const t=[i,j,k].sort((a,b)=>a-b).join('-');
+        if(!trioSeen.has(t)) cnt++;
+      }
+    }
+    raw[i]=cnt;
+  }
+  // Dampen outliers: cap 46-49 at the max of remaining numbers
+  const OUTLIERS=new Set([46,47,48,49]);
+  const nonOutlierMax=Math.max(...Object.entries(raw).filter(([n])=>!OUTLIERS.has(Number(n))).map(([,v])=>v));
+  const dampened={};
+  for(let i=1;i<=49;i++) dampened[i]=OUTLIERS.has(i)?Math.min(raw[i],nonOutlierMax):raw[i];
+  _virginTrioCache=dampened;
+  return dampened;
+}
+
+// Normalise an object of {num: raw} to 0–1 range
+function normalise(obj){
+  const vals=Object.values(obj);
+  const mn=Math.min(...vals), mx=Math.max(...vals);
+  const range=mx-mn||1;
+  const out={};
+  for(const k in obj) out[k]=(obj[k]-mn)/range;
+  return out;
+}
+
+// Average gap between appearances for each number
+function avgGapMap(){
+  const appearances={};
+  for(let i=1;i<=49;i++) appearances[i]=[];
+  draws.forEach((d,idx)=>{ for(const n of d.nums) appearances[n].push(idx); });
+  const out={};
+  for(let i=1;i<=49;i++){
+    const a=appearances[i];
+    if(a.length<2){ out[i]=draws.length; continue; }
+    let sum=0;
+    for(let j=1;j<a.length;j++) sum+=a[j]-a[j-1];
+    out[i]=sum/(a.length-1);
+  }
+  return out;
+}
+
+// Pair affinity: sum of co-occurrence counts with all other numbers
+function pairAffinityMap(){
+  const pm=pairMap();
+  const aff={};
+  for(let i=1;i<=49;i++) aff[i]=0;
+  for(const [key,cnt] of Object.entries(pm)){
+    const [a,b]=key.split('-').map(Number);
+    aff[a]+=cnt; aff[b]+=cnt;
+  }
+  return aff;
+}
+
+function computeScores(){
+  const fm   = freqMap();
+  const gm   = gapMap();         // draws since last seen (higher = more overdue)
+  const aff  = pairAffinityMap();
+  const avgG = avgGapMap();
+  const rfm  = recentFreqMap();
+  const vtm  = virginTrioMap();
+
+  // Gap cycle score: how much current gap exceeds personal average (capped at 2x)
+  const cycle={};
+  for(let i=1;i<=49;i++){
+    const ratio = (gm[i]||0) / (avgG[i]||1);
+    cycle[i] = Math.min(ratio, 2); // cap so one extreme number doesn't dominate
+  }
+
+  // Normalise all six signals to 0–1
+  const nFreq   = normalise(fm);
+  const nGap    = normalise(gm);
+  const nAff    = normalise(aff);
+  const nCycle  = normalise(cycle);
+  const nRecent = normalise(rfm);
+  const nVirgin = normalise(vtm);
+
+  // Weights — calibrated: Virgin 50%, Freq 50% → 3/6 on last draw
+  const wFreq   = parseFloat(document.getElementById('w-freq').value)/100   || 0.50;
+  const wGap    = parseFloat(document.getElementById('w-gap').value)/100    || 0.00;
+  const wPair   = parseFloat(document.getElementById('w-pair').value)/100   || 0.00;
+  const wCycle  = parseFloat(document.getElementById('w-cycle').value)/100  || 0.00;
+  const wRecent = parseFloat(document.getElementById('w-recent').value)/100 || 0.00;
+  const wVirgin = parseFloat(document.getElementById('w-virgin').value)/100 || 0.50;
+  const wTotal  = wFreq+wGap+wPair+wCycle+wRecent+wVirgin||1;
+
+  const scores={};
+  for(let i=1;i<=49;i++){
+    scores[i]=(
+      nFreq[i]   * wFreq  +
+      nGap[i]    * wGap   +
+      nAff[i]    * wPair  +
+      nCycle[i]  * wCycle +
+      nRecent[i] * wRecent +
+      nVirgin[i] * wVirgin
+    ) / wTotal;
+  }
+
+  return {scores, nFreq, nGap, nAff, nCycle, nRecent, nVirgin};
+}
+
+function generatePick(){
+  if(!draws.length){
+    document.getElementById('pick-result').innerHTML='<span class="pick-empty">Load a CSV first</span>';
+    return;
+  }
+
+  let picked, note;
+
+  if(_mode==='rand'){
+    const pool=Array.from({length:49},(_,i)=>i+1);
+    picked=pool.sort(()=>Math.random()-.5).slice(0,6).sort((a,b)=>a-b);
+    note='Pure random — equal probability for all numbers.';
+    document.getElementById('score-table-wrap').style.display='none';
+
+  } else if(_mode==='hot'){
+    const fm=freqMap();
+    picked=Object.entries(fm).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>Number(e[0])).sort((a,b)=>a-b);
+    note='Top 6 by all-time frequency — the numbers that have appeared most.';
+    document.getElementById('score-table-wrap').style.display='none';
+
+  } else if(_mode==='overdue'){
+    const gm=gapMap();
+    picked=Object.entries(gm).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>Number(e[0])).sort((a,b)=>a-b);
+    note='Top 6 most overdue — numbers that have gone longest without appearing.';
+    document.getElementById('score-table-wrap').style.display='none';
+
+  } else {
+    // LOGIC MODE — composite score, fully deterministic
+    const {scores,nFreq,nGap,nAff,nCycle,nRecent,nVirgin} = computeScores();
+    const ranked = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+    picked = ranked.slice(0,6).map(e=>Number(e[0])).sort((a,b)=>a-b);
+
+    note='6 signals including Virgin Trios (3-combos never drawn together, outliers dampened). Calibrated: Virgin 50% + Freq 50% → 3/6 on last draw.';
+
+    // Build score breakdown table (top 10)
+    const tbody=document.getElementById('score-tbody');
+    tbody.innerHTML='';
+    ranked.slice(0,10).forEach(([n,s],idx)=>{
+      const isChosen=picked.includes(Number(n));
+      const tr=document.createElement('tr');
+      tr.style.borderBottom='1px solid var(--border)';
+      tr.style.background=isChosen?'var(--gold-soft)':'';
+      tr.innerHTML=`
+        <td style="padding:8px 12px;font-family:var(--ff-head);font-size:18px;">${isChosen?'★ ':''}${n}</td>
+        <td style="padding:8px 12px;text-align:right;">${(nFreq[n]*100).toFixed(1)}</td>
+        <td style="padding:8px 12px;text-align:right;">${(nGap[n]*100).toFixed(1)}</td>
+        <td style="padding:8px 12px;text-align:right;">${(nAff[n]*100).toFixed(1)}</td>
+        <td style="padding:8px 12px;text-align:right;">${(nCycle[n]*100).toFixed(1)}</td>
+        <td style="padding:8px 12px;text-align:right;">${(nRecent[n]*100).toFixed(1)}</td>
+        <td style="padding:8px 12px;text-align:right;">${(nVirgin[n]*100).toFixed(1)}</td>
+        <td style="padding:8px 12px;text-align:right;font-weight:700;font-family:var(--ff-head);font-size:16px;">${(s*100).toFixed(1)}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('score-table-wrap').style.display='block';
+  }
+
+  const res=document.getElementById('pick-result');
+  res.innerHTML='';
+  picked.forEach((n,i)=>{
+    const b=document.createElement('div');
+    b.className='pick-ball';
+    b.textContent=n;
+    b.style.animationDelay=(i*.06)+'s';
+    res.appendChild(b);
+  });
+  document.getElementById('pick-note').textContent=note;
+  _lastPicked = picked;
+  document.getElementById('pick-check-wrap').style.display='block';
+  document.getElementById('pick-check-result').innerHTML='';
+}
+
+let _lastPicked = [];
+
+function checkPickHistory(includeAdd) {
+  const out = document.getElementById('pick-check-result');
+  if (!_lastPicked.length) { out.innerHTML=''; return; }
+  const pickedKey = [..._lastPicked].sort((a,b)=>a-b).join('-');
+  const matches = draws.filter(d => {
+    const dk = [...d.nums].sort((a,b)=>a-b).join('-');
+    return dk === pickedKey;
+  });
+  if (!includeAdd) {
+    if (matches.length === 0) {
+      out.innerHTML = `<div class="chk-result chk-never">
+        <div class="chk-icon">✅</div>
+        <div class="chk-title">Never Drawn Before</div>
+        <div class="chk-sub">These exact 6 numbers have never appeared together across ${draws.length} draws.</div>
+      </div>`;
+    } else {
+      const rowsHtml = matches.map(d => `
+        <div class="dup-match-row">
+          <div class="dup-draw-no">#${d.drawNo||'?'}</div>
+          <div class="dup-draw-date">${d.date||'—'}</div>
+          <div class="draw-balls" style="flex:1">
+            ${d.nums.map(n=>`<div class="db db-hi">${n}</div>`).join('')}
+            ${d.add!=null?`<div class="db-sep"></div><div class="db db-add">${d.add}</div>`:''}
+          </div>
+        </div>`).join('');
+      out.innerHTML = `<div class="chk-result chk-found">
+        <div class="chk-header">
+          <span class="chk-badge">⚠️ Drawn ${matches.length}× Before</span>
+          <span style="font-size:11px;font-weight:600;color:var(--muted);">Exact 6-number match</span>
+        </div>
+        <div class="dup-match-rows">${rowsHtml}</div>
+      </div>`;
+    }
+  } else {
+    if (matches.length === 0) {
+      out.innerHTML = `<div class="chk-result chk-never">
+        <div class="chk-icon">✅</div>
+        <div class="chk-title">Never Drawn Before</div>
+        <div class="chk-sub">These exact 6 numbers have never appeared together — so no additional number has ever accompanied them either.</div>
+      </div>`;
+    } else {
+      const rowsHtml = matches.map(d => `
+        <div class="dup-match-row">
+          <div class="dup-draw-no">#${d.drawNo||'?'}</div>
+          <div class="dup-draw-date">${d.date||'—'}</div>
+          <div class="draw-balls" style="flex:1">
+            ${d.nums.map(n=>`<div class="db db-hi">${n}</div>`).join('')}
+            ${d.add!=null?`<div class="db-sep"></div><div class="db db-hi-add" title="Additional">${d.add}</div>`:'<span style="font-size:11px;color:var(--muted);margin-left:6px;">No add. no.</span>'}
+          </div>
+        </div>`).join('');
+      out.innerHTML = `<div class="chk-result chk-found">
+        <div class="chk-header">
+          <span class="chk-badge">⚠️ Drawn ${matches.length}× Before</span>
+          <span style="font-size:11px;font-weight:600;color:var(--muted);">Additional numbers that appeared with these 6</span>
+        </div>
+        <div class="dup-match-rows">${rowsHtml}</div>
+      </div>`;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DRAW HISTORY VIEWER
+// ═══════════════════════════════════════════════════════════
+let _viewerPage = 1;
+const VIEWER_PAGE_SIZE = 50;
+let _viewerFilter = '';
+let _viewerData = [];
+let _viewerSort = 'desc'; // 'desc' = newest first, 'asc' = oldest first
+
+function buildViewer() {
+  const wrap = document.getElementById('viewer-wrap');
+  wrap.innerHTML = `
+    <div class="viewer-controls">
+      <input class="viewer-search" id="viewer-search" type="text" placeholder="Search draw # or date…" oninput="onViewerSearch(this.value)">
+      <div class="sort-toggle">
+        <button class="sort-btn active" id="sort-desc" onclick="setViewerSort('desc')">Newest First</button>
+        <button class="sort-btn" id="sort-asc" onclick="setViewerSort('asc')">Oldest First</button>
+      </div>
+      <span class="viewer-page-info" id="viewer-page-info"></span>
+    </div>
+    <div class="draw-table-wrap">
+      <table class="draw-table">
+        <thead>
+          <tr>
+            <th>Draw</th>
+            <th>Date</th>
+            <th>Winning Numbers</th>
+            <th style="color:var(--muted);opacity:.7">Additional</th>
+          </tr>
+        </thead>
+        <tbody id="viewer-tbody"></tbody>
+      </table>
+    </div>
+    <div class="viewer-pagination" id="viewer-pagination"></div>`;
+  applyViewerSort();
+  renderViewerPage(1);
+}
+
+function setViewerSort(dir) {
+  _viewerSort = dir;
+  document.getElementById('sort-desc').classList.toggle('active', dir === 'desc');
+  document.getElementById('sort-asc').classList.toggle('active', dir === 'asc');
+  applyViewerSort();
+  renderViewerPage(1);
+}
+
+function applyViewerSort() {
+  _viewerData = _viewerSort === 'desc' ? [...draws] : [...draws].reverse();
+}
+
+function onViewerSearch(val) {
+  _viewerFilter = val.trim().toLowerCase();
+  renderViewerPage(1);
+}
+
+function renderViewerPage(page) {
+  _viewerPage = page;
+  const filtered = _viewerData.filter(d => {
+    if (!_viewerFilter) return true;
+    return String(d.drawNo || '').includes(_viewerFilter) ||
+           (d.date || '').toLowerCase().includes(_viewerFilter);
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / VIEWER_PAGE_SIZE));
+  const safeP = Math.min(page, totalPages);
+  const slice = filtered.slice((safeP - 1) * VIEWER_PAGE_SIZE, safeP * VIEWER_PAGE_SIZE);
+
+  const tbody = document.getElementById('viewer-tbody');
+  tbody.innerHTML = '';
+  for (const d of slice) {
+    const tr = document.createElement('tr');
+    const ballsHtml = d.nums.map(n => `<div class="db">${n}</div>`).join('');
+    const addHtml = d.add ? `<div class="db-sep"></div><div class="db db-add">${d.add}</div>` : '—';
+    tr.innerHTML = `
+      <td class="td-draw">${d.drawNo || '—'}</td>
+      <td class="td-date">${d.date || '—'}</td>
+      <td><div class="draw-balls">${ballsHtml}</div></td>
+      <td><div class="draw-balls">${addHtml}</div></td>`;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('viewer-page-info').textContent =
+    `${filtered.length} draw${filtered.length !== 1 ? 's' : ''} · Page ${safeP} of ${totalPages}`;
+
+  // Pagination buttons
+  const pag = document.getElementById('viewer-pagination');
+  pag.innerHTML = '';
+  const addBtn = (label, p, disabled = false, active = false) => {
+    const b = document.createElement('button');
+    b.className = 'pg-btn' + (active ? ' active' : '');
+    b.textContent = label;
+    b.disabled = disabled;
+    b.onclick = () => renderViewerPage(p);
+    pag.appendChild(b);
+  };
+  addBtn('‹ Prev', safeP - 1, safeP <= 1);
+  // Page window
+  const win = 2;
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= safeP - win && i <= safeP + win)) pages.push(i);
+  }
+  let last = 0;
+  for (const p of pages) {
+    if (last && p - last > 1) {
+      const ellipsis = document.createElement('span');
+      ellipsis.textContent = '…';
+      ellipsis.style.cssText = 'color:var(--muted);font-size:12px;padding:0 4px;align-self:center;';
+      pag.appendChild(ellipsis);
+    }
+    addBtn(p, p, false, p === safeP);
+    last = p;
+  }
+  addBtn('Next ›', safeP + 1, safeP >= totalPages);
+}
+
+// ═══════════════════════════════════════════════════════════
+// DUPLICATE DRAW DETECTOR
+// ═══════════════════════════════════════════════════════════
+let _dupResults = {}; // cached results per tab key
+let _dupTab = '6';    // active tab: '6','6a','5','5a','4','4a','3','3a'
+
+function buildDuplicates() {
+  const wrap = document.getElementById('dup-wrap');
+  _dupResults = computeDupResults();
+  _dupTab = '6';
+
+  const tabs = [
+    { key:'6',  label:'6 Nums' },
+    { key:'6a', label:'6 + Add' },
+    { key:'5',  label:'5 Nums' },
+    { key:'5a', label:'5 + Add' },
+    { key:'4',  label:'4 Nums' },
+    { key:'4a', label:'4 + Add' },
+    { key:'3',  label:'3 Nums' },
+    { key:'3a', label:'3 + Add' },
+  ];
+
+  // Summary stat cards
+  const statHtml = [
+    { key:'6',  lbl:'6-Num Dups',    exact:true },
+    { key:'6a', lbl:'6+Add Dups',    exact:true },
+    { key:'5',  lbl:'5-Num Matches', exact:false },
+    { key:'4',  lbl:'4-Num Matches', exact:false },
+    { key:'3',  lbl:'3-Num Matches', exact:false },
+  ].map(s => {
+    const cnt = _dupResults[s.key].length;
+    const color = s.exact ? (cnt ? 'var(--red)' : 'var(--green)') : 'var(--text)';
+    return `<div class="dup-stat"><div class="ds-val" style="color:${color}">${cnt}</div><div class="ds-lbl">${s.lbl}</div></div>`;
+  }).join('');
+
+  const tabBtns = tabs.map(t => {
+    const cnt = _dupResults[t.key].length;
+    return `<button class="dup-tab-btn${t.key===_dupTab?' active':''}" onclick="switchDupTab('${t.key}')" data-key="${t.key}">
+      ${t.label}<span class="dup-tab-cnt">${cnt}</span>
+    </button>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="dup-summary">${statHtml}
+      <div class="dup-stat"><div class="ds-val">${draws.length}</div><div class="ds-lbl">Draws Scanned</div></div>
+    </div>
+    <div class="dup-tabs">${tabBtns}</div>
+    <div id="dup-panel"></div>`;
+
+  renderDupPanel();
+}
+
+function computeDupResults() {
+  const maps = {};
+  // For each combo size 3–6, with and without additional
+  for (let size = 3; size <= 6; size++) {
+    maps[String(size)] = {};
+    maps[size + 'a'] = {};
+  }
+
+  for (const d of draws) {
+    const sorted = [...d.nums].sort((a, b) => a - b);
+    // Generate all combinations of each size from the 6 winning numbers
+    for (let size = 3; size <= 6; size++) {
+      const combos = getCombinations(sorted, size);
+      for (const combo of combos) {
+        const k = combo.join('-');
+        if (!maps[String(size)][k]) maps[String(size)][k] = [];
+        maps[String(size)][k].push(d);
+
+        // With additional
+        if (d.add != null) {
+          const withAdd = [...combo, d.add].sort((a, b) => a - b);
+          const ka = withAdd.join('-');
+          if (!maps[size + 'a'][ka]) maps[size + 'a'][ka] = [];
+          maps[size + 'a'][ka].push(d);
+        }
+      }
+    }
+  }
+
+  // Convert to sorted duplicate arrays (most repeated first)
+  const results = {};
+  for (const key of Object.keys(maps)) {
+    results[key] = Object.entries(maps[key])
+      .filter(([, g]) => g.length > 1)
+      .sort((a, b) => b[1].length - a[1].length);
+  }
+  return results;
+}
+
+function getCombinations(arr, size) {
+  if (size === arr.length) return [arr];
+  if (size === 1) return arr.map(x => [x]);
+  const result = [];
+  for (let i = 0; i <= arr.length - size; i++) {
+    const rest = getCombinations(arr.slice(i + 1), size - 1);
+    for (const r of rest) result.push([arr[i], ...r]);
+  }
+  return result;
+}
+
+function switchDupTab(key) {
+  _dupTab = key;
+  document.querySelectorAll('.dup-tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.key === key);
+  });
+  renderDupPanel();
+}
+
+function renderDupPanel() {
+  const panel = document.getElementById('dup-panel');
+  const groups = _dupResults[_dupTab];
+  const isAddTab = _dupTab.endsWith('a');
+  const baseSize = parseInt(_dupTab);
+
+  // Tab colour coding
+  const isExact = baseSize === 6;
+  const tagColors = { 6:'var(--red)', 5:'#a855f7', 4:'#3b82f6', 3:'#10b981' };
+  const tagColor = tagColors[baseSize] || 'var(--gold)';
+
+  if (groups.length === 0) {
+    const is6 = baseSize === 6;
+    panel.innerHTML = `<div class="dup-none">
+      <div class="dn-icon">${is6 ? '✅' : '🔢'}</div>
+      <div class="dn-title" style="color:${is6 ? 'var(--green)' : 'var(--text)'}">${is6 ? 'No Duplicates' : 'No Matches Found'}</div>
+      <div class="dn-sub">${is6
+        ? `Every ${isAddTab?'6+additional':'6-number'} combination across ${draws.length} draws is unique.`
+        : `No ${baseSize}${isAddTab?'+additional':''}-number subset has appeared in more than one draw.`
+      }</div>
+    </div>`;
+    return;
+  }
+
+  // Show top matches — cap partial matches to avoid huge render
+  const MAX_SHOW = baseSize >= 5 ? groups.length : 100;
+  const shown = groups.slice(0, MAX_SHOW);
+  const overflow = groups.length - shown.length;
+
+  let html = '';
+  if (overflow > 0) {
+    html += `<div style="margin-bottom:12px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;">
+      Showing top ${shown.length} of ${groups.length} matching combos · sorted by most repeated
+    </div>`;
+  }
+
+  for (const [key, group] of shown) {
+    const nums = key.split('-').map(Number);
+    // For +add tabs: last number is the additional
+    const mainNums = isAddTab ? nums.slice(0, -1) : nums;
+    const addNum   = isAddTab ? nums[nums.length - 1] : null;
+
+    const ballsHtml = mainNums.map(n => `<div class="db">${n}</div>`).join('');
+    const addHtml = addNum != null
+      ? `<div class="db-sep"></div><div class="db db-add">${addNum}</div>`
+      : '';
+
+    const tagLabel = `${baseSize}${isAddTab ? ' + Add' : ''} Match`;
+
+    // Each row shows the full draw with matching numbers highlighted
+    const rowsHtml = group.map(d => {
+      const drawBalls = d.nums.map(n => {
+        const isMatch = mainNums.includes(n);
+        return `<div class="db${isMatch ? ' db-hi' : ' db-dim'}">${n}</div>`;
+      }).join('');
+      const drawAdd = d.add != null
+        ? `<div class="db-sep"></div><div class="db ${addNum === d.add ? 'db-hi-add' : 'db-add'}">${d.add}</div>`
+        : '';
+      return `<div class="dup-match-row">
+        <div class="dup-draw-no">#${d.drawNo || '?'}</div>
+        <div class="dup-draw-date">${d.date || '—'}</div>
+        <div class="draw-balls" style="flex:1">${drawBalls}${drawAdd}</div>
+      </div>`;
+    }).join('');
+
+    html += `<div class="dup-match" style="--tag-color:${tagColor}">
+      <div class="dup-match-head">
+        <span class="dup-tag" style="background:${tagColor}">${tagLabel}</span>
+        <div class="dup-match-nums">${ballsHtml}${addHtml}</div>
+        <span style="font-size:11px;font-weight:600;color:var(--muted);">${group.length}× across ${draws.length} draws</span>
+      </div>
+      <div class="dup-match-rows">${rowsHtml}</div>
+    </div>`;
+  }
+
+  if (overflow > 0) {
+    html += `<div style="text-align:center;padding:16px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;">
+      + ${overflow} more combos not shown
+    </div>`;
+  }
+
+  panel.innerHTML = html;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// SMARTPICK SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+// ── Logging ──────────────────────────────────────────────
+const _spLog = [];
+function spLog(msg, type=''){
+  _spLog.push({msg, type});
+  const el = document.getElementById('sp-log');
+  if(!el) return;
+  el.style.display = 'block';
+  const cls = type==='ok'?'log-ok':type==='warn'?'log-warn':type==='err'?'log-err':'';
+  el.innerHTML += `<div class="${cls}">${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+function spClearLog(){
+  _spLog.length = 0;
+  const el = document.getElementById('sp-log');
+  if(el){ el.innerHTML=''; el.style.display='none'; }
+}
+
+// ── Gate & UI state ──────────────────────────────────────
+function spSetGate(state, msg){
+  const el = document.getElementById('sp-gate');
+  el.className = 'sp-gate gate-' + state;
+  document.getElementById('sp-gate-msg').textContent = msg;
+}
+
+function spSetActionMsg(msg){ document.getElementById('sp-action-msg').textContent = msg; }
+
+function spEnableGenerate(enabled){
+  // Never enable the button if admin hasn't unlocked
+  const actuallyEnable = enabled && !!_adminSecret;
+  const btn = document.getElementById('sp-gen-btn');
+  btn.disabled = !actuallyEnable;
+  btn.style.opacity = actuallyEnable ? '1' : '.45';
+  btn.style.cursor = actuallyEnable ? 'pointer' : 'not-allowed';
+}
+
+// ── SGT date gate (Phase 0) ──────────────────────────────
+function sgtToday(){
+  const now = new Date();
+  const sgt = new Date(now.getTime() + (8 * 3600000) + (now.getTimezoneOffset() * 60000));
+  return { y: sgt.getUTCFullYear(), m: sgt.getUTCMonth()+1, d: sgt.getUTCDate(), dow: sgt.getUTCDay() };
+}
+
+function sgtTodayStr(){
+  const t = sgtToday();
+  return `${t.y}-${String(t.m).padStart(2,'0')}-${String(t.d).padStart(2,'0')}`;
+}
+
+function expectedLatestDraw(){
+  // Returns the expected most-recent draw date as a JS Date (midnight SGT)
+  const t = sgtToday();
+  const sgtMidnight = new Date(Date.UTC(t.y, t.m-1, t.d) - (8*3600000)); // midnight SGT in UTC
+  let daysBack = 0;
+  // Days to subtract per SGT weekday to reach the expected latest draw date
+  // Sun(0)→Thu(-3), Mon(1)→Thu(-4), Tue(2)→Mon(-1), Wed(3)→Mon(-2),
+  // Thu(4)→Mon(-3), Fri(5)→Thu(-1), Sat(6)→Thu(-2)
+  const backMap = {0:3, 1:4, 2:1, 3:2, 4:3, 5:1, 6:2};
+  daysBack = backMap[t.dow];
+  const expected = new Date(Date.UTC(t.y, t.m-1, t.d - daysBack) - (8*3600000));
+  return expected;
+}
+
+function parseDrawDate(dateStr){
+  // Tries to parse date strings from the CSV
+  if(!dateStr) return null;
+  // Try "DD Mon YYYY", "Mon DD, YYYY", "YYYY-MM-DD", "DD/MM/YYYY"
+  const d = new Date(dateStr);
+  if(!isNaN(d)) return d;
+  return null;
+}
+
+function runDateGate(){
+  if(!draws.length){
+    spSetGate('wait', 'Load CSV first to check date gate.');
+    spEnableGenerate(false);
+    return false;
+  }
+  // Find most recent draw date
+  const sorted = [...draws].sort((a,b)=>{
+    const da = parseDrawDate(a.date), db = parseDrawDate(b.date);
+    if(!da||!db) return 0;
+    return db-da;
+  });
+  const latestDraw = sorted[0];
+  const latestDate = parseDrawDate(latestDraw.date);
+  const expected = expectedLatestDraw();
+
+  if(!latestDate){
+    spSetGate('wait', 'Could not parse draw dates from CSV. Check date format.');
+    spEnableGenerate(false);
+    return false;
+  }
+
+  // Normalise both to date-only (midnight UTC)
+  const ld = new Date(Date.UTC(latestDate.getFullYear(), latestDate.getMonth(), latestDate.getDate()));
+  const ex = new Date(Date.UTC(expected.getFullYear(), expected.getMonth(), expected.getDate()));
+
+  if(ld >= ex){
+    spSetGate('pass', `✓ CSV is up to date (latest: ${latestDraw.date}). Gate passed.`);
+    return true;
+  } else {
+    const exStr = ex.toISOString().slice(0,10);
+    spSetGate('fail', `✗ CSV stale — latest draw: ${latestDraw.date}, expected: ${exStr}. Update CSV before generating.`);
+    spEnableGenerate(false);
+    return false;
+  }
+}
+
+// ── GitHub helpers ────────────────────────────────────────
+function spConfig(){
+  return {
+    repo:   document.getElementById('sp-repo').value.trim(),
+    branch: document.getElementById('sp-branch').value.trim() || 'main',
+    path:   document.getElementById('sp-path').value.trim() || 'daily_picks.json',
+  };
+}
+
+function spRawUrl(){
+  const c = spConfig();
+  if(!c.repo) return null;
+  return `https://raw.githubusercontent.com/${c.repo}/refs/heads/${c.branch}/${c.path}`;
+}
+
+function spSaveConfig(){
+  localStorage.setItem('sp-config', JSON.stringify(spConfig()));
+}
+function spLoadConfig(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('sp-config')||'{}');
+    if(saved.repo)   document.getElementById('sp-repo').value   = saved.repo;
+    if(saved.branch) document.getElementById('sp-branch').value = saved.branch;
+    if(saved.path)   document.getElementById('sp-path').value   = saved.path;
+  } catch(_){}
+}
+['sp-repo','sp-branch','sp-path'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('change', spSaveConfig);
+});
+
+async function spFetch(){
+  const url = spRawUrl();
+  if(!url){ spSetActionMsg('Enter Owner/Repo first.'); return; }
+  spSaveConfig();
+  spSetActionMsg('Fetching from GitHub…');
+  spClearLog();
+  try{
+    const res = await fetch(url + '?t=' + Date.now());
+    if(res.status === 404){
+      spSetActionMsg('daily_picks.json not found yet — generate first.');
+      spLog('No daily_picks.json found in repo.','warn');
+      spCheckGateAndEnableBtn();
+      return;
+    }
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    spDisplayPicksJson(json);
+    spSetActionMsg('Fetched successfully.');
+    spLog(`Loaded ${json.picks?.length||0} stored pick(s).`,'ok');
+  } catch(e){
+    spSetActionMsg('Fetch failed: ' + e.message);
+    spLog('Fetch error: '+e.message,'err');
+  }
+}
+
+(function spAutoFetch(){
+  spLoadConfig();
+  const c = spConfig();
+  if(c.repo) spFetch();
+})();
+
+function spCheckGateAndEnableBtn(){
+  // If a pick for the current draw window already exists, don't allow re-generation
+  const nextDrawTime = nextDraw();
+  const prevDrawTime = (function(){
+    const drawDays = [1, 4];
+    for(let i = 1; i <= 7; i++){
+      const c = new Date(nextDrawTime);
+      c.setUTCDate(c.getUTCDate() - i);
+      c.setUTCHours(10, 30, 0, 0);
+      const sgt = new Date(c.getTime() + 8*3600000);
+      if(drawDays.includes(sgt.getUTCDay())) return c;
+    }
+    return null;
+  })();
+  const prevDrawDateStr = prevDrawTime
+    ? new Date(prevDrawTime.getTime() + 8*3600000).toISOString().slice(0,10)
+    : null;
+  const hasCurrentPick = _spStoredPicks &&
+    _spStoredPicks.some(p => !prevDrawDateStr || p.date > prevDrawDateStr);
+  if(hasCurrentPick){
+    spEnableGenerate(false);
+    spSetActionMsg('A pick for this draw window is already stored — no generation needed.');
+    return;
+  }
+  const passed = runDateGate();
+  if(passed) spEnableGenerate(true);
+}
+
+let _spStoredPicks = null;
+
+function spDisplayPicksJson(json){
+  _spStoredPicks = json.picks || [];
+
+  // Find the most recent pick valid for the current draw window.
+  // A pick is valid if it was generated after the previous draw date.
+  const nextDrawTime = nextDraw();
+  const prevDrawTime = (function(){
+    const drawDays = [1, 4]; // Mon, Thu SGT
+    for(let i = 1; i <= 7; i++){
+      const c = new Date(nextDrawTime);
+      c.setUTCDate(c.getUTCDate() - i);
+      c.setUTCHours(10, 30, 0, 0);
+      const sgt = new Date(c.getTime() + 8*3600000);
+      if(drawDays.includes(sgt.getUTCDay())) return c;
+    }
+    return null;
+  })();
+
+  // prevDrawDateStr = the date of the last completed draw in SGT (YYYY-MM-DD)
+  const prevDrawDateStr = prevDrawTime
+    ? new Date(prevDrawTime.getTime() + 8*3600000).toISOString().slice(0,10)
+    : null;
+
+  // Show the most recent pick that was generated AFTER the last draw
+  const currentPick = _spStoredPicks
+    .filter(p => !prevDrawDateStr || p.date > prevDrawDateStr)
+    .sort((a, b) => b.date.localeCompare(a.date))[0] || null;
+
+  if(currentPick){
+    renderSpPick(currentPick.numbers, currentPick.audit || null, true);
+    spEnableGenerate(false);
+    document.getElementById('sp-gen-btn').style.display = 'none';
+    spSetGate('pass', `✓ Pick for this draw window (generated ${currentPick.date}) loaded from GitHub.`);
+  } else {
+    clearSpPick();
+    spCheckGateAndEnableBtn();
+  }
+}
+
+function clearSpPick(){
+  const el = document.getElementById('sp-pick-display');
+  el.innerHTML = '<span class="sp-pick-empty" id="sp-pick-empty">No pick for today yet — generate when ready.</span>';
+  document.getElementById('sp-audit').style.display = 'none';
+}
+
+function renderSpPick(numbers, audit, fromStore){
+  const el = document.getElementById('sp-pick-display');
+  el.innerHTML = '';
+  [...numbers].sort((a,b)=>a-b).forEach((n,i)=>{
+    const b = document.createElement('div');
+    b.className = 'sp-pick-ball';
+    b.textContent = n;
+    b.style.animationDelay = (i*.07)+'s';
+    el.appendChild(b);
+  });
+  if(fromStore){
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-left:8px;';
+    lbl.textContent = '(Stored)';
+    el.appendChild(lbl);
+  }
+  if(audit){
+    document.getElementById('sp-audit').style.display = 'block';
+    renderAuditPanel(audit);
+  }
+}
+
+// ── Algorithm Phases 1–4 ─────────────────────────────────
+
+function getAllTrios(drawsArr){
+  // Returns Map: "a-b-c" → count
+  const map = new Map();
+  for(const d of drawsArr){
+    const s = [...d.nums].sort((a,b)=>a-b);
+    for(let i=0;i<s.length-2;i++)
+      for(let j=i+1;j<s.length-1;j++)
+        for(let k=j+1;k<s.length;k++){
+          const key = s[i]+'-'+s[j]+'-'+s[k];
+          map.set(key, (map.get(key)||0)+1);
+        }
+  }
+  return map;
+}
+
+function spGlobalFreq(){
+  const f = {};
+  for(let i=1;i<=49;i++) f[i]=0;
+  for(const d of draws) for(const n of d.nums) f[n]++;
+  return f;
+}
+
+function spPhase1(trioMap, gFreq){
+  // Trio A = highest count; tie-break = highest combined individual freq
+  let best = null, bestCnt = -1, bestFreqSum = -1;
+  for(const [key, cnt] of trioMap){
+    const nums = key.split('-').map(Number);
+    const fsum = nums.reduce((a,n)=>a+(gFreq[n]||0),0);
+    if(cnt > bestCnt || (cnt===bestCnt && fsum>bestFreqSum)){
+      best = key; bestCnt = cnt; bestFreqSum = fsum;
+    }
+  }
+  return { trioA: best.split('-').map(Number), globalAppearances: bestCnt };
+}
+
+function spPhase2(trioA, trioMap, gFreq){
+  // Anchor = trioA member appearing most in last 10 draws
+  const last10 = draws.slice(0, 10); // draws[0] is newest (CSV is newest-first)
+  const counts = {};
+  for(const n of trioA) counts[n]=0;
+  for(const d of last10) for(const n of d.nums) if(counts[n]!==undefined) counts[n]++;
+  // Pick anchor — highest count; tie-break = global freq
+  const anchor = trioA.reduce((a,b)=>{
+    if(counts[b]>counts[a]) return b;
+    if(counts[b]===counts[a]&&(gFreq[b]||0)>(gFreq[a]||0)) return b;
+    return a;
+  });
+  const anchorLast10 = counts[anchor];
+
+  // Trio B: most common trio containing anchor, different from trioA
+  const trioAKey = [...trioA].sort((a,b)=>a-b).join('-');
+  let bestB = null, bestBCnt = -1, bestBFreqSum = -1;
+  for(const [key, cnt] of trioMap){
+    const nums = key.split('-').map(Number);
+    if(!nums.includes(anchor)) continue;
+    if(key === trioAKey) continue;
+    const fsum = nums.reduce((a,n)=>a+(gFreq[n]||0),0);
+    if(cnt > bestBCnt || (cnt===bestBCnt && fsum>bestBFreqSum)){
+      bestB = key; bestBCnt = cnt; bestBFreqSum = fsum;
+    }
+  }
+  if(!bestB){
+    // Fallback: trioA (shouldn't normally happen)
+    bestB = trioAKey; bestBCnt = trioMap.get(trioAKey)||0;
+  }
+  return {
+    anchor, anchorLast10,
+    trioB: bestB.split('-').map(Number),
+    trioBAppearances: bestBCnt
+  };
+}
+
+function spPhase3(trioB, allCombosSet, maxIter=10000){
+  // Pick 3 random non-trio numbers; check full-history duplicate
+  const trioSet = new Set(trioB);
+  const pool = Array.from({length:49},(_,i)=>i+1).filter(n=>!trioSet.has(n));
+  let iter = 0, combo = null;
+  while(iter < maxIter){
+    iter++;
+    const rand = [...pool].sort(()=>Math.random()-.5).slice(0,3);
+    const candidate = [...trioB, ...rand].sort((a,b)=>a-b);
+    const key = candidate.join('-');
+    if(!allCombosSet.has(key)){ combo = candidate; break; }
+  }
+  return { combo, iterations: iter };
+}
+
+function spPhase4(combo, trioB, allCombosSet, addFreqDesc, addFreqAsc, maxIter=10000){
+  // Check against last 3 draws (newest-first, so slice from front)
+  const last3 = draws.slice(0, 3).map(d=>d.nums);
+  const last3Flat = last3.flat();
+  const overlapNums = combo.filter(n=>last3Flat.includes(n));
+  const overlapCount = overlapNums.length;
+  const replacementTriggered = overlapCount >= 3;
+
+  if(!replacementTriggered){
+    return { combo, replacementTriggered, overlapCount, overlapNums, last3, postIter:0, replacement:null };
+  }
+
+  // Replacement Protocol
+  const trioSet = new Set(trioB);
+  const nonTrioNums = combo.filter(n=>!trioSet.has(n)); // the 3 random ones
+  const offenders = overlapNums.filter(n=>!trioSet.has(n)).slice(0,3); // only non-trio can be replaced
+
+  // If fewer than 3 non-trio offenders, pad with any non-trio num
+  while(offenders.length < 3){
+    const extra = nonTrioNums.find(n=>!offenders.includes(n));
+    if(extra) offenders.push(extra); else break;
+  }
+
+  const mostCommonAdd = addFreqDesc[0];    // most common additional number since 2014
+  // Least common add number not in last 3 draws
+  const last3Add = draws.slice(0, 3).map(d=>d.add).filter(Boolean);
+  const leastCommonAdd = addFreqAsc.find(n=>!last3Add.includes(n)) || addFreqAsc[0];
+
+  const replacement = {
+    triggered: true,
+    offendingNumbers: [...offenders],
+    replacement1: { replaced: offenders[0], with: null, method: 'randomised' },
+    replacement2: { replaced: offenders[1], with: mostCommonAdd, method: 'most common additional number since 2014' },
+    replacement3: { replaced: offenders[2], with: leastCommonAdd, method: 'least common additional number not in last 3 draws' },
+  };
+
+  // Build new combo with replacements, then loop until unique
+  let iter = 0, finalCombo = null;
+  while(iter < maxIter){
+    iter++;
+    const pool = Array.from({length:49},(_,i)=>i+1)
+      .filter(n=>!trioSet.has(n)&&n!==mostCommonAdd&&n!==leastCommonAdd);
+    const r1 = pool.sort(()=>Math.random()-.5)[0];
+    replacement.replacement1.with = r1;
+    const newCombo = [
+      ...trioB,
+      r1,
+      mostCommonAdd,
+      leastCommonAdd
+    ].sort((a,b)=>a-b);
+    // Ensure no overlap within combo
+    if(new Set(newCombo).size !== 6) continue;
+    const key = newCombo.join('-');
+    if(!allCombosSet.has(key)){ finalCombo = newCombo; break; }
+  }
+
+  return { combo: finalCombo||combo, replacementTriggered, overlapCount, overlapNums, last3, replacement, postIter: iter };
+}
+
+function buildAllCombosSet(){
+  const s = new Set();
+  for(const d of draws) s.add([...d.nums].sort((a,b)=>a-b).join('-'));
+  return s;
+}
+
+function buildAddFreqLists(){
+  const freq = {};
+  for(const d of draws) if(d.add!=null) freq[d.add]=(freq[d.add]||0)+1;
+  const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+  return {
+    desc: sorted.map(e=>Number(e[0])),
+    asc:  sorted.reverse().map(e=>Number(e[0]))
+  };
+}
+
+async function spGenerate(){
+  if(!draws.length){ spSetActionMsg('Load CSV first.'); return; }
+  const today = sgtTodayStr();
+  spClearLog();
+  spLog('Starting SmartPick generation for ' + today);
+
+  // Run gate one more time
+  if(!runDateGate()){ spLog('Date gate failed — aborting.','err'); return; }
+
+  spSetActionMsg('Calculating…');
+  spEnableGenerate(false);
+
+  // Phase 1
+  spLog('Phase 1: Building trio frequency map…');
+  const trioMap = getAllTrios(draws);
+  const gFreq = spGlobalFreq();
+  const { trioA, globalAppearances: trioAApp } = spPhase1(trioMap, gFreq);
+  spLog(`Trio A: [${trioA.join(', ')}] appeared ${trioAApp}×`,'ok');
+
+  // Phase 2
+  spLog('Phase 2: Recency calibration…');
+  const { anchor, anchorLast10, trioB, trioBAppearances } = spPhase2(trioA, trioMap, gFreq);
+  spLog(`Anchor: ${anchor} (appeared ${anchorLast10}× in last 10 draws)`,'ok');
+  spLog(`Trio B: [${trioB.join(', ')}] appeared ${trioBAppearances}×`,'ok');
+
+  // Phase 3
+  spLog('Phase 3: Assembling 6-number combo…');
+  const allCombosSet = buildAllCombosSet();
+  const { combo: initCombo, iterations: dupIter } = spPhase3(trioB, allCombosSet);
+  if(!initCombo){ spSetActionMsg('Failed to find unique combo (Phase 3).'); spLog('Phase 3 failed.','err'); return; }
+  spLog(`Initial combo: [${initCombo.join(', ')}] — unique after ${dupIter} iteration(s)`,'ok');
+
+  // Phase 4
+  spLog('Phase 4: Recency bias check…');
+  const { desc: addDesc, asc: addAsc } = buildAddFreqLists();
+  const p4 = spPhase4(initCombo, trioB, allCombosSet, addDesc, addAsc);
+  const finalCombo = p4.combo;
+
+  if(p4.replacementTriggered){
+    spLog(`Replacement triggered (${p4.overlapCount} overlaps with last 3 draws):`,'warn');
+    spLog(`  #1 randomised replacement: ${p4.replacement.replacement1.replaced} → ${p4.replacement.replacement1.with}`);
+    spLog(`  #2 most common add: ${p4.replacement.replacement2.replaced} → ${p4.replacement.replacement2.with}`);
+    spLog(`  #3 least common add: ${p4.replacement.replacement3.replaced} → ${p4.replacement.replacement3.with}`);
+  } else {
+    spLog(`Recency OK — overlap ${p4.overlapCount}/3 (threshold not reached)`,'ok');
+  }
+  spLog(`Final combo: [${finalCombo.join(', ')}]`,'ok');
+
+  // Build audit object
+  const audit = {
+    trioA: { numbers: trioA, globalAppearances: trioAApp, rank: 1 },
+    anchorNumber: { number: anchor, last10Appearances: anchorLast10, trioARank: 'highest in last 10' },
+    trioB: { numbers: trioB, globalAppearances: trioBAppearances, derivedFromAnchor: anchor },
+    initialCombo: initCombo,
+    duplicateCheckPassed: true,
+    duplicateLoopIterations: dupIter,
+    recencyCheck: {
+      last3Draws: p4.last3,
+      overlappingNumbers: p4.overlapNums,
+      overlapCount: p4.overlapCount,
+      replacementTriggered: p4.replacementTriggered
+    },
+    ...(p4.replacementTriggered ? { replacementProtocol: p4.replacement } : {}),
+    finalCombo,
+    totalIterations: dupIter + (p4.postIter||0),
+    generatedAt: new Date().toISOString()
+  };
+
+  // Render immediately
+  renderSpPick(finalCombo, audit, false);
+
+  // Phase 5 — write via Vercel serverless function
+  spLog('Phase 5: Saving via /api/save-pick…');
+  spSetActionMsg('Saving…');
+  try {
+    await spWriteViApi(finalCombo, audit, today);
+    spSetActionMsg('✓ Saved to GitHub. Pick locked for today.');
+    spLog('Saved successfully.','ok');
+    document.getElementById('sp-gen-btn').style.display = 'none';
+  } catch(e) {
+    spSetActionMsg('Generated but save failed: ' + e.message);
+    spLog('Save error: '+e.message,'err');
+    spEnableGenerate(true);
+  }
+}
+
+// ── Admin unlock ─────────────────────────────────────────
+let _adminSecret = null;
+
+function spUnlock(){
+  const pw = document.getElementById('sp-admin-pw').value;
+  if(!pw){ document.getElementById('sp-admin-status').textContent = 'Enter a password.'; return; }
+  document.getElementById('sp-admin-status').textContent = 'Verifying…';
+  // Test auth: send intentionally bad body → 400 if auth passes, 401 if wrong password
+  fetch('/api/save-pick', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': pw },
+    body: JSON.stringify({})
+  }).then(r => {
+    if(r.status === 401){
+      document.getElementById('sp-admin-status').textContent = '✗ Wrong password.';
+      document.getElementById('sp-admin-status').style.color = 'var(--red)';
+      _adminSecret = null;
+    } else {
+      // 400 = auth passed, bad body = correct password
+      _adminSecret = pw;
+      document.getElementById('sp-admin-pw').value = '';
+      document.getElementById('sp-admin-lock').innerHTML =
+        `<span class="sp-admin-badge">✓ Admin Unlocked</span>
+         <span style="font-size:11px;color:var(--muted);font-weight:600;">Generate button is now active.</span>
+         <button class="btn btn-ghost" style="margin-left:auto;" onclick="spLock()">Lock</button>`;
+      spCheckGateAndEnableBtn();
+    }
+  }).catch(()=>{
+    document.getElementById('sp-admin-status').textContent = 'Could not reach server.';
+    document.getElementById('sp-admin-status').style.color = 'var(--red)';
+  });
+}
+
+function spLock(){
+  _adminSecret = null;
+  spEnableGenerate(false);
+  document.getElementById('sp-admin-lock').innerHTML = `
+    <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);">🔒 Admin</span>
+    <input type="password" id="sp-admin-pw" placeholder="Enter admin password to unlock" autocomplete="off">
+    <button class="btn btn-ghost" onclick="spUnlock()">Unlock</button>
+    <span id="sp-admin-status" style="font-size:11px;font-weight:600;color:var(--muted);"></span>`;
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && document.activeElement?.id === 'sp-admin-pw') spUnlock();
+});
+
+async function spWriteViApi(numbers, audit, date){
+  if(!_adminSecret) throw new Error('Not unlocked — refresh and log in again.');
+  const res = await fetch('/api/save-pick', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-secret': _adminSecret,
+    },
+    body: JSON.stringify({ date, numbers, audit }),
+  });
+  const json = await res.json();
+  if(!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+  return json;
+}
+
+// ── Audit Trail Renderer ─────────────────────────────────
+function spToggleAudit(){
+  const body = document.getElementById('sp-audit-body');
+  const btn = document.getElementById('sp-audit-toggle');
+  const open = body.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  btn.querySelector('span:first-child').textContent = open ? '▾ How was this pick generated?' : '▸ How was this pick generated?';
+}
+
+function renderAuditPanel(audit){
+  const body = document.getElementById('sp-audit-body');
+  if(!audit){ body.innerHTML='<div style="color:var(--muted);font-size:12px;">No audit data available.</div>'; return; }
+
+  const ballsHtml = (nums, anchor) => nums.map(n=>
+    `<div class="ball-sm${n===anchor?' anchor':''}">${n}</div>`
+  ).join('');
+
+  const comboHtml = nums => nums.map(n=>`<div class="ball-sm">${n}</div>`).join('');
+
+  const rows = (items) => items.map(([k,v])=>`
+    <div class="sp-audit-row">
+      <div class="sp-audit-key">${k}</div>
+      <div class="sp-audit-val">${v}</div>
+    </div>`).join('');
+
+  let html = '';
+
+  // Phase 1
+  html += `<div class="sp-audit-phase">
+    <div class="sp-audit-phase-title">Phase 1 — Most Common Trio (Trio A)</div>
+    ${rows([
+      ['Trio A numbers', `<div class="sp-trio-balls">${ballsHtml(audit.trioA?.numbers||[], null)}</div>`],
+      ['Global appearances', `<span class="hi">${audit.trioA?.globalAppearances}</span> times across all draws`],
+    ])}
+  </div>`;
+
+  // Phase 2
+  html += `<div class="sp-audit-phase">
+    <div class="sp-audit-phase-title">Phase 2 — Recency Calibration (Trio B)</div>
+    ${rows([
+      ['Anchor number', `<span class="hi">${audit.anchorNumber?.number}</span> — appeared ${audit.anchorNumber?.last10Appearances}× in last 10 draws`],
+      ['Trio B (used for pick)', `<div class="sp-trio-balls">${ballsHtml(audit.trioB?.numbers||[], audit.anchorNumber?.number)}</div> — ${audit.trioB?.globalAppearances} global appearances`],
+    ])}
+  </div>`;
+
+  // Phase 3
+  html += `<div class="sp-audit-phase">
+    <div class="sp-audit-phase-title">Phase 3 — Initial 6-Number Combo</div>
+    ${rows([
+      ['Initial combo', `<div class="sp-trio-balls">${comboHtml(audit.initialCombo||[])}</div>`],
+      ['Duplicate check', audit.duplicateCheckPassed ? `<span class="ok">✓ Passed</span>` : `<span class="warn">⚠ Failed</span>`],
+      ['Loop iterations', String(audit.duplicateLoopIterations||1)],
+    ])}
+  </div>`;
+
+  // Phase 4
+  const rc = audit.recencyCheck || {};
+  const last3Html = (rc.last3Draws||[]).map(draw=>
+    `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px;">${(draw||[]).map(n=>`<div class="ball-sm${(rc.overlappingNumbers||[]).includes(n)?' anchor':''}">${n}</div>`).join('')}</div>`
+  ).join('');
+
+  html += `<div class="sp-audit-phase">
+    <div class="sp-audit-phase-title">Phase 4 — Recency Bias Check</div>
+    ${rows([
+      ['Last 3 draws', `<div>${last3Html}</div>`],
+      ['Overlapping numbers', rc.overlappingNumbers?.length ? `<span class="warn">${rc.overlappingNumbers.join(', ')}</span>` : '<span class="ok">None</span>'],
+      ['Replacement triggered', rc.replacementTriggered ? '<span class="warn">Yes</span>' : '<span class="ok">No</span>'],
+    ])}
+  </div>`;
+
+  // Replacement protocol if triggered
+  if(audit.replacementProtocol?.triggered){
+    const rp = audit.replacementProtocol;
+    html += `<div class="sp-audit-phase">
+      <div class="sp-audit-phase-title">Replacement Protocol</div>
+      ${rows([
+        ['#1 Random', `<span class="warn">${rp.replacement1?.replaced}</span> → <span class="hi">${rp.replacement1?.with}</span> (randomised)`],
+        ['#2 Most common add.', `<span class="warn">${rp.replacement2?.replaced}</span> → <span class="hi">${rp.replacement2?.with}</span>`],
+        ['#3 Least common add.', `<span class="warn">${rp.replacement3?.replaced}</span> → <span class="hi">${rp.replacement3?.with}</span>`],
+      ])}
+    </div>`;
+  }
+
+  // Final
+  html += `<div class="sp-audit-phase">
+    <div class="sp-audit-phase-title">Final Result</div>
+    ${rows([
+      ['Final combo', `<div class="sp-trio-balls">${comboHtml(audit.finalCombo||[])}</div>`],
+      ['Total iterations', String(audit.totalIterations||1)],
+      ['Generated at', audit.generatedAt ? new Date(audit.generatedAt).toLocaleString('en-SG',{timeZone:'Asia/Singapore'}) + ' SGT' : '—'],
+    ])}
+  </div>`;
+
+  body.innerHTML = html;
+}
+
+// ── Hook into CSV load to re-run gate ────────────────────
+const _origBuildAll = buildAll;
+window.buildAll = function(){
+  _origBuildAll();
+  runDateGate();
+  // Re-check if today's pick is loaded
+  if(_spStoredPicks) spDisplayPicksJson({ picks: _spStoredPicks });
+};
+
+// ═══════════════════════════════════════════════════════════
+// AUTO-LOAD toto.csv FROM SAME FOLDER (works on GitHub Pages)
+// ═══════════════════════════════════════════════════════════
+(async function autoLoad(){
+  try{
+    const r=await fetch('./toto.csv');
+    if(!r.ok) return;
+    const txt=await r.text();
+    parseCSV(txt);
+    document.getElementById('csv-status').textContent='✓ Auto-loaded toto.csv from folder';
+  } catch(e){
+    // Silent fail — user will upload manually
+  }
+})();
+</script>
+</body>
+</html>
