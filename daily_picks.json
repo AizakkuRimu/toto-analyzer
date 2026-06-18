@@ -1,6 +1,123 @@
 {
   "picks": [
     {
+      "date": "2026-06-18",
+      "numbers": [
+        1,
+        4,
+        6,
+        17,
+        18,
+        47
+      ],
+      "audit": {
+        "phase0": {
+          "drawsScanned": 8,
+          "poolSize": 34,
+          "cold": [
+            1,
+            4,
+            6,
+            8,
+            17,
+            18,
+            25,
+            31,
+            34,
+            37,
+            41,
+            43,
+            45,
+            47,
+            48
+          ],
+          "supplemented": [],
+          "chosen6": [
+            1,
+            4,
+            6,
+            17,
+            18,
+            47
+          ]
+        },
+        "trioA": {
+          "numbers": [
+            1,
+            4,
+            18
+          ],
+          "globalAppearances": 5,
+          "rank": 1
+        },
+        "anchorNumber": {
+          "number": 18,
+          "last10Appearances": 2,
+          "trioARank": "highest in last 10"
+        },
+        "trioB": {
+          "numbers": [
+            4,
+            18,
+            47
+          ],
+          "globalAppearances": 4,
+          "derivedFromAnchor": 18
+        },
+        "initialCombo": [
+          1,
+          4,
+          6,
+          17,
+          18,
+          47
+        ],
+        "duplicateCheckPassed": true,
+        "duplicateLoopIterations": 1,
+        "recencyCheck": {
+          "last3Draws": [
+            [
+              2,
+              7,
+              11,
+              19,
+              20,
+              42
+            ],
+            [
+              9,
+              16,
+              27,
+              28,
+              32,
+              49
+            ],
+            [
+              14,
+              16,
+              21,
+              22,
+              35,
+              38
+            ]
+          ],
+          "overlappingNumbers": [],
+          "overlapCount": 0,
+          "replacementTriggered": false
+        },
+        "finalCombo": [
+          1,
+          4,
+          6,
+          17,
+          18,
+          47
+        ],
+        "totalIterations": 1,
+        "generatedAt": "2026-06-18T11:19:00.095Z"
+      }
+    },
+    {
       "date": "2026-06-15",
       "numbers": [
         1,
