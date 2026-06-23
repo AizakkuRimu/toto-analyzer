@@ -1,6 +1,199 @@
 {
   "picks": [
     {
+      "date": "2026-06-23",
+      "numbers": [
+        1,
+        5,
+        11,
+        31,
+        33,
+        49
+      ],
+      "audit": {
+        "step1_2": {
+          "hot": [
+            16,
+            11,
+            21,
+            2,
+            4,
+            7,
+            9,
+            14,
+            15,
+            19,
+            20,
+            22,
+            27,
+            28,
+            32,
+            35,
+            38,
+            39,
+            42,
+            49
+          ],
+          "cold": [
+            1,
+            3,
+            5,
+            6,
+            8,
+            10,
+            12,
+            13,
+            17,
+            18,
+            23,
+            24,
+            25,
+            26,
+            29,
+            30,
+            31,
+            33,
+            34,
+            36,
+            37,
+            40,
+            41,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48
+          ],
+          "last4": [
+            {
+              "drawNo": 4193,
+              "date": "2026-06-22"
+            },
+            {
+              "drawNo": 4192,
+              "date": "2026-06-18"
+            },
+            {
+              "drawNo": 4191,
+              "date": "2026-06-15"
+            },
+            {
+              "drawNo": 4190,
+              "date": "2026-06-11"
+            }
+          ]
+        },
+        "step3": {
+          "set1": {
+            "pair": [
+              49,
+              5
+            ],
+            "count": 29,
+            "label": "All-time since 2014"
+          },
+          "set2": {
+            "pair": [
+              11,
+              33
+            ],
+            "count": 1,
+            "label": "Last 10 draws"
+          },
+          "set3": {
+            "pair": [
+              11,
+              1
+            ],
+            "count": 0,
+            "label": "Last 3 draws"
+          }
+        },
+        "step4": {
+          "slots": [
+            {
+              "set": 1,
+              "role": "hot",
+              "value": 49
+            },
+            {
+              "set": 1,
+              "role": "cold",
+              "value": 5
+            },
+            {
+              "set": 2,
+              "role": "hot",
+              "value": 11
+            },
+            {
+              "set": 2,
+              "role": "cold",
+              "value": 33
+            },
+            {
+              "set": 3,
+              "role": "hot",
+              "value": 31,
+              "replaced": true,
+              "replacedFrom": 11,
+              "fallbackHot": false
+            },
+            {
+              "set": 3,
+              "role": "cold",
+              "value": 1
+            }
+          ],
+          "dedupLog": [
+            {
+              "duplicateValue": 11,
+              "replacedSlot": 4,
+              "replacement": 31,
+              "usedFallbackHot": false,
+              "pairScore": 12
+            }
+          ],
+          "comboAfterDedup": [
+            49,
+            5,
+            11,
+            33,
+            31,
+            1
+          ]
+        },
+        "step5": {
+          "finalCombo": [
+            1,
+            5,
+            11,
+            31,
+            33,
+            49
+          ],
+          "wasDuplicate": false,
+          "smartIterations": 0,
+          "fallbackIterations": 0,
+          "log": []
+        },
+        "hotColdSplit": {
+          "hot": 2,
+          "cold": 4
+        },
+        "finalCombo": [
+          1,
+          5,
+          11,
+          31,
+          33,
+          49
+        ],
+        "generatedAt": "2026-06-23T00:19:43.926Z"
+      }
+    },
+    {
       "date": "2026-06-18",
       "numbers": [
         1,
