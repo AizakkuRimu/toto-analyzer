@@ -1,0 +1,309 @@
+{
+  "picks": [
+    {
+      "date": "2026-06-25",
+      "numbers": [
+        5,
+        11,
+        16,
+        25,
+        33,
+        49
+      ],
+      "audit": {
+        "step1_2": {
+          "hot": [
+            4,
+            11,
+            16,
+            21,
+            28,
+            39,
+            2,
+            7,
+            9,
+            15,
+            19,
+            20,
+            23,
+            27,
+            31,
+            32,
+            42,
+            49
+          ],
+          "cold": [
+            1,
+            3,
+            5,
+            6,
+            8,
+            10,
+            12,
+            13,
+            14,
+            17,
+            18,
+            22,
+            24,
+            25,
+            26,
+            29,
+            30,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            40,
+            41,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48
+          ],
+          "last4": [
+            {
+              "drawNo": 4194,
+              "date": "2026-06-25"
+            },
+            {
+              "drawNo": 4193,
+              "date": "2026-06-22"
+            },
+            {
+              "drawNo": 4192,
+              "date": "2026-06-18"
+            },
+            {
+              "drawNo": 4191,
+              "date": "2026-06-15"
+            }
+          ]
+        },
+        "step3": {
+          "set1": {
+            "pair": [
+              49,
+              5
+            ],
+            "count": 29,
+            "label": "All-time since 2014"
+          },
+          "set2": {
+            "pair": [
+              11,
+              25
+            ],
+            "count": 1,
+            "label": "Last 14 draws"
+          },
+          "set3": {
+            "pair": [
+              16,
+              14
+            ],
+            "count": 1,
+            "label": "Last 7 draws"
+          }
+        },
+        "step4": {
+          "slots": [
+            {
+              "set": 1,
+              "role": "hot",
+              "value": 49
+            },
+            {
+              "set": 1,
+              "role": "cold",
+              "value": 5
+            },
+            {
+              "set": 2,
+              "role": "hot",
+              "value": 11
+            },
+            {
+              "set": 2,
+              "role": "cold",
+              "value": 25
+            },
+            {
+              "set": 3,
+              "role": "hot",
+              "value": 16
+            },
+            {
+              "set": 3,
+              "role": "cold",
+              "value": 14
+            }
+          ],
+          "dedupLog": [],
+          "comboAfterDedup": [
+            49,
+            5,
+            11,
+            25,
+            16,
+            14
+          ]
+        },
+        "step4_5": {
+          "rules": [
+            {
+              "drawNo": 4194,
+              "date": "2026-06-25",
+              "nums": [
+                4,
+                21,
+                23,
+                28,
+                31,
+                39
+              ],
+              "missing": [
+                "10s",
+                "40s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            },
+            {
+              "drawNo": 4193,
+              "date": "2026-06-22",
+              "nums": [
+                4,
+                11,
+                15,
+                16,
+                21,
+                39
+              ],
+              "missing": [
+                "40s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            },
+            {
+              "drawNo": 4192,
+              "date": "2026-06-18",
+              "nums": [
+                2,
+                7,
+                11,
+                19,
+                20,
+                42
+              ],
+              "missing": [
+                "30s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            }
+          ],
+          "replacements": [
+            {
+              "rule": {
+                "drawNo": 4192,
+                "date": "2026-06-18",
+                "missing": [
+                  "30s"
+                ]
+              },
+              "bandFilled": "30s",
+              "replaced": 14,
+              "newNum": 33,
+              "ourMissingBefore": [
+                "30s"
+              ]
+            }
+          ],
+          "usedFallback": false,
+          "comboAfterBalance": [
+            49,
+            5,
+            11,
+            25,
+            16,
+            33
+          ],
+          "log": [
+            {
+              "type": "rules",
+              "rules": [
+                {
+                  "drawNo": 4194,
+                  "date": "2026-06-25",
+                  "missing": [
+                    "10s",
+                    "40s"
+                  ]
+                },
+                {
+                  "drawNo": 4193,
+                  "date": "2026-06-22",
+                  "missing": [
+                    "40s"
+                  ]
+                },
+                {
+                  "drawNo": 4192,
+                  "date": "2026-06-18",
+                  "missing": [
+                    "30s"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "ok",
+              "msg": "Combo OK vs Draw 4194 (missing:[10s,40s]) — our missing:[30s]"
+            },
+            {
+              "type": "ok",
+              "msg": "Combo OK vs Draw 4193 (missing:[40s]) — our missing:[30s]"
+            },
+            {
+              "type": "fix",
+              "msg": "Rule Draw 4192 (missing:[30s]): replaced 14 (10s) → 33 (30s)"
+            }
+          ]
+        },
+        "step5": {
+          "finalCombo": [
+            5,
+            11,
+            16,
+            25,
+            33,
+            49
+          ],
+          "wasDuplicate": false,
+          "smartIterations": 0,
+          "fallbackIterations": 0,
+          "log": []
+        },
+        "hotColdSplit": {
+          "hot": 3,
+          "cold": 3
+        },
+        "finalCombo": [
+          5,
+          11,
+          16,
+          25,
+          33,
+          49
+        ],
+        "generatedAt": "2026-06-25T12:46:12.228Z"
+      }
+    }
+  ]
+}
