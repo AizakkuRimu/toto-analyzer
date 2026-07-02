@@ -3148,26 +3148,27 @@ function spResolveHistoryDuplicate(finalNums, hotList, coldList){
 // Step 6 — Nudge numbers toward the middle of the range.
 // One "anchor" number is locked: whichever appears most in the last 3 draws
 // (ties broken by highest frequency in last 14, then lowest value).
-// The other 5 are nudged ±1–3:
+// Of the other 5, any that were held steady by the Step 5.9 same-band pair
+// check are also skipped. Everyone else is nudged ±1–3:
 //   singles (1–9) and 10s (10–19) → increase
 //   20s (20–29), 30s (30–39), 40s (40–45) → decrease
 // Nudge is clamped to stay within the number's own band — never crosses a band boundary.
-// After nudging, if any two numbers are equal, one is bumped ±1 within its band until resolved.
+// After nudging, if any two numbers are equal, one is bumped ±1 within its band until resolved
+// (anchor and held numbers are protected from this bump wherever possible).
 const BAND_RANGES = { singles:[1,9], '10s':[10,19], '20s':[20,29], '30s':[30,39], '40s':[40,45] };
 function bandBounds(n){ return BAND_RANGES[getBand(n)] || [1,49]; }
 
-function spNudgeNumbers(combo, drawsData){
+// Finds the anchor number: highest frequency in last 3 draws,
+// tiebreak by frequency in last 14, then lowest value.
+function spDetermineAnchor(combo, drawsData){
   const last3 = drawsData.slice(0, 3);
   const last14 = drawsData.slice(0, 14);
 
-  // Frequency in last 3
   const freq3 = {};
   for(const d of last3) for(const n of d.nums) freq3[n] = (freq3[n]||0) + 1;
-  // Frequency in last 14 (tiebreak)
   const freq14 = {};
   for(const d of last14) for(const n of d.nums) freq14[n] = (freq14[n]||0) + 1;
 
-  // Find anchor: number in combo with highest freq3, tiebreak freq14, tiebreak lowest value
   const anchorNum = combo.slice().sort((a, b) => {
     const f3 = (freq3[b]||0) - (freq3[a]||0);
     if(f3 !== 0) return f3;
@@ -3176,10 +3177,51 @@ function spNudgeNumbers(combo, drawsData){
     return a - b;
   })[0];
 
+  return { anchorNum, freq3, freq14 };
+}
+
+// Step 5.9 — Same-Band Pair Check.
+// Groups the 5 non-anchor numbers by decade band. If a band holds 2+ numbers
+// (e.g. 10 and 15 are both "10s"), only ONE of them — picked at random — is
+// eligible to be nudged in Step 6; the rest hold steady at their original value.
+// Bands with just a single (non-anchor) number are unaffected — that number
+// nudges normally.
+function spCheckBandPairs(combo, anchorNum){
+  const nonAnchor = combo.filter(n => n !== anchorNum);
+  const groups = {};
+  nonAnchor.forEach(n => {
+    const b = getBand(n);
+    (groups[b] = groups[b] || []).push(n);
+  });
+
+  const heldNumbers = new Set();
+  const pairLog = [];
+
+  ALL_BANDS.forEach(band => {
+    const members = (groups[band] || []).slice().sort((a,b)=>a-b);
+    if(members.length >= 2){
+      const shuffled = members.slice().sort(() => Math.random() - 0.5);
+      const nudgeTarget = shuffled[0];
+      const held = shuffled.slice(1);
+      held.forEach(h => heldNumbers.add(h));
+      pairLog.push({ band, members, nudgeTarget, held });
+    }
+  });
+
+  return { heldNumbers, pairLog, hadPairs: pairLog.length > 0 };
+}
+
+function spNudgeNumbers(combo, anchorNum, freq3, heldNumbers){
+  heldNumbers = heldNumbers || new Set();
+
   const nudgeLog = [];
   let result = combo.map(n => {
     if(n === anchorNum){
       nudgeLog.push({ original: n, nudged: n, delta: 0, anchor: true, freq3: freq3[n]||0 });
+      return n;
+    }
+    if(heldNumbers.has(n)){
+      nudgeLog.push({ original: n, nudged: n, delta: 0, anchor: false, held: true, band: getBand(n) });
       return n;
     }
     const band = getBand(n);
@@ -3188,11 +3230,12 @@ function spNudgeNumbers(combo, drawsData){
     const rawDelta = (Math.floor(Math.random() * 3) + 1) * direction; // ±1, 2, or 3
     // Clamp so we never cross a band boundary
     const nudged = Math.min(bhi, Math.max(blo, n + rawDelta));
-    nudgeLog.push({ original: n, nudged, delta: nudged - n, anchor: false, band, bandRange: [blo, bhi] });
+    nudgeLog.push({ original: n, nudged, delta: nudged - n, anchor: false, held: false, band, bandRange: [blo, bhi] });
     return nudged;
   });
 
-  // Post-nudge dedup: if any duplicates, bump one ±1 within its band until resolved
+  // Post-nudge dedup: if any duplicates, bump one ±1 within its band until resolved.
+  // Anchor and held numbers are protected from being the one that moves, wherever possible.
   const dedupLog = [];
   let attempts = 0;
   while(attempts < 200){
@@ -3203,9 +3246,8 @@ function spNudgeNumbers(combo, drawsData){
     if(!dupEntry) break;
 
     const [, idxs] = dupEntry;
-    // Don't touch anchor index
-    const anchorIdx = result.indexOf(anchorNum);
-    const moveable = idxs.filter(i => i !== anchorIdx);
+    const protectedIdxs = idxs.filter(i => result[i] === anchorNum || heldNumbers.has(result[i]));
+    const moveable = idxs.filter(i => !protectedIdxs.includes(i));
     const pickIdx = moveable.length > 0
       ? moveable[Math.floor(Math.random() * moveable.length)]
       : idxs[Math.floor(Math.random() * idxs.length)];
@@ -3317,13 +3359,28 @@ async function spGenerate(){
   }
   spLog(`Combo after history check: [${finalCombo.join(', ')}]`,'ok');
 
+  // Step 5.9: same-band pair check — run before nudging so paired numbers
+  // (two+ numbers landing in the same decade band) only let ONE of them nudge.
+  spLog('Step 5.9: Checking for numbers sharing the same decade band before nudging…');
+  const anchorInfo = spDetermineAnchor(finalCombo, draws);
+  const pairRes = spCheckBandPairs(finalCombo, anchorInfo.anchorNum);
+  if(pairRes.hadPairs){
+    pairRes.pairLog.forEach(p => {
+      spLog(`  ${p.band}: [${p.members.join(', ')}] → will nudge ${p.nudgeTarget}, holding [${p.held.join(', ')}] steady`,'warn');
+    });
+  } else {
+    spLog('  No same-band pairs found — every number nudges normally.','ok');
+  }
+
   // Step 6: nudge numbers toward the middle (anchor = most frequent in last 3 draws)
   spLog('Step 6: Nudging numbers toward the middle — locking most frequent from last 3 draws…');
-  const nudgeRes = spNudgeNumbers(finalCombo, draws);
+  const nudgeRes = spNudgeNumbers(finalCombo, anchorInfo.anchorNum, anchorInfo.freq3, pairRes.heldNumbers);
   const postNudgeCombo = [...nudgeRes.combo].sort((a,b)=>a-b);
   nudgeRes.nudgeLog.forEach(l => {
     if(l.anchor){
       spLog(`  🔒 Anchor (most frequent in last 3, freq=${l.freq3}): ${l.original} — locked, no change`,'ok');
+    } else if(l.held){
+      spLog(`  ⏸ ${l.original} (${l.band}) — held steady (paired with another ${l.band} number)`,'ok');
     } else {
       const dir = l.delta > 0 ? `+${l.delta}` : `${l.delta}`;
       spLog(`  ${l.original} (${l.band}) → ${l.nudged} (${dir})`);
@@ -3369,6 +3426,11 @@ async function spGenerate(){
       finalCombo, wasDuplicate: histRes.wasDuplicate,
       smartIterations: histRes.smartIterations, fallbackIterations: histRes.fallbackIterations,
       log: histRes.log
+    },
+    step5_9: {
+      anchorNum: anchorInfo.anchorNum,
+      pairLog: pairRes.pairLog,
+      hadPairs: pairRes.hadPairs,
     },
     step6: {
       anchorNum: nudgeRes.anchorNum,
@@ -3613,11 +3675,30 @@ function renderAuditPanel(audit){
     ])}
   </div>`;
 
+  // Step 5.9 — Same-Band Pair Check
+  const s59 = audit.step5_9 || {};
+  const pairCheckRows = (s59.pairLog||[]).map((p) => [
+    bandLabel(p.band),
+    `Members <span class="hi">[${p.members.join(', ')}]</span> → nudging <span class="hi">${p.nudgeTarget}</span>, holding <span class="warn">${p.held.join(', ')}</span> steady`
+  ]);
+  html += `<div class="sp-audit-phase">
+    <div class="sp-audit-phase-title">Step 5.9 — Same-Band Pair Check</div>
+    ${rows([
+      ['How it works', 'Before nudging, the 5 non-anchor numbers are grouped by decade band. If 2 or more share a band (e.g. 10 and 15, both 10s), only one — picked at random — gets nudged next; the rest hold steady.'],
+      ['Anchor (excluded from check)', s59.anchorNum != null ? `<span class="hi">${s59.anchorNum}</span>` : '—'],
+      ['Same-band pairs found?', s59.hadPairs ? `<span class="warn">${(s59.pairLog||[]).length} band${(s59.pairLog||[]).length>1?'s':''}</span>` : '<span class="ok">None — every number nudges normally</span>'],
+      ...pairCheckRows,
+    ])}
+  </div>`;
+
   // Step 6 — Nudge
   const s6 = audit.step6 || {};
   const nudgeRows = (s6.nudgeLog||[]).map((l, i) => {
     if(l.anchor){
       return [`🔒 Anchor`, `<span class="hi">${l.original}</span> — most frequent in last 3 draws (${l.freq3}×), locked`];
+    }
+    if(l.held){
+      return [`⏸ Held`, `<span class="hi">${l.original}</span> (${l.band}) — held steady, paired with another ${l.band} number`];
     }
     const dir = l.delta > 0 ? `<span class="ok">+${l.delta}</span>` : `<span class="warn">${l.delta}</span>`;
     return [`${l.original} → ${l.nudged}`, `${l.band} → nudged ${dir} (${l.original} → ${l.nudged})`];
