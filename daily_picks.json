@@ -1,6 +1,705 @@
 {
   "picks": [
     {
+      "date": "2026-07-09",
+      "numbers": [
+        1,
+        7,
+        14,
+        18,
+        41,
+        43
+      ],
+      "audit": {
+        "step1_2": {
+          "hot": [
+            11,
+            23,
+            31,
+            34,
+            37,
+            46,
+            5,
+            6,
+            7,
+            8,
+            22,
+            25,
+            27,
+            38,
+            39,
+            42,
+            47,
+            49
+          ],
+          "cold": [
+            1,
+            2,
+            3,
+            4,
+            9,
+            10,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            24,
+            26,
+            28,
+            29,
+            30,
+            32,
+            33,
+            35,
+            36,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "last4": [
+            {
+              "drawNo": 4198,
+              "date": "2026-07-09"
+            },
+            {
+              "drawNo": 4197,
+              "date": "2026-07-06"
+            },
+            {
+              "drawNo": 4196,
+              "date": "2026-07-02"
+            },
+            {
+              "drawNo": 4195,
+              "date": "2026-06-29"
+            }
+          ]
+        },
+        "step3": {
+          "set1": {
+            "pair": [
+              25,
+              28
+            ],
+            "count": 28,
+            "label": "All-time since 2014"
+          },
+          "set2": {
+            "pair": [
+              39,
+              21
+            ],
+            "count": 2,
+            "label": "Last 14 draws"
+          },
+          "set3": {
+            "pair": [
+              39,
+              4
+            ],
+            "count": 2,
+            "label": "Last 7 draws"
+          }
+        },
+        "step4": {
+          "slots": [
+            {
+              "set": 1,
+              "role": "hot",
+              "value": 25
+            },
+            {
+              "set": 1,
+              "role": "cold",
+              "value": 28
+            },
+            {
+              "set": 2,
+              "role": "hot",
+              "value": 39
+            },
+            {
+              "set": 2,
+              "role": "cold",
+              "value": 21
+            },
+            {
+              "set": 3,
+              "role": "hot",
+              "value": 1,
+              "replaced": true,
+              "replacedFrom": 39,
+              "fallbackHot": false
+            },
+            {
+              "set": 3,
+              "role": "cold",
+              "value": 4
+            }
+          ],
+          "dedupLog": [
+            {
+              "duplicateValue": 39,
+              "replacedSlot": 4,
+              "replacement": 1,
+              "usedFallbackHot": false,
+              "usedCrossBand": true,
+              "dupBand": "30s",
+              "replacementBand": "singles",
+              "pairScore": 11
+            }
+          ],
+          "comboAfterDedup": [
+            25,
+            28,
+            39,
+            21,
+            1,
+            4
+          ]
+        },
+        "step4_5": {
+          "rules": [
+            {
+              "drawNo": 4198,
+              "date": "2026-07-09",
+              "nums": [
+                23,
+                27,
+                31,
+                38,
+                42,
+                47
+              ],
+              "missing": [
+                "singles",
+                "10s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            },
+            {
+              "drawNo": 4197,
+              "date": "2026-07-06",
+              "nums": [
+                8,
+                25,
+                34,
+                37,
+                39,
+                46
+              ],
+              "missing": [
+                "10s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            },
+            {
+              "drawNo": 4196,
+              "date": "2026-07-02",
+              "nums": [
+                5,
+                7,
+                11,
+                37,
+                46,
+                49
+              ],
+              "missing": [
+                "20s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            }
+          ],
+          "replacements": [
+            {
+              "rule": {
+                "drawNo": 4197,
+                "date": "2026-07-06",
+                "missing": [
+                  "10s"
+                ]
+              },
+              "bandFilled": "10s",
+              "replaced": 21,
+              "newNum": 13,
+              "ourMissingBefore": [
+                "10s",
+                "40s"
+              ]
+            }
+          ],
+          "usedFallback": false,
+          "comboAfterBalance": [
+            25,
+            28,
+            39,
+            13,
+            1,
+            4
+          ],
+          "log": [
+            {
+              "type": "rules",
+              "rules": [
+                {
+                  "drawNo": 4198,
+                  "date": "2026-07-09",
+                  "missing": [
+                    "singles",
+                    "10s"
+                  ]
+                },
+                {
+                  "drawNo": 4197,
+                  "date": "2026-07-06",
+                  "missing": [
+                    "10s"
+                  ]
+                },
+                {
+                  "drawNo": 4196,
+                  "date": "2026-07-02",
+                  "missing": [
+                    "20s"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "ok",
+              "msg": "Combo OK vs Draw 4198 (missing:[singles,10s]) — our missing:[10s,40s]"
+            },
+            {
+              "type": "fix",
+              "msg": "Rule Draw 4197 (missing:[10s]): replaced 21 (20s) → 13 (10s)"
+            },
+            {
+              "type": "ok",
+              "msg": "Combo OK vs Draw 4196 (missing:[20s]) — our missing:[40s]"
+            }
+          ]
+        },
+        "step5": {
+          "finalCombo": [
+            1,
+            4,
+            13,
+            25,
+            28,
+            39
+          ],
+          "wasDuplicate": false,
+          "smartIterations": 0,
+          "fallbackIterations": 0,
+          "log": []
+        },
+        "step5_9": {
+          "anchorNum": 39,
+          "pairLog": [
+            {
+              "band": "singles",
+              "members": [
+                1,
+                4
+              ],
+              "nudgeTarget": 4,
+              "held": [
+                1
+              ]
+            },
+            {
+              "band": "20s",
+              "members": [
+                25,
+                28
+              ],
+              "nudgeTarget": 28,
+              "held": [
+                25
+              ]
+            }
+          ],
+          "hadPairs": true,
+          "streakSkipped": null
+        },
+        "step6": {
+          "anchorNum": 39,
+          "nudgeLog": [
+            {
+              "original": 1,
+              "nudged": 1,
+              "delta": 0,
+              "anchor": false,
+              "held": true,
+              "band": "singles"
+            },
+            {
+              "original": 4,
+              "nudged": 7,
+              "delta": 3,
+              "anchor": false,
+              "held": false,
+              "band": "singles",
+              "bandRange": [
+                1,
+                9
+              ]
+            },
+            {
+              "original": 13,
+              "nudged": 14,
+              "delta": 1,
+              "anchor": false,
+              "held": false,
+              "band": "10s",
+              "bandRange": [
+                10,
+                19
+              ]
+            },
+            {
+              "original": 25,
+              "nudged": 25,
+              "delta": 0,
+              "anchor": false,
+              "held": true,
+              "band": "20s"
+            },
+            {
+              "original": 28,
+              "nudged": 25,
+              "delta": -3,
+              "anchor": false,
+              "held": false,
+              "band": "20s",
+              "bandRange": [
+                20,
+                29
+              ]
+            },
+            {
+              "original": 39,
+              "nudged": 39,
+              "delta": 0,
+              "anchor": true,
+              "freq3": 1
+            }
+          ],
+          "dedupLog": [
+            {
+              "duplicateValue": 25,
+              "index": 3,
+              "newValue": 24,
+              "direction": -1
+            }
+          ],
+          "comboAfterNudge": [
+            1,
+            7,
+            14,
+            24,
+            25,
+            39
+          ],
+          "streakSkipped": null
+        },
+        "step6_5": {
+          "replacements": [],
+          "rules": [
+            {
+              "drawNo": 4198,
+              "date": "2026-07-09",
+              "nums": [
+                23,
+                27,
+                31,
+                38,
+                42,
+                47
+              ],
+              "missing": [
+                "singles",
+                "10s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            },
+            {
+              "drawNo": 4197,
+              "date": "2026-07-06",
+              "nums": [
+                8,
+                25,
+                34,
+                37,
+                39,
+                46
+              ],
+              "missing": [
+                "10s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            },
+            {
+              "drawNo": 4196,
+              "date": "2026-07-02",
+              "nums": [
+                5,
+                7,
+                11,
+                37,
+                46,
+                49
+              ],
+              "missing": [
+                "20s"
+              ],
+              "isFallback": false,
+              "isFallbackLeast": false
+            }
+          ],
+          "usedFallback": false,
+          "comboAfterRebalance": [
+            1,
+            7,
+            14,
+            24,
+            25,
+            39
+          ],
+          "wasClean": true
+        },
+        "step7": {
+          "skipped": false,
+          "startPres": [
+            "singles",
+            "10s",
+            "20s",
+            "30s"
+          ],
+          "targetBands": [
+            "singles",
+            "10s",
+            "40s"
+          ],
+          "mode": "unseen",
+          "unseenCount": 22,
+          "freqMap": {
+            "20s,30s,40s": 1,
+            "singles,20s,30s,40s": 1,
+            "singles,10s,30s,40s": 1,
+            "singles,10s,20s,30s": 2,
+            "singles,20s,30s": 1,
+            "singles,10s,20s,40s": 1,
+            "singles,10s,20s,30s,40s": 1,
+            "10s,20s,30s": 1,
+            "10s,20s,30s,40s": 1
+          },
+          "drawPresences": [
+            {
+              "drawNo": 4198,
+              "date": "2026-07-09",
+              "pres": [
+                "20s",
+                "30s",
+                "40s"
+              ],
+              "key": "20s,30s,40s"
+            },
+            {
+              "drawNo": 4197,
+              "date": "2026-07-06",
+              "pres": [
+                "singles",
+                "20s",
+                "30s",
+                "40s"
+              ],
+              "key": "singles,20s,30s,40s"
+            },
+            {
+              "drawNo": 4196,
+              "date": "2026-07-02",
+              "pres": [
+                "singles",
+                "10s",
+                "30s",
+                "40s"
+              ],
+              "key": "singles,10s,30s,40s"
+            },
+            {
+              "drawNo": 4195,
+              "date": "2026-06-29",
+              "pres": [
+                "singles",
+                "10s",
+                "20s",
+                "30s"
+              ],
+              "key": "singles,10s,20s,30s"
+            },
+            {
+              "drawNo": 4194,
+              "date": "2026-06-25",
+              "pres": [
+                "singles",
+                "20s",
+                "30s"
+              ],
+              "key": "singles,20s,30s"
+            },
+            {
+              "drawNo": 4193,
+              "date": "2026-06-22",
+              "pres": [
+                "singles",
+                "10s",
+                "20s",
+                "30s"
+              ],
+              "key": "singles,10s,20s,30s"
+            },
+            {
+              "drawNo": 4192,
+              "date": "2026-06-18",
+              "pres": [
+                "singles",
+                "10s",
+                "20s",
+                "40s"
+              ],
+              "key": "singles,10s,20s,40s"
+            },
+            {
+              "drawNo": 4191,
+              "date": "2026-06-15",
+              "pres": [
+                "singles",
+                "10s",
+                "20s",
+                "30s",
+                "40s"
+              ],
+              "key": "singles,10s,20s,30s,40s"
+            },
+            {
+              "drawNo": 4190,
+              "date": "2026-06-11",
+              "pres": [
+                "10s",
+                "20s",
+                "30s"
+              ],
+              "key": "10s,20s,30s"
+            },
+            {
+              "drawNo": 4189,
+              "date": "2026-06-08",
+              "pres": [
+                "10s",
+                "20s",
+                "30s",
+                "40s"
+              ],
+              "key": "10s,20s,30s,40s"
+            }
+          ],
+          "swaps": [
+            {
+              "removed": 24,
+              "removedBand": "20s",
+              "added": 41,
+              "addedBand": "40s",
+              "usedFallback": false,
+              "reason": "not in target type"
+            },
+            {
+              "removed": 25,
+              "removedBand": "20s",
+              "added": 18,
+              "addedBand": "10s",
+              "usedFallback": false,
+              "reason": "not in target type"
+            },
+            {
+              "removed": 39,
+              "removedBand": "30s",
+              "added": 43,
+              "addedBand": "40s",
+              "usedFallback": false,
+              "reason": "not in target type"
+            }
+          ],
+          "matched": true,
+          "comboAfterBandCombo": [
+            1,
+            7,
+            14,
+            18,
+            41,
+            43
+          ],
+          "log": [
+            {
+              "type": "info",
+              "msg": "22 of 31 possible band-combo types haven't appeared at all in the last 10 draws."
+            },
+            {
+              "type": "info",
+              "msg": "Target band-combo type: [singles + 10s + 40s] (unseen in last 10)"
+            },
+            {
+              "type": "info",
+              "msg": "Our combo's band-combo type before this step: [singles + 10s + 20s + 30s]"
+            },
+            {
+              "type": "fix",
+              "msg": "24 (20s) isn't in the target type → replaced with 41 (40s)"
+            },
+            {
+              "type": "fix",
+              "msg": "25 (20s) isn't in the target type → replaced with 18 (10s)"
+            },
+            {
+              "type": "fix",
+              "msg": "39 (30s) isn't in the target type → replaced with 43 (40s)"
+            },
+            {
+              "type": "ok",
+              "msg": "Reached target type after 3 swap(s)."
+            }
+          ]
+        },
+        "hotColdSplit": {
+          "hot": 1,
+          "cold": 5
+        },
+        "finalCombo": [
+          1,
+          7,
+          14,
+          18,
+          41,
+          43
+        ],
+        "generatedAt": "2026-07-09T14:00:07.737Z"
+      }
+    },
+    {
       "date": "2026-07-06",
       "numbers": [
         9,
