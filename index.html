@@ -1338,7 +1338,7 @@ body::before{
     </div>
 
     <div class="sg-intro">
-      Each number lives or dies by <b>streaks</b>. Land in the draw 3 times in a row → it's retired on a hot streak. Miss 3 draws in a row → it's cut loose. Any change in outcome (a hit after misses, or a miss after hits) resets the opposite counter back to full. Eliminated numbers sit on the bench for <b>3 draws</b> before they're eligible to be picked again.
+      Each number lives or dies by <b>streaks</b>. Land in the draw 3 times in a row → it's retired on a hot streak. Miss 3 draws in a row → it's cut loose. Any change in outcome (a hit after misses, or a miss after hits) resets the opposite counter back to full. Eliminated numbers sit on the bench for <b>3 draws</b> before they're eligible to be picked again. Every number starts completely fresh the moment it's added to the squad — 0/0 streak, full hearts both ways — regardless of how it performed in draws before you picked it. Only draws you resolve <i>after</i> adding a number count toward its lives.
     </div>
 
     <div class="sg-panel">
@@ -1355,6 +1355,7 @@ body::before{
       <div style="margin-top:10px;font-size:10.5px;color:var(--muted);">Without this, the tracker still works fine — it just saves to this browser only (localStorage), so it won't follow you to another device.</div>
     </div>
 
+    <div id="sg-started-label" style="font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;"></div>
     <div class="sg-squad-grid" id="sg-squad-grid"></div>
 
     <div id="sg-cooldown-section" style="display:none;">
@@ -4186,14 +4187,20 @@ function sgDefaultState(){
     squad: [null,null,null,null,null,null], // {num, streakType:'hit'|'miss'|null, streakCount:0}
     cooldown: {},   // { num: drawsLeft }
     log: [],        // newest first
-    drawCount: 0
+    drawCount: 0,
+    squadStartedAt: null // date the very first number was ever added — nothing before this counts
   };
+}
+function sgNormalizeState(s){
+  if(s && s.squadStartedAt === undefined) s.squadStartedAt = null;
+  return s;
 }
 function sgLoad(){
   try{
     const raw = localStorage.getItem(SG_STORAGE_KEY);
     sgState = raw ? JSON.parse(raw) : sgDefaultState();
     if(!sgState || !Array.isArray(sgState.squad) || sgState.squad.length!==6) sgState = sgDefaultState();
+    sgNormalizeState(sgState);
   }catch(_){ sgState = sgDefaultState(); }
 }
 function sgSave(){ localStorage.setItem(SG_STORAGE_KEY, JSON.stringify(sgState)); }
@@ -4216,16 +4223,22 @@ function sgHeartsHTML(type, livesRemaining){
 }
 
 function sgNumFreqStat(num){
-  if(!draws.length) return 'Load CSV to see history stats';
+  if(!draws.length) return 'Load CSV for historical context';
   let count=0, lastGap=null;
   for(let i=0;i<draws.length;i++){
     if(draws[i].nums.includes(num)){ if(lastGap===null) lastGap=i; count++; }
   }
-  if(count===0) return 'Never drawn since 2014';
-  return `Seen ${count}× · last ${lastGap===0 ? 'draw' : lastGap+' draws ago'}`;
+  if(count===0) return 'Never drawn since 2014 · info only';
+  return `Seen ${count}× · last ${lastGap===0 ? 'draw' : lastGap+' draws ago'} · info only`;
 }
 
 function sgRenderSquad(){
+  const startedLabel = document.getElementById('sg-started-label');
+  if(startedLabel){
+    startedLabel.textContent = sgState.squadStartedAt
+      ? `🟢 Tracking since ${sgState.squadStartedAt} — nothing before this date counts`
+      : '';
+  }
   const grid = document.getElementById('sg-squad-grid');
   grid.innerHTML = '';
   sgState.squad.forEach((entry, idx)=>{
@@ -4306,6 +4319,9 @@ function sgAddNumber(idx){
   if(isNaN(v) || v<1 || v>49){ errEl.textContent='Enter 1–49'; return; }
   if(sgNumsInPlay(idx).has(v)){ errEl.textContent='Already in squad'; return; }
   if(sgIsOnCooldown(v)){ errEl.textContent=`Benched (${sgState.cooldown[v]} left)`; return; }
+  if(!sgState.squadStartedAt){
+    sgState.squadStartedAt = new Date().toISOString().slice(0,10);
+  }
   sgState.squad[idx] = { num:v, streakType:null, streakCount:0 };
   sgSave();
   sgRenderAll();
@@ -4443,7 +4459,7 @@ async function sgLoadFromGithub(){
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     if(!json || !Array.isArray(json.squad)) throw new Error('File exists but is not a valid squid game state.');
-    sgState = json;
+    sgState = sgNormalizeState(json);
     sgSave();
     sgRenderAll();
     msg.className='custom-ok'; msg.textContent='Loaded from GitHub.';
@@ -4484,7 +4500,7 @@ async function sgAutoLoadFromGithub(){
     if(!res.ok) return; // 404 or repo not reachable — silently keep local state
     const json = await res.json();
     if(json && Array.isArray(json.squad)){
-      sgState = json;
+      sgState = sgNormalizeState(json);
       sgSave();
       sgRenderAll();
       const msg = document.getElementById('sg-sync-msg');
