@@ -888,6 +888,110 @@ body::before{
 .sp-log-wrap .log-ok{color:var(--green);}
 .sp-log-wrap .log-warn{color:var(--gold);}
 .sp-log-wrap .log-err{color:var(--red);}
+
+/* ═══════════ SQUID GAME TRACKER ═══════════ */
+:root{
+  --sg-pink: #ff2f6e;
+  --sg-pink-soft: rgba(255,47,110,.12);
+}
+[data-theme="dark"]{
+  --sg-pink: #ff5585;
+}
+.sg-intro{
+  font-size:12px;line-height:1.7;color:var(--muted);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:18px;
+}
+.sg-intro b{color:var(--text);}
+.sg-squad-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:14px;margin-bottom:18px;
+}
+.sg-card{
+  position:relative;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:18px 14px 16px;text-align:center;
+  box-shadow:var(--shadow);
+}
+.sg-card.sg-out-soon{border-color:var(--sg-pink);}
+.sg-ball{
+  width:52px;height:52px;border-radius:50%;margin:0 auto 8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-head);font-size:24px;
+  background:var(--gold-soft);border:2px solid var(--gold);color:var(--gold);
+}
+.sg-freq-line{font-size:9.5px;color:var(--muted);margin-bottom:10px;font-weight:600;line-height:1.4;}
+.sg-hearts-row{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:5px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.sg-hearts{display:flex;gap:2px;}
+.sg-heart{font-size:15px;line-height:1;}
+.sg-heart.hit.filled{color:var(--red);}
+.sg-heart.hit.empty{color:var(--border);}
+.sg-heart.miss.filled{color:var(--blue);}
+.sg-heart.miss.empty{color:var(--border);}
+.sg-streak-badge{
+  display:inline-block;margin-top:8px;padding:3px 10px;border-radius:100px;
+  font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+}
+.sg-streak-badge.hit{background:rgba(192,57,43,.12);color:var(--red);}
+.sg-streak-badge.miss{background:rgba(37,99,235,.12);color:var(--blue);}
+.sg-streak-badge.none{background:var(--surface2);color:var(--muted);}
+.sg-card.sg-empty{
+  border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:190px;
+}
+.sg-empty-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+.sg-empty-input{
+  width:70px;text-align:center;padding:8px 0;border-radius:8px;
+  border:1.5px solid var(--border);background:var(--surface2);color:var(--text);
+  font-family:var(--ff-head);font-size:18px;
+}
+.sg-empty-input:focus{border-color:var(--sg-pink);outline:none;}
+.sg-add-btn{
+  font-size:11px;font-weight:700;padding:6px 14px;border-radius:100px;
+  background:var(--sg-pink);color:#fff;border:none;cursor:pointer;
+}
+.sg-add-btn:hover{opacity:.85;}
+.sg-add-err{font-size:10px;color:var(--red);font-weight:600;min-height:14px;}
+.sg-remove-x{
+  position:absolute;top:8px;right:10px;font-size:14px;color:var(--muted);cursor:pointer;
+  background:none;border:none;line-height:1;padding:2px 4px;
+}
+.sg-remove-x:hover{color:var(--red);}
+.sg-cooldown-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.sg-cooldown-chip{
+  display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;
+  background:var(--surface2);border:1px solid var(--border);font-size:11px;font-weight:600;color:var(--muted);
+}
+.sg-cooldown-chip b{color:var(--text);font-family:var(--ff-head);font-size:13px;}
+.sg-panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 16px;margin-bottom:18px;
+}
+.sg-panel-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.sg-date-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.sg-date-row input[type=text]{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:7px 10px;font-size:12px;color:var(--text);font-weight:600;
+}
+.sg-log-wrap{max-height:440px;overflow-y:auto;}
+.sg-log-entry{
+  border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surface2);
+}
+.sg-log-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+.sg-log-date{font-size:12px;font-weight:700;color:var(--text);}
+.sg-log-seq{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+.sg-event-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;font-weight:600;flex-wrap:wrap;}
+.sg-event-num{
+  width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-head);font-size:13px;background:var(--surface);border:1.5px solid var(--border);flex-shrink:0;
+}
+.sg-event-num.hit{border-color:var(--red);color:var(--red);}
+.sg-event-num.miss{border-color:var(--blue);color:var(--blue);}
+.sg-event-tag{color:var(--muted);font-weight:600;}
+.sg-event-elim{color:var(--sg-pink);font-weight:700;}
+.sg-empty-log{font-size:12px;color:var(--muted);text-align:center;padding:20px 0;}
+@media(max-width:480px){
+  .sg-squad-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
+  .sg-panel{padding:14px 12px;}
+}
 </style>
 </head>
 <body>
@@ -1029,7 +1133,7 @@ body::before{
         </div>
       </div>
       <div style="margin-top:12px;padding:10px 14px;background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;font-size:11px;font-weight:600;color:var(--gold);letter-spacing:.04em;">
-        🔒 PAT lives in Vercel env vars — never in the browser. Writes go via <code style="background:rgba(0,0,0,.08);padding:1px 5px;border-radius:3px;">/api/save-pick</code>.
+        🔑 Writes go through this project's Vercel serverless functions (<code>/api/save-pick</code>, <code>/api/save-squid</code>), which hold the real GitHub token server-side in an env var — it never touches the browser. The password below is just the lightweight <code>ADMIN_SECRET</code> those functions check for, sent over HTTPS. It stays in memory for this session only, unless you check "remember on this device."
       </div>
     </div>
 
@@ -1046,8 +1150,9 @@ body::before{
 
     <!-- Admin Unlock -->
     <div class="sp-admin-lock" id="sp-admin-lock">
-      <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);">🔒 Admin</span>
+      <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);">🔑 GitHub Access</span>
       <input type="password" id="sp-admin-pw" placeholder="Enter admin password to unlock" autocomplete="off">
+      <label style="font-size:10px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:4px;"><input type="checkbox" id="sp-admin-remember" style="width:auto;">Remember on this device</label>
       <button class="btn btn-ghost" onclick="spUnlock()">Unlock</button>
       <span id="sp-admin-status" style="font-size:11px;font-weight:600;color:var(--muted);"></span>
     </div>
@@ -1222,6 +1327,77 @@ body::before{
     </div>
     <div id="dup-wrap">
       <div class="no-data"><div class="icon">🔍</div>Load CSV to check for duplicate draws</div>
+    </div>
+  </div>
+
+  <!-- SQUID GAME TRACKER -->
+  <div class="section fade-up" style="animation-delay:.52s" id="sec-squidgame">
+    <div class="section-head">
+      <h3>🦑 Squid Game Tracker</h3>
+      <span class="sub">6 numbers · 3 hit lives · 3 miss lives · streak-reset rules</span>
+    </div>
+
+    <div class="sg-intro">
+      Each number lives or dies by <b>streaks</b>. Land in the draw 3 times in a row → it's retired on a hot streak. Miss 3 draws in a row → it's cut loose. Any change in outcome (a hit after misses, or a miss after hits) resets the opposite counter back to full. Eliminated numbers sit on the bench for <b>3 draws</b> before they're eligible to be picked again.
+    </div>
+
+    <div class="sg-panel">
+      <div class="sg-panel-title">☁️ GitHub Sync <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional — reuses the repo/branch + admin password from SmartPick System above)</span></div>
+      <div class="sg-date-row">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);">JSON file path</label>
+        <input type="text" id="sg-github-path" value="squid_game_state.json" placeholder="squid_game_state.json">
+      </div>
+      <div class="custom-actions">
+        <button class="btn btn-ghost" onclick="sgLoadFromGithub()">↓ Load from GitHub</button>
+        <button class="btn btn-primary" onclick="sgSaveToGithub()">☁️ Save to GitHub</button>
+        <span id="sg-sync-msg" class="custom-error"></span>
+      </div>
+      <div style="margin-top:10px;font-size:10.5px;color:var(--muted);">Without this, the tracker still works fine — it just saves to this browser only (localStorage), so it won't follow you to another device.</div>
+    </div>
+
+    <div class="sg-squad-grid" id="sg-squad-grid"></div>
+
+    <div id="sg-cooldown-section" style="display:none;">
+      <div class="sg-panel-title">🧊 On the Bench</div>
+      <div class="sg-cooldown-wrap" id="sg-cooldown-wrap"></div>
+    </div>
+
+    <!-- Squad duplicate check -->
+    <div class="sg-panel" id="sg-dupcheck-panel" style="display:none;">
+      <div class="sg-panel-title">Check This Squad vs Draw History</div>
+      <button class="btn btn-ghost" onclick="sgCheckSquadDuplicate()">🔍 Has this exact 6 ever been drawn? (2014–present)</button>
+      <div id="sg-dupcheck-result" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- Resolve draw panel -->
+    <div class="sg-panel">
+      <div class="sg-panel-title">Resolve a Draw</div>
+      <div class="sg-date-row">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);">Draw date</label>
+        <input type="text" id="sg-draw-date" placeholder="e.g. 16 Jul 2026 (Thu)">
+        <button class="btn btn-ghost" onclick="sgUseLatestLoadedDraw()">↓ Use Latest Loaded CSV Draw</button>
+      </div>
+      <div class="custom-slots" id="sg-result-slots">
+        <div class="custom-slot"><div class="custom-slot-label">#1</div><input type="number" min="1" max="49" placeholder="—" id="sg-rs-0"></div>
+        <div class="custom-slot"><div class="custom-slot-label">#2</div><input type="number" min="1" max="49" placeholder="—" id="sg-rs-1"></div>
+        <div class="custom-slot"><div class="custom-slot-label">#3</div><input type="number" min="1" max="49" placeholder="—" id="sg-rs-2"></div>
+        <div class="custom-slot"><div class="custom-slot-label">#4</div><input type="number" min="1" max="49" placeholder="—" id="sg-rs-3"></div>
+        <div class="custom-slot"><div class="custom-slot-label">#5</div><input type="number" min="1" max="49" placeholder="—" id="sg-rs-4"></div>
+        <div class="custom-slot"><div class="custom-slot-label">#6</div><input type="number" min="1" max="49" placeholder="—" id="sg-rs-5"></div>
+      </div>
+      <div class="custom-actions">
+        <button class="btn btn-primary" id="sg-resolve-btn" onclick="sgResolveDraw()">⚡ Resolve Draw</button>
+        <span id="sg-resolve-msg" class="custom-error"></span>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="sg-panel">
+      <div class="sg-panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>Draw Log</span>
+        <button class="btn btn-ghost" style="border-color:var(--red);color:var(--red);font-size:10px;padding:4px 10px;" onclick="sgResetAll()">↺ Reset Everything</button>
+      </div>
+      <div class="sg-log-wrap" id="sg-log-wrap"></div>
     </div>
   </div>
 
@@ -3636,7 +3812,7 @@ async function spGenerate(){
 
   renderSpPick(postBandComboCombo, audit, false);
 
-  spLog('Saving via /api/save-pick…');
+  spLog('Saving directly to GitHub…');
   spSetActionMsg('Saving…');
   try {
     await spWriteViApi(postBandComboCombo, audit, today);
@@ -3650,43 +3826,46 @@ async function spGenerate(){
   }
 }
 
-// ── Admin unlock ─────────────────────────────────────────
+// ── Serverless write helpers ───────────────────────────────
+// This project runs on Vercel, so writes go through this repo's
+// /api/save-pick.js and /api/save-squid.js serverless functions.
+// The real GitHub PAT lives only in Vercel's env vars — the browser
+// never sees it. The browser only holds the lightweight ADMIN_SECRET
+// password, sent as the x-admin-secret header those functions check.
 let _adminSecret = null;
+
+(function spRestoreRememberedSecret(){
+  try{
+    const saved = localStorage.getItem('sp-remembered-secret');
+    if(saved) document.getElementById('sp-admin-pw').value = saved;
+  }catch(_){}
+})();
 
 function spUnlock(){
   const pw = document.getElementById('sp-admin-pw').value;
-  if(!pw){ document.getElementById('sp-admin-status').textContent = 'Enter a password.'; return; }
-  document.getElementById('sp-admin-status').textContent = 'Verifying…';
-  // Test auth: send intentionally bad body → 400 if auth passes, 401 if wrong password
-  fetch('/api/save-pick', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-secret': pw },
-    body: JSON.stringify({})
-  }).then(r => {
-    if(r.status === 401){
-      document.getElementById('sp-admin-status').textContent = '✗ Wrong password.';
-      document.getElementById('sp-admin-status').style.color = 'var(--red)';
-      _adminSecret = null;
-    } else {
-      // 400 = auth passed, bad body = correct password
-      _adminSecret = pw;
-      document.getElementById('sp-admin-pw').value = '';
-      document.getElementById('sp-admin-lock').innerHTML =
-        `<span class="sp-admin-badge">✓ Admin Unlocked</span>
-         <span style="font-size:11px;color:var(--muted);font-weight:600;">Generate button is now active.</span>
-         <button class="btn btn-ghost" style="margin-left:auto;" onclick="spLock()">Lock</button>`;
-      // If a pick is already stored, show reset button now that admin is unlocked
-      const prevDateStr = spPrevDrawDateStr();
-      const hasStoredPick = _spStoredPicks && _spStoredPicks.some(p => !prevDateStr || p.date >= prevDateStr);
-      if(hasStoredPick){
-        document.getElementById('sp-reset-btn').style.display = 'inline-flex';
-      }
-      spCheckGateAndEnableBtn();
-    }
-  }).catch(()=>{
-    document.getElementById('sp-admin-status').textContent = 'Could not reach server.';
-    document.getElementById('sp-admin-status').style.color = 'var(--red)';
-  });
+  const statusEl = document.getElementById('sp-admin-status');
+  if(!pw){ statusEl.textContent = 'Enter the admin password first.'; statusEl.style.color = 'var(--red)'; return; }
+
+  // No dedicated verify endpoint — the password is checked server-side
+  // on the first real save. Store it optimistically and surface a 401
+  // from /api/save-pick or /api/save-squid if it turns out to be wrong.
+  _adminSecret = pw;
+  const remember = document.getElementById('sp-admin-remember')?.checked;
+  try{
+    if(remember) localStorage.setItem('sp-remembered-secret', pw);
+    else localStorage.removeItem('sp-remembered-secret');
+  }catch(_){}
+  document.getElementById('sp-admin-pw').value = '';
+  document.getElementById('sp-admin-lock').innerHTML =
+    `<span class="sp-admin-badge">✓ Admin Unlocked</span>
+     <span style="font-size:11px;color:var(--muted);font-weight:600;">Generate + Squid Game sync are now active. (Verified on first save.)</span>
+     <button class="btn btn-ghost" style="margin-left:auto;" onclick="spLock()">Lock</button>`;
+  const prevDateStr = spPrevDrawDateStr();
+  const hasStoredPick = _spStoredPicks && _spStoredPicks.some(p => !prevDateStr || p.date >= prevDateStr);
+  if(hasStoredPick){
+    document.getElementById('sp-reset-btn').style.display = 'inline-flex';
+  }
+  spCheckGateAndEnableBtn();
 }
 
 function spLock(){
@@ -3694,8 +3873,9 @@ function spLock(){
   spEnableGenerate(false);
   document.getElementById('sp-reset-btn').style.display = 'none';
   document.getElementById('sp-admin-lock').innerHTML = `
-    <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);">🔒 Admin</span>
+    <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);">🔑 Admin Access</span>
     <input type="password" id="sp-admin-pw" placeholder="Enter admin password to unlock" autocomplete="off">
+    <label style="font-size:10px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:4px;"><input type="checkbox" id="sp-admin-remember" style="width:auto;">Remember on this device</label>
     <button class="btn btn-ghost" onclick="spUnlock()">Unlock</button>
     <span id="sp-admin-status" style="font-size:11px;font-weight:600;color:var(--muted);"></span>`;
 }
@@ -3722,18 +3902,18 @@ document.addEventListener('keydown', e => {
 });
 
 async function spWriteViApi(numbers, audit, date){
-  if(!_adminSecret) throw new Error('Not unlocked — refresh and log in again.');
+  if(!_adminSecret) throw new Error('Not unlocked — enter the admin password above.');
   const res = await fetch('/api/save-pick', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-admin-secret': _adminSecret,
-    },
-    body: JSON.stringify({ date, numbers, audit }),
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': _adminSecret },
+    body: JSON.stringify({ date, numbers, audit })
   });
-  const json = await res.json();
-  if(!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
-  return json;
+  const result = await res.json().catch(()=>({}));
+  if(!res.ok){
+    if(res.status === 401) _adminSecret = null; // bad password — force re-unlock
+    throw new Error(result.error || `Save failed (HTTP ${res.status})`);
+  }
+  return result;
 }
 
 // ── Audit Trail Renderer ─────────────────────────────────
@@ -3985,6 +4165,338 @@ window.buildAll = function(){
     // Silent fail — user will upload manually
   }
 })();
+
+// ═══════════════════════════════════════════════════════════
+// SQUID GAME TRACKER
+// Rules: each squad number tracks a single streak (hit or miss).
+// Same outcome as last time → streak +1. Different outcome → streak
+// resets to 1 on the new type (this is what "refills" the opposite
+// life-bar back to full). Streak reaching 3 eliminates the number;
+// it benches for 3 resolved draws before it can be picked again.
+// State is stored in localStorage — this tracker is personal/local
+// to this browser and does not use the GitHub SmartPick storage.
+// ═══════════════════════════════════════════════════════════
+const SG_STORAGE_KEY   = 'sg-squid-state-v1';
+const SG_LIFE_MAX       = 3;
+const SG_COOLDOWN_DRAWS = 3;
+let sgState = null;
+
+function sgDefaultState(){
+  return {
+    squad: [null,null,null,null,null,null], // {num, streakType:'hit'|'miss'|null, streakCount:0}
+    cooldown: {},   // { num: drawsLeft }
+    log: [],        // newest first
+    drawCount: 0
+  };
+}
+function sgLoad(){
+  try{
+    const raw = localStorage.getItem(SG_STORAGE_KEY);
+    sgState = raw ? JSON.parse(raw) : sgDefaultState();
+    if(!sgState || !Array.isArray(sgState.squad) || sgState.squad.length!==6) sgState = sgDefaultState();
+  }catch(_){ sgState = sgDefaultState(); }
+}
+function sgSave(){ localStorage.setItem(SG_STORAGE_KEY, JSON.stringify(sgState)); }
+
+function sgNumsInPlay(excludeSlot){
+  const s = new Set();
+  sgState.squad.forEach((e,i)=>{ if(e && i!==excludeSlot) s.add(e.num); });
+  return s;
+}
+function sgIsOnCooldown(num){ return Object.prototype.hasOwnProperty.call(sgState.cooldown, num); }
+
+// ── Rendering ──────────────────────────────────────────
+function sgHeartsHTML(type, livesRemaining){
+  let html = '<div class="sg-hearts">';
+  for(let i=0;i<SG_LIFE_MAX;i++){
+    const filled = i < livesRemaining;
+    html += `<span class="sg-heart ${type} ${filled?'filled':'empty'}">${filled?'♥':'♡'}</span>`;
+  }
+  return html + '</div>';
+}
+
+function sgNumFreqStat(num){
+  if(!draws.length) return 'Load CSV to see history stats';
+  let count=0, lastGap=null;
+  for(let i=0;i<draws.length;i++){
+    if(draws[i].nums.includes(num)){ if(lastGap===null) lastGap=i; count++; }
+  }
+  if(count===0) return 'Never drawn since 2014';
+  return `Seen ${count}× · last ${lastGap===0 ? 'draw' : lastGap+' draws ago'}`;
+}
+
+function sgRenderSquad(){
+  const grid = document.getElementById('sg-squad-grid');
+  grid.innerHTML = '';
+  sgState.squad.forEach((entry, idx)=>{
+    const card = document.createElement('div');
+    if(!entry){
+      card.className = 'sg-card sg-empty';
+      card.innerHTML = `
+        <div class="sg-empty-label">Open Slot #${idx+1}</div>
+        <input type="number" min="1" max="49" class="sg-empty-input" id="sg-add-${idx}" placeholder="—">
+        <button class="sg-add-btn" onclick="sgAddNumber(${idx})">Add to Squad</button>
+        <div class="sg-add-err" id="sg-add-err-${idx}"></div>
+      `;
+    } else {
+      const hitLives  = entry.streakType==='hit'  ? (SG_LIFE_MAX - entry.streakCount) : SG_LIFE_MAX;
+      const missLives = entry.streakType==='miss' ? (SG_LIFE_MAX - entry.streakCount) : SG_LIFE_MAX;
+      card.className = 'sg-card' + ((hitLives===1||missLives===1) ? ' sg-out-soon' : '');
+      const streakBadge = !entry.streakType
+        ? `<span class="sg-streak-badge none">Fresh pick</span>`
+        : `<span class="sg-streak-badge ${entry.streakType}">${entry.streakType==='hit'?'🔥':'🧊'} ${entry.streakCount} ${entry.streakType==='hit'?'hit':'miss'} streak</span>`;
+      card.innerHTML = `
+        <button class="sg-remove-x" onclick="sgRemoveNumber(${idx})" title="Remove from squad">✕</button>
+        <div class="sg-ball">${entry.num}</div>
+        <div class="sg-freq-line">${sgNumFreqStat(entry.num)}</div>
+        <div class="sg-hearts-row">Hit ${sgHeartsHTML('hit', hitLives)}</div>
+        <div class="sg-hearts-row">Miss ${sgHeartsHTML('miss', missLives)}</div>
+        ${streakBadge}
+      `;
+    }
+    grid.appendChild(card);
+  });
+  const full = sgState.squad.every(e=>e);
+  document.getElementById('sg-dupcheck-panel').style.display = full ? 'block' : 'none';
+}
+
+function sgRenderCooldown(){
+  const wrap = document.getElementById('sg-cooldown-wrap');
+  const section = document.getElementById('sg-cooldown-section');
+  const entries = Object.entries(sgState.cooldown);
+  if(!entries.length){ section.style.display='none'; wrap.innerHTML=''; return; }
+  section.style.display='block';
+  wrap.innerHTML = entries.map(([num,left])=>
+    `<div class="sg-cooldown-chip"><b>${num}</b> · benched, ${left} draw${left==1?'':'s'} left</div>`
+  ).join('');
+}
+
+function sgRenderLog(){
+  const wrap = document.getElementById('sg-log-wrap');
+  if(!sgState.log.length){
+    wrap.innerHTML = '<div class="sg-empty-log">No draws resolved yet.</div>';
+    return;
+  }
+  wrap.innerHTML = sgState.log.map(entry=>{
+    const evHtml = entry.events.map(ev=>`
+      <div class="sg-event-row">
+        <div class="sg-event-num ${ev.outcome}">${ev.num}</div>
+        <span class="sg-event-tag">${ev.outcome==='hit'?'Matched':'Missed'} · streak ${ev.streakCount}/${SG_LIFE_MAX}</span>
+        ${ev.eliminated?`<span class="sg-event-elim">→ OUT, benched ${SG_COOLDOWN_DRAWS} draws</span>`:''}
+      </div>`).join('');
+    return `
+      <div class="sg-log-entry">
+        <div class="sg-log-head">
+          <span class="sg-log-date">${entry.date || ('Draw #'+entry.seq)}</span>
+          <span class="sg-log-seq">Draw #${entry.seq} · Result ${[...entry.result].sort((a,b)=>a-b).join(', ')}</span>
+        </div>
+        ${evHtml || '<div style="font-size:11px;color:var(--muted);">No squad numbers were active for this draw.</div>'}
+      </div>`;
+  }).join('');
+}
+
+function sgRenderAll(){ sgRenderSquad(); sgRenderCooldown(); sgRenderLog(); }
+
+// ── Squad Setup ────────────────────────────────────────
+function sgAddNumber(idx){
+  const input = document.getElementById('sg-add-'+idx);
+  const errEl = document.getElementById('sg-add-err-'+idx);
+  const v = parseInt(input.value,10);
+  errEl.textContent='';
+  if(isNaN(v) || v<1 || v>49){ errEl.textContent='Enter 1–49'; return; }
+  if(sgNumsInPlay(idx).has(v)){ errEl.textContent='Already in squad'; return; }
+  if(sgIsOnCooldown(v)){ errEl.textContent=`Benched (${sgState.cooldown[v]} left)`; return; }
+  sgState.squad[idx] = { num:v, streakType:null, streakCount:0 };
+  sgSave();
+  sgRenderAll();
+}
+
+function sgRemoveNumber(idx){
+  const entry = sgState.squad[idx];
+  if(!entry) return;
+  if(!confirm(`Remove ${entry.num} from the squad? This just clears the slot — it does not count as an in-game elimination or trigger the bench cooldown.`)) return;
+  sgState.squad[idx] = null;
+  sgSave();
+  sgRenderAll();
+}
+
+// ── Squad duplicate check (reuses the `draws` global loaded via CSV) ──
+function sgCheckSquadDuplicate(){
+  const out = document.getElementById('sg-dupcheck-result');
+  if(!draws.length){
+    out.innerHTML = '<div class="chk-result chk-never" style="text-align:left;padding:14px 16px;"><span class="chk-sub">Load the CSV above first.</span></div>';
+    return;
+  }
+  const nums = sgState.squad.map(e=>e && e.num).filter(n=>n!=null);
+  if(nums.length<6){ out.innerHTML=''; return; }
+  const sorted=[...nums].sort((a,b)=>a-b);
+  const key = sorted.join('-');
+  const matches = draws.filter(d=>[...d.nums].sort((a,b)=>a-b).join('-')===key);
+  if(!matches.length){
+    out.innerHTML = `<div class="chk-result chk-never">
+      <div class="chk-icon">✅</div>
+      <div class="chk-title">Never Drawn Before</div>
+      <div class="chk-sub">This exact squad (${sorted.join(', ')}) has never appeared together across ${draws.length} draws since 2014.</div>
+    </div>`;
+  } else {
+    const rowsHtml = matches.map(d=>`
+      <div class="dup-match-row">
+        <div class="dup-draw-no">#${d.drawNo||'?'}</div>
+        <div class="dup-draw-date">${d.date||'—'}</div>
+        <div class="draw-balls" style="flex:1">${d.nums.map(n=>`<div class="db db-hi">${n}</div>`).join('')}</div>
+      </div>`).join('');
+    out.innerHTML = `<div class="chk-result chk-found">
+      <div class="chk-header">
+        <span class="chk-badge">⚠️ Drawn ${matches.length}× Before</span>
+        <span style="font-size:11px;font-weight:600;color:var(--muted);">Exact 6-number match</span>
+      </div>
+      <div class="dup-match-rows">${rowsHtml}</div>
+    </div>`;
+  }
+}
+
+// ── Resolve Draw ───────────────────────────────────────
+function sgUseLatestLoadedDraw(){
+  const msg = document.getElementById('sg-resolve-msg');
+  if(!draws.length){ msg.className='custom-error'; msg.textContent='Load the CSV above first.'; return; }
+  const latest = draws[0]; // draws[0] is the newest draw
+  latest.nums.forEach((n,i)=>{ document.getElementById('sg-rs-'+i).value = n; });
+  document.getElementById('sg-draw-date').value = latest.date || '';
+  msg.className='custom-ok';
+  msg.textContent = `Loaded draw #${latest.drawNo||'?'} (${latest.date||'—'}).`;
+}
+
+function sgResolveDraw(){
+  const msg = document.getElementById('sg-resolve-msg');
+  msg.className='custom-error';
+  const vals=[];
+  for(let i=0;i<6;i++){
+    const v = parseInt(document.getElementById('sg-rs-'+i).value,10);
+    if(isNaN(v)||v<1||v>49){ msg.textContent='Enter all 6 result numbers (1–49).'; return; }
+    vals.push(v);
+  }
+  if(new Set(vals).size!==6){ msg.textContent='Result numbers must be unique.'; return; }
+
+  const dateStr = document.getElementById('sg-draw-date').value.trim();
+  const events = [];
+
+  sgState.squad.forEach((entry, idx)=>{
+    if(!entry) return;
+    const hit = vals.includes(entry.num);
+    if(entry.streakType === (hit?'hit':'miss')){
+      entry.streakCount++;
+    } else {
+      entry.streakType = hit?'hit':'miss';
+      entry.streakCount = 1;
+    }
+    const eliminated = entry.streakCount >= SG_LIFE_MAX;
+    events.push({num:entry.num, outcome: hit?'hit':'miss', streakCount:entry.streakCount, eliminated});
+    if(eliminated){
+      sgState.cooldown[entry.num] = SG_COOLDOWN_DRAWS;
+      sgState.squad[idx] = null;
+    }
+  });
+
+  Object.keys(sgState.cooldown).forEach(num=>{
+    sgState.cooldown[num] -= 1;
+    if(sgState.cooldown[num] <= 0) delete sgState.cooldown[num];
+  });
+
+  sgState.drawCount++;
+  sgState.log.unshift({ seq: sgState.drawCount, date: dateStr, result: vals, events });
+  sgSave();
+
+  for(let i=0;i<6;i++) document.getElementById('sg-rs-'+i).value='';
+  msg.className='custom-ok';
+  msg.textContent = `Draw #${sgState.drawCount} resolved.`;
+
+  sgRenderAll();
+}
+
+// ── Reset ───────────────────────────────────────────────
+function sgResetAll(){
+  if(!confirm('Reset the entire Squid Game tracker? This clears your squad, the bench, and the full draw log. This cannot be undone.')) return;
+  sgState = sgDefaultState();
+  sgSave();
+  sgRenderAll();
+  document.getElementById('sg-resolve-msg').textContent='';
+}
+
+// ── GitHub Sync — reads are public (raw.githubusercontent.com, no
+// auth needed); writes go through /api/save-squid.js using the same
+// admin password + repo/branch already configured in SmartPick above.
+function sgGithubConfig(){
+  const c = spConfig();
+  const path = (document.getElementById('sg-github-path')?.value || 'squid_game_state.json').trim() || 'squid_game_state.json';
+  return { repo: c.repo, branch: c.branch, path };
+}
+
+async function sgLoadFromGithub(){
+  const msg = document.getElementById('sg-sync-msg');
+  const cfg = sgGithubConfig();
+  if(!cfg.repo){ msg.className='custom-error'; msg.textContent='Enter Owner/Repo in the SmartPick System config above.'; return; }
+  msg.className='custom-ok'; msg.textContent='Loading…';
+  try{
+    const url = `https://raw.githubusercontent.com/${cfg.repo}/refs/heads/${cfg.branch}/${cfg.path}?t=${Date.now()}`;
+    const res = await fetch(url);
+    if(res.status === 404){ msg.className='custom-error'; msg.textContent='No squid_game_state.json in the repo yet — hit Save first.'; return; }
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if(!json || !Array.isArray(json.squad)) throw new Error('File exists but is not a valid squid game state.');
+    sgState = json;
+    sgSave();
+    sgRenderAll();
+    msg.className='custom-ok'; msg.textContent='Loaded from GitHub.';
+  }catch(e){
+    msg.className='custom-error'; msg.textContent='Load failed: ' + e.message;
+  }
+}
+
+async function sgSaveToGithub(){
+  const msg = document.getElementById('sg-sync-msg');
+  if(!_adminSecret){ msg.className='custom-error'; msg.textContent='Unlock Admin Access in the SmartPick System section above first.'; return; }
+  msg.className='custom-ok'; msg.textContent='Saving…';
+  try{
+    const res = await fetch('/api/save-squid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': _adminSecret },
+      body: JSON.stringify({ state: sgState })
+    });
+    const result = await res.json().catch(()=>({}));
+    if(!res.ok){
+      if(res.status === 401) _adminSecret = null; // bad password — force re-unlock
+      throw new Error(result.error || `Save failed (HTTP ${res.status})`);
+    }
+    msg.className='custom-ok'; msg.textContent='Saved to GitHub.';
+  }catch(e){
+    msg.className='custom-error'; msg.textContent='Save failed: ' + e.message;
+  }
+}
+
+// Auto-load on page open — reads are public (raw.githubusercontent.com),
+// so this needs no token, just the repo/branch already configured above.
+async function sgAutoLoadFromGithub(){
+  const cfg = sgGithubConfig();
+  if(!cfg.repo) return;
+  try{
+    const url = `https://raw.githubusercontent.com/${cfg.repo}/refs/heads/${cfg.branch}/${cfg.path}?t=${Date.now()}`;
+    const res = await fetch(url);
+    if(!res.ok) return; // 404 or repo not reachable — silently keep local state
+    const json = await res.json();
+    if(json && Array.isArray(json.squad)){
+      sgState = json;
+      sgSave();
+      sgRenderAll();
+      const msg = document.getElementById('sg-sync-msg');
+      if(msg){ msg.className='custom-ok'; msg.textContent='Auto-loaded latest state from GitHub.'; }
+    }
+  }catch(_){ /* silent — keep local state */ }
+}
+
+// ── Init ────────────────────────────────────────────────
+sgLoad();
+sgRenderAll();
+sgAutoLoadFromGithub();
 </script>
 </body>
 </html>
