@@ -1,0 +1,38 @@
+{
+  "squad": [
+    {
+      "num": 7,
+      "streakType": null,
+      "streakCount": 0
+    },
+    {
+      "num": 14,
+      "streakType": null,
+      "streakCount": 0
+    },
+    {
+      "num": 18,
+      "streakType": null,
+      "streakCount": 0
+    },
+    {
+      "num": 29,
+      "streakType": null,
+      "streakCount": 0
+    },
+    {
+      "num": 31,
+      "streakType": null,
+      "streakCount": 0
+    },
+    {
+      "num": 45,
+      "streakType": null,
+      "streakCount": 0
+    }
+  ],
+  "cooldown": {},
+  "log": [],
+  "drawCount": 0,
+  "squadStartedAt": "2026-07-14"
+}
