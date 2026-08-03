@@ -1,6 +1,10 @@
 {
   "squad": [
-    null,
+    {
+      "num": 6,
+      "streakType": null,
+      "streakCount": 0
+    },
     null,
     null,
     null,
