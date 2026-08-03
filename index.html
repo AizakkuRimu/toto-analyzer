@@ -992,6 +992,53 @@ body::before{
   .sg-squad-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
   .sg-panel{padding:14px 12px;}
 }
+
+/* ── APP TABS ────────────────────────────────────────────── */
+.app-tabbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg);
+  padding:10px 0;
+  margin-bottom:6px;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.app-tabbar::-webkit-scrollbar{display:none;}
+.tab-btn{
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--ff-body);font-weight:700;font-size:12.5px;letter-spacing:.02em;
+  background:var(--surface);color:var(--muted);
+  border:1px solid var(--border);border-radius:100px;
+  padding:9px 16px;cursor:pointer;
+  white-space:nowrap;
+  box-shadow:var(--shadow);
+}
+.tab-btn.active{background:var(--gold);color:#1a1200;border-color:var(--gold);}
+.tab-dot{width:6px;height:6px;border-radius:50%;background:var(--red);display:none;}
+.tab-dot.show{display:inline-block;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── STICKY ADMIN STRIP (shared unlock, visible on every tab) ── */
+.admin-strip{
+  position:sticky;top:49px;z-index:19;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;margin-bottom:16px;box-shadow:var(--shadow);
+  font-size:11.5px;
+}
+.admin-strip input[type="password"]{
+  font-family:var(--ff-body);font-size:12px;border:1px solid var(--border);
+  border-radius:6px;padding:6px 10px;background:var(--bg);color:var(--text);
+  width:150px;
+}
+@media(max-width:480px){
+  .admin-strip input[type="password"]{width:120px;}
+  .tab-btn{font-size:11.5px;padding:8px 13px;}
+}
 </style>
 </head>
 <body>
@@ -1064,6 +1111,25 @@ body::before{
     </div>
   </div>
 
+  <!-- APP TABS -->
+  <nav class="app-tabbar">
+    <button class="tab-btn active" id="tab-btn-analyze" onclick="showTab('analyze')">📊 Analyze</button>
+    <button class="tab-btn" id="tab-btn-smartpick" onclick="showTab('smartpick')">🎯 SmartPick</button>
+    <button class="tab-btn" id="tab-btn-squidgame" onclick="showTab('squidgame')"><span class="tab-dot" id="sg-tab-dot"></span>🦑 Squid Game</button>
+  </nav>
+
+  <!-- SHARED ADMIN UNLOCK — visible on every tab, so you never have to hunt for it -->
+  <div class="admin-strip" id="sp-admin-lock">
+    <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);">🔑 GitHub Access</span>
+    <input type="password" id="sp-admin-pw" placeholder="Admin password to unlock" autocomplete="off">
+    <label style="font-size:10px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:4px;"><input type="checkbox" id="sp-admin-remember" style="width:auto;">Remember</label>
+    <button class="btn btn-ghost" onclick="spUnlock()">Unlock</button>
+    <span id="sp-admin-status" style="font-size:11px;font-weight:600;color:var(--muted);"></span>
+  </div>
+
+  <!-- ══════════ ANALYZE TAB ══════════ -->
+  <div class="tab-panel active" id="tab-analyze">
+
   <!-- STATS OVERVIEW -->
   <div class="section fade-up" style="animation-delay:.25s" id="sec-stats">
     <div class="stat-row" id="stat-row">
@@ -1109,6 +1175,11 @@ body::before{
   </div>
 
   <!-- SMARTPICK SYSTEM -->
+  </div><!-- /tab-analyze -->
+
+  <!-- ══════════ SMARTPICK TAB ══════════ -->
+  <div class="tab-panel" id="tab-smartpick">
+
   <div class="section fade-up" style="animation-delay:.43s" id="sec-smartpick">
     <div class="section-head">
       <h3>SmartPick System</h3>
@@ -1148,14 +1219,7 @@ body::before{
       <span class="sp-pick-empty" id="sp-pick-empty">Today's pick will appear here once generated or fetched from GitHub.</span>
     </div>
 
-    <!-- Admin Unlock -->
-    <div class="sp-admin-lock" id="sp-admin-lock">
-      <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);">🔑 GitHub Access</span>
-      <input type="password" id="sp-admin-pw" placeholder="Enter admin password to unlock" autocomplete="off">
-      <label style="font-size:10px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:4px;"><input type="checkbox" id="sp-admin-remember" style="width:auto;">Remember on this device</label>
-      <button class="btn btn-ghost" onclick="spUnlock()">Unlock</button>
-      <span id="sp-admin-status" style="font-size:11px;font-weight:600;color:var(--muted);"></span>
-    </div>
+    <!-- Admin Unlock now lives in the sticky bar above the tabs, since it's shared with Squid Game sync too. -->
 
     <!-- Actions -->
     <div class="sp-actions">
@@ -1331,6 +1395,11 @@ body::before{
   </div>
 
   <!-- SQUID GAME TRACKER -->
+  </div><!-- /tab-smartpick -->
+
+  <!-- ══════════ SQUID GAME TAB ══════════ -->
+  <div class="tab-panel" id="tab-squidgame">
+
   <div class="section fade-up" style="animation-delay:.52s" id="sec-squidgame">
     <div class="section-head">
       <h3>🦑 Squid Game Tracker</h3>
@@ -1347,10 +1416,17 @@ body::before{
         <label style="font-size:11px;font-weight:700;color:var(--muted);">JSON file path</label>
         <input type="text" id="sg-github-path" value="squid_game_state.json" placeholder="squid_game_state.json">
       </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:10px;">
+        <input type="checkbox" id="sg-autosave" style="width:auto;" onchange="sgToggleAutosave()">
+        Auto-save to GitHub after every resolve / catch-up (needs Admin unlocked above)
+      </label>
       <div class="custom-actions">
         <button class="btn btn-ghost" onclick="sgLoadFromGithub()">↓ Load from GitHub</button>
         <button class="btn btn-primary" onclick="sgSaveToGithub()">☁️ Save to GitHub</button>
         <span id="sg-sync-msg" class="custom-error"></span>
+      </div>
+      <div id="sg-unsaved-banner" style="display:none;margin-top:10px;padding:8px 12px;background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;font-size:11.5px;font-weight:700;color:var(--gold);">
+        ● Unsaved changes — this device only. Hit "Save to GitHub" (or turn on auto-save above) so it follows you elsewhere.
       </div>
       <div style="margin-top:10px;font-size:10.5px;color:var(--muted);">Without this, the tracker still works fine — it just saves to this browser only (localStorage), so it won't follow you to another device.</div>
     </div>
@@ -1392,6 +1468,19 @@ body::before{
       </div>
     </div>
 
+    <!-- Auto Catch-Up panel -->
+    <div class="sg-panel" id="sg-catchup-panel">
+      <div class="sg-panel-title">🔄 Auto Catch-Up</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+        Finds every loaded CSV draw newer than your last resolved draw and resolves them in order automatically. If a squad slot is empty going into one of those draws, it'll pause and ask what you picked before continuing.
+      </div>
+      <div class="custom-actions">
+        <button class="btn btn-ghost" onclick="sgAutoCatchUp()">🔄 Find &amp; Resolve Missing Draws</button>
+        <span id="sg-catchup-msg" class="custom-error"></span>
+      </div>
+      <div id="sg-catchup-wizard"></div>
+    </div>
+
     <!-- Log -->
     <div class="sg-panel">
       <div class="sg-panel-title" style="display:flex;justify-content:space-between;align-items:center;">
@@ -1403,6 +1492,8 @@ body::before{
   </div>
 
   <!-- FOOTER -->
+  </div><!-- /tab-squidgame -->
+
   <div class="footer fade-up" style="animation-delay:.55s">
     <div class="footer-left">TOTO Analyser · For entertainment only · Please gamble responsibly</div>
     <div class="footer-right">Draws: Mon &amp; Thu · 6:30 PM SGT</div>
@@ -1414,6 +1505,24 @@ body::before{
 // ═══════════════════════════════════════════════════════════
 // THEME
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// APP TABS
+// ═══════════════════════════════════════════════════════════
+const TAB_NAMES = ['analyze','smartpick','squidgame'];
+function showTab(name){
+  TAB_NAMES.forEach(n=>{
+    document.getElementById('tab-'+n)?.classList.toggle('active', n===name);
+    document.getElementById('tab-btn-'+n)?.classList.toggle('active', n===name);
+  });
+  try{ localStorage.setItem('active-tab', name); }catch(_){}
+}
+(function restoreTab(){
+  let saved = 'analyze';
+  try{ saved = localStorage.getItem('active-tab') || 'analyze'; }catch(_){}
+  if(!TAB_NAMES.includes(saved)) saved = 'analyze';
+  showTab(saved);
+})();
+
 function toggleTheme(){
   const d=document.documentElement;
   const dark=d.getAttribute('data-theme')==='dark';
@@ -4203,7 +4312,42 @@ function sgLoad(){
     sgNormalizeState(sgState);
   }catch(_){ sgState = sgDefaultState(); }
 }
-function sgSave(){ localStorage.setItem(SG_STORAGE_KEY, JSON.stringify(sgState)); }
+function sgPersistLocalOnly(){ localStorage.setItem(SG_STORAGE_KEY, JSON.stringify(sgState)); }
+
+function sgSave(){
+  sgPersistLocalOnly();
+  sgMarkDirty(true);
+  if(document.getElementById('sg-autosave')?.checked && _adminSecret){
+    sgSaveToGithub(true);
+  }
+}
+
+// ── Unsaved-changes tracking ───────────────────────────
+function sgMarkDirty(dirty){
+  const banner = document.getElementById('sg-unsaved-banner');
+  const dot = document.getElementById('sg-tab-dot');
+  if(banner) banner.style.display = dirty ? 'block' : 'none';
+  if(dot) dot.classList.toggle('show', dirty);
+}
+
+function sgToggleAutosave(){
+  const on = document.getElementById('sg-autosave').checked;
+  try{ localStorage.setItem('sg-autosave-enabled', on ? '1' : '0'); }catch(_){}
+  const msg = document.getElementById('sg-sync-msg');
+  if(on && !_adminSecret){
+    msg.className='custom-error';
+    msg.textContent='Auto-save is on, but you need to Unlock Admin Access above before it can actually push.';
+  } else if(on && _adminSecret && document.getElementById('sg-unsaved-banner')?.style.display !== 'none'){
+    sgSaveToGithub(true); // catch up immediately on anything already pending
+  }
+}
+(function sgRestoreAutosavePref(){
+  try{
+    const on = localStorage.getItem('sg-autosave-enabled') === '1';
+    const el = document.getElementById('sg-autosave');
+    if(el) el.checked = on;
+  }catch(_){}
+})();
 
 function sgNumsInPlay(excludeSlot){
   const s = new Set();
@@ -4382,18 +4526,10 @@ function sgUseLatestLoadedDraw(){
   msg.textContent = `Loaded draw #${latest.drawNo||'?'} (${latest.date||'—'}).`;
 }
 
-function sgResolveDraw(){
-  const msg = document.getElementById('sg-resolve-msg');
-  msg.className='custom-error';
-  const vals=[];
-  for(let i=0;i<6;i++){
-    const v = parseInt(document.getElementById('sg-rs-'+i).value,10);
-    if(isNaN(v)||v<1||v>49){ msg.textContent='Enter all 6 result numbers (1–49).'; return; }
-    vals.push(v);
-  }
-  if(new Set(vals).size!==6){ msg.textContent='Result numbers must be unique.'; return; }
-
-  const dateStr = document.getElementById('sg-draw-date').value.trim();
+// Core resolution logic, shared by the manual "Resolve Draw" button and
+// the Auto Catch-Up wizard. Mutates sgState in place; does NOT save/render
+// or touch any DOM — callers are responsible for that.
+function sgApplyDrawResult(dateStr, vals){
   const events = [];
 
   sgState.squad.forEach((entry, idx)=>{
@@ -4420,6 +4556,22 @@ function sgResolveDraw(){
 
   sgState.drawCount++;
   sgState.log.unshift({ seq: sgState.drawCount, date: dateStr, result: vals, events });
+  return events;
+}
+
+function sgResolveDraw(){
+  const msg = document.getElementById('sg-resolve-msg');
+  msg.className='custom-error';
+  const vals=[];
+  for(let i=0;i<6;i++){
+    const v = parseInt(document.getElementById('sg-rs-'+i).value,10);
+    if(isNaN(v)||v<1||v>49){ msg.textContent='Enter all 6 result numbers (1–49).'; return; }
+    vals.push(v);
+  }
+  if(new Set(vals).size!==6){ msg.textContent='Result numbers must be unique.'; return; }
+
+  const dateStr = document.getElementById('sg-draw-date').value.trim();
+  sgApplyDrawResult(dateStr, vals);
   sgSave();
 
   for(let i=0;i<6;i++) document.getElementById('sg-rs-'+i).value='';
@@ -4427,6 +4579,133 @@ function sgResolveDraw(){
   msg.textContent = `Draw #${sgState.drawCount} resolved.`;
 
   sgRenderAll();
+}
+
+// ── Auto Catch-Up ──────────────────────────────────────
+// Finds every CSV-loaded draw newer than the last resolved draw and
+// walks through them in date order, applying sgApplyDrawResult to each.
+// If a squad slot is empty going into a draw, it pauses and asks what
+// (if anything) to fill that slot with before continuing — since normally
+// that's a manual choice the user makes between draws.
+function sgTodaySGT(){
+  return new Date(Date.now() + 8*3600000).toISOString().slice(0,10);
+}
+
+let _sgCatchupQueue = [];
+let _sgCatchupDone = [];
+
+function sgAutoCatchUp(){
+  const msg = document.getElementById('sg-catchup-msg');
+  msg.className = 'custom-error';
+  document.getElementById('sg-catchup-wizard').innerHTML = '';
+
+  if(!draws.length){ msg.textContent = 'Load the CSV above first.'; return; }
+
+  // Last resolved date = newest entry in the log (log[0], since we unshift).
+  // If nothing resolved yet, fall back to squadStartedAt so we don't pull in
+  // draws from before the squad existed.
+  const lastDateStr = (sgState.log[0] && sgState.log[0].date) || sgState.squadStartedAt;
+  const today = sgTodaySGT();
+
+  // draws[] is newest-first (per existing convention in this file).
+  // Keep only draws strictly after lastDateStr and up to today, oldest→newest.
+  let missing = draws
+    .filter(d => d.date && (!lastDateStr || d.date > lastDateStr) && d.date <= today)
+    .sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+  if(!missing.length){
+    msg.className = 'custom-ok';
+    msg.textContent = lastDateStr
+      ? `Already up to date — last resolved draw was ${lastDateStr}.`
+      : 'No draws to catch up on yet.';
+    return;
+  }
+
+  _sgCatchupQueue = missing;
+  _sgCatchupDone = [];
+  msg.className = 'custom-ok';
+  msg.textContent = `Found ${missing.length} unresolved draw${missing.length===1?'':'s'} (${missing[0].date} → ${missing[missing.length-1].date}). Working through them…`;
+  sgCatchupStep();
+}
+
+function sgCatchupStep(){
+  const wizard = document.getElementById('sg-catchup-wizard');
+
+  if(!_sgCatchupQueue.length){
+    // All done — save, render, summarize.
+    sgSave();
+    sgRenderAll();
+    const msg = document.getElementById('sg-catchup-msg');
+    msg.className = 'custom-ok';
+    const dates = _sgCatchupDone.map(d=>d.date).join(', ');
+    msg.textContent = `✅ Caught up — resolved ${_sgCatchupDone.length} draw${_sgCatchupDone.length===1?'':'s'}: ${dates}. Don't forget to Save to GitHub if you use sync.`;
+    wizard.innerHTML = '';
+    return;
+  }
+
+  const draw = _sgCatchupQueue[0];
+  const emptyIdxs = [];
+  sgState.squad.forEach((e,idx)=>{ if(!e) emptyIdxs.push(idx); });
+
+  if(emptyIdxs.length){
+    // Pause and ask what (if anything) to fill the empty slot(s) with
+    // before resolving this draw.
+    wizard.innerHTML = `
+      <div class="sg-panel" style="border:1px solid var(--gold);margin-top:10px;">
+        <div class="sg-panel-title">⏸ Before resolving ${draw.date} (Draw #${draw.drawNo||'?'})</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">
+          ${emptyIdxs.length} squad slot${emptyIdxs.length===1?' is':'s are'} empty. If you picked replacement number(s) for these before this draw, enter them now so the streak is tracked correctly. Leave blank to skip and keep the slot open.
+        </div>
+        ${emptyIdxs.map(idx=>`
+          <div class="sg-date-row" style="margin-bottom:6px;">
+            <label style="font-size:11px;font-weight:700;color:var(--muted);">Slot #${idx+1}</label>
+            <input type="number" min="1" max="49" placeholder="—" id="sg-catchup-fill-${idx}">
+          </div>`).join('')}
+        <div class="sg-add-err" id="sg-catchup-fill-err" style="margin-bottom:8px;"></div>
+        <div class="custom-actions">
+          <button class="btn btn-primary" onclick="sgCatchupApplyFillsAndContinue()">Continue with this draw</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // No empty slots — just resolve it and move to the next.
+  sgApplyDrawResult(draw.date, draw.nums.slice());
+  _sgCatchupDone.push(draw);
+  _sgCatchupQueue.shift();
+  sgCatchupStep();
+}
+
+function sgCatchupApplyFillsAndContinue(){
+  const errEl = document.getElementById('sg-catchup-fill-err');
+  errEl.textContent = '';
+  const draw = _sgCatchupQueue[0];
+  const emptyIdxs = [];
+  sgState.squad.forEach((e,idx)=>{ if(!e) emptyIdxs.push(idx); });
+
+  // Validate all filled-in values first (unique across squad, not on cooldown)
+  // before committing any of them.
+  const fills = [];
+  for(const idx of emptyIdxs){
+    const input = document.getElementById('sg-catchup-fill-'+idx);
+    const raw = input ? input.value.trim() : '';
+    if(!raw) continue;
+    const v = parseInt(raw,10);
+    if(isNaN(v) || v<1 || v>49){ errEl.textContent = `Slot #${idx+1}: enter 1–49 or leave blank.`; return; }
+    if(sgNumsInPlay().has(v) || fills.some(f=>f.v===v)){ errEl.textContent = `${v} is already in the squad.`; return; }
+    if(sgIsOnCooldown(v)){ errEl.textContent = `${v} is benched (${sgState.cooldown[v]} draw(s) left).`; return; }
+    fills.push({idx, v});
+  }
+
+  fills.forEach(({idx,v})=>{
+    sgState.squad[idx] = { num:v, streakType:null, streakCount:0 };
+    if(!sgState.squadStartedAt) sgState.squadStartedAt = draw.date;
+  });
+
+  sgApplyDrawResult(draw.date, draw.nums.slice());
+  _sgCatchupDone.push(draw);
+  _sgCatchupQueue.shift();
+  sgCatchupStep();
 }
 
 // ── Reset ───────────────────────────────────────────────
@@ -4460,7 +4739,8 @@ async function sgLoadFromGithub(){
     const json = await res.json();
     if(!json || !Array.isArray(json.squad)) throw new Error('File exists but is not a valid squid game state.');
     sgState = sgNormalizeState(json);
-    sgSave();
+    sgPersistLocalOnly();
+    sgMarkDirty(false);
     sgRenderAll();
     msg.className='custom-ok'; msg.textContent='Loaded from GitHub.';
   }catch(e){
@@ -4468,10 +4748,13 @@ async function sgLoadFromGithub(){
   }
 }
 
-async function sgSaveToGithub(){
+async function sgSaveToGithub(silent){
   const msg = document.getElementById('sg-sync-msg');
-  if(!_adminSecret){ msg.className='custom-error'; msg.textContent='Unlock Admin Access in the SmartPick System section above first.'; return; }
-  msg.className='custom-ok'; msg.textContent='Saving…';
+  if(!_adminSecret){
+    if(!silent){ msg.className='custom-error'; msg.textContent='Unlock Admin Access above first.'; }
+    return;
+  }
+  if(!silent){ msg.className='custom-ok'; msg.textContent='Saving…'; }
   try{
     const res = await fetch('/api/save-squid', {
       method: 'POST',
@@ -4483,7 +4766,8 @@ async function sgSaveToGithub(){
       if(res.status === 401) _adminSecret = null; // bad password — force re-unlock
       throw new Error(result.error || `Save failed (HTTP ${res.status})`);
     }
-    msg.className='custom-ok'; msg.textContent='Saved to GitHub.';
+    msg.className='custom-ok'; msg.textContent = silent ? 'Auto-saved to GitHub.' : 'Saved to GitHub.';
+    sgMarkDirty(false);
   }catch(e){
     msg.className='custom-error'; msg.textContent='Save failed: ' + e.message;
   }
@@ -4501,7 +4785,8 @@ async function sgAutoLoadFromGithub(){
     const json = await res.json();
     if(json && Array.isArray(json.squad)){
       sgState = sgNormalizeState(json);
-      sgSave();
+      sgPersistLocalOnly();
+      sgMarkDirty(false);
       sgRenderAll();
       const msg = document.getElementById('sg-sync-msg');
       if(msg){ msg.className='custom-ok'; msg.textContent='Auto-loaded latest state from GitHub.'; }
