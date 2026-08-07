@@ -25,7 +25,11 @@
       "streakType": "hit",
       "streakCount": 1
     },
-    null
+    {
+      "num": 33,
+      "streakType": null,
+      "streakCount": 0
+    }
   ],
   "cooldown": {
     "2": 1,
