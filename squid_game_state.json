@@ -2,43 +2,89 @@
   "squad": [
     {
       "num": 6,
-      "streakType": "miss",
+      "streakType": "hit",
       "streakCount": 1
     },
     {
       "num": 9,
       "streakType": "miss",
-      "streakCount": 1
+      "streakCount": 2
     },
     {
       "num": 17,
-      "streakType": "miss",
+      "streakType": "hit",
       "streakCount": 1
     },
     {
       "num": 21,
       "streakType": "miss",
-      "streakCount": 1
+      "streakCount": 2
     },
     {
       "num": 30,
-      "streakType": "hit",
+      "streakType": "miss",
       "streakCount": 1
     },
     {
       "num": 33,
-      "streakType": null,
-      "streakCount": 0
+      "streakType": "hit",
+      "streakCount": 1
     }
   ],
   "cooldown": {
-    "2": 1,
-    "19": 1,
-    "20": 1,
-    "38": 1,
-    "44": 2
+    "44": 1
   },
   "log": [
+    {
+      "seq": 8,
+      "date": "2026-08-10",
+      "result": [
+        3,
+        6,
+        17,
+        32,
+        33,
+        39
+      ],
+      "events": [
+        {
+          "num": 6,
+          "outcome": "hit",
+          "streakCount": 1,
+          "eliminated": false
+        },
+        {
+          "num": 9,
+          "outcome": "miss",
+          "streakCount": 2,
+          "eliminated": false
+        },
+        {
+          "num": 17,
+          "outcome": "hit",
+          "streakCount": 1,
+          "eliminated": false
+        },
+        {
+          "num": 21,
+          "outcome": "miss",
+          "streakCount": 2,
+          "eliminated": false
+        },
+        {
+          "num": 30,
+          "outcome": "miss",
+          "streakCount": 1,
+          "eliminated": false
+        },
+        {
+          "num": 33,
+          "outcome": "hit",
+          "streakCount": 1,
+          "eliminated": false
+        }
+      ]
+    },
     {
       "seq": 7,
       "date": "2026-08-07",
@@ -384,6 +430,6 @@
       ]
     }
   ],
-  "drawCount": 7,
+  "drawCount": 8,
   "squadStartedAt": "2026-07-14"
 }
