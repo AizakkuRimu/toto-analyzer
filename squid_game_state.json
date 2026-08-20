@@ -1,6 +1,10 @@
 {
   "squad": [
-    null,
+    {
+      "num": 10,
+      "streakType": null,
+      "streakCount": 0
+    },
     {
       "num": 22,
       "streakType": "miss",
