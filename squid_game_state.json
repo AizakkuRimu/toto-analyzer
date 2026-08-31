@@ -1,41 +1,94 @@
 {
   "squad": [
     {
-      "num": 10,
-      "streakType": "miss",
-      "streakCount": 2
+      "num": 8,
+      "streakType": null,
+      "streakCount": 0
     },
     {
       "num": 22,
       "streakType": "miss",
-      "streakCount": 1
-    },
-    {
-      "num": 12,
-      "streakType": "miss",
       "streakCount": 2
     },
     {
-      "num": 25,
-      "streakType": "miss",
-      "streakCount": 2
+      "num": 9,
+      "streakType": null,
+      "streakCount": 0
+    },
+    {
+      "num": 35,
+      "streakType": null,
+      "streakCount": 0
     },
     {
       "num": 30,
-      "streakType": null,
-      "streakCount": 0
+      "streakType": "miss",
+      "streakCount": 1
     },
     {
       "num": 40,
-      "streakType": null,
-      "streakCount": 0
+      "streakType": "miss",
+      "streakCount": 1
     }
   ],
   "cooldown": {
-    "33": 2,
-    "45": 2
+    "10": 2,
+    "12": 2,
+    "25": 2,
+    "33": 1,
+    "45": 1
   },
   "log": [
+    {
+      "seq": 14,
+      "date": "2026-08-31",
+      "result": [
+        7,
+        26,
+        33,
+        39,
+        41,
+        46
+      ],
+      "events": [
+        {
+          "num": 10,
+          "outcome": "miss",
+          "streakCount": 3,
+          "eliminated": true
+        },
+        {
+          "num": 22,
+          "outcome": "miss",
+          "streakCount": 2,
+          "eliminated": false
+        },
+        {
+          "num": 12,
+          "outcome": "miss",
+          "streakCount": 3,
+          "eliminated": true
+        },
+        {
+          "num": 25,
+          "outcome": "miss",
+          "streakCount": 3,
+          "eliminated": true
+        },
+        {
+          "num": 30,
+          "outcome": "miss",
+          "streakCount": 1,
+          "eliminated": false
+        },
+        {
+          "num": 40,
+          "outcome": "miss",
+          "streakCount": 1,
+          "eliminated": false
+        }
+      ]
+    },
     {
       "seq": 13,
       "date": "2026-08-27",
@@ -681,6 +734,6 @@
       ]
     }
   ],
-  "drawCount": 13,
+  "drawCount": 14,
   "squadStartedAt": "2026-07-14"
 }
