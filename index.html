@@ -2961,7 +2961,10 @@ function spConfig(){
 function spRawUrl(){
   const c = spConfig();
   if(!c.repo) return null;
-  return `https://raw.githubusercontent.com/${c.repo}/refs/heads/${c.branch}/${c.path}`;
+  // Goes through /api/get-pick (reads api.github.com directly) instead of
+  // raw.githubusercontent.com, which is CDN-cached and can lag several
+  // minutes behind a fresh save.
+  return `/api/get-pick?path=${encodeURIComponent(c.path)}`;
 }
 
 function spSaveConfig(){
@@ -3002,7 +3005,7 @@ async function spFetch(){
   spSetActionMsg('Fetching from GitHub…');
   spClearLog();
   try{
-    const res = await fetch(url + '?t=' + Date.now());
+    const res = await fetch(url + '&t=' + Date.now(), { cache: 'no-store' });
     if(res.status === 404){
       spSetActionMsg('daily_picks.json not found — generate a new pick.');
       spLog('No daily_picks.json found in repo — file was likely deleted.','warn');
@@ -3951,14 +3954,37 @@ let _adminSecret = null;
   }catch(_){}
 })();
 
-function spUnlock(){
+async function spUnlock(){
   const pw = document.getElementById('sp-admin-pw').value;
   const statusEl = document.getElementById('sp-admin-status');
   if(!pw){ statusEl.textContent = 'Enter the admin password first.'; statusEl.style.color = 'var(--red)'; return; }
 
-  // No dedicated verify endpoint — the password is checked server-side
-  // on the first real save. Store it optimistically and surface a 401
-  // from /api/save-pick or /api/save-squid if it turns out to be wrong.
+  // Actually verify the password against the server before showing
+  // "Unlocked" — previously this was stored optimistically and only
+  // checked on the first real save, so ANY password looked like a
+  // successful login until you tried to save.
+  statusEl.textContent = 'Checking…';
+  statusEl.style.color = 'var(--muted)';
+  let verified = false;
+  try{
+    const res = await fetch('/api/verify-secret', {
+      method: 'POST',
+      headers: { 'x-admin-secret': pw }
+    });
+    verified = res.ok;
+  }catch(_){
+    statusEl.textContent = 'Could not reach server to verify — try again.';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+
+  if(!verified){
+    statusEl.textContent = 'Incorrect password.';
+    statusEl.style.color = 'var(--red)';
+    _adminSecret = null;
+    return;
+  }
+
   _adminSecret = pw;
   const remember = document.getElementById('sp-admin-remember')?.checked;
   try{
@@ -3968,7 +3994,7 @@ function spUnlock(){
   document.getElementById('sp-admin-pw').value = '';
   document.getElementById('sp-admin-lock').innerHTML =
     `<span class="sp-admin-badge">✓ Admin Unlocked</span>
-     <span style="font-size:11px;color:var(--muted);font-weight:600;">Generate + Squid Game sync are now active. (Verified on first save.)</span>
+     <span style="font-size:11px;color:var(--muted);font-weight:600;">Generate + Squid Game sync are now active.</span>
      <button class="btn btn-ghost" style="margin-left:auto;" onclick="spLock()">Lock</button>`;
   const prevDateStr = spPrevDrawDateStr();
   const hasStoredPick = _spStoredPicks && _spStoredPicks.some(p => !prevDateStr || p.date >= prevDateStr);
@@ -4717,8 +4743,8 @@ function sgResetAll(){
   document.getElementById('sg-resolve-msg').textContent='';
 }
 
-// ── GitHub Sync — reads are public (raw.githubusercontent.com, no
-// auth needed); writes go through /api/save-squid.js using the same
+// ── GitHub Sync — reads go through /api/get-squid.js (server-side,
+// always fresh); writes go through /api/save-squid.js using the same
 // admin password + repo/branch already configured in SmartPick above.
 function sgGithubConfig(){
   const c = spConfig();
@@ -4732,8 +4758,12 @@ async function sgLoadFromGithub(){
   if(!cfg.repo){ msg.className='custom-error'; msg.textContent='Enter Owner/Repo in the SmartPick System config above.'; return; }
   msg.className='custom-ok'; msg.textContent='Loading…';
   try{
-    const url = `https://raw.githubusercontent.com/${cfg.repo}/refs/heads/${cfg.branch}/${cfg.path}?t=${Date.now()}`;
-    const res = await fetch(url);
+    // Goes through /api/get-squid (reads api.github.com directly) instead
+    // of raw.githubusercontent.com, which is CDN-cached and can lag several
+    // minutes behind a fresh save — that lag was making saves look like
+    // they hadn't gone through.
+    const url = `/api/get-squid?path=${encodeURIComponent(cfg.path)}&t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
     if(res.status === 404){ msg.className='custom-error'; msg.textContent='No squid_game_state.json in the repo yet — hit Save first.'; return; }
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
@@ -4773,14 +4803,16 @@ async function sgSaveToGithub(silent){
   }
 }
 
-// Auto-load on page open — reads are public (raw.githubusercontent.com),
-// so this needs no token, just the repo/branch already configured above.
+// Auto-load on page open — goes through /api/get-squid (reads
+// api.github.com directly, server-side, using the PAT) instead of
+// raw.githubusercontent.com, so a save made moments ago doesn't get
+// hidden behind CDN cache lag on refresh.
 async function sgAutoLoadFromGithub(){
   const cfg = sgGithubConfig();
   if(!cfg.repo) return;
   try{
-    const url = `https://raw.githubusercontent.com/${cfg.repo}/refs/heads/${cfg.branch}/${cfg.path}?t=${Date.now()}`;
-    const res = await fetch(url);
+    const url = `/api/get-squid?path=${encodeURIComponent(cfg.path)}&t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
     if(!res.ok) return; // 404 or repo not reachable — silently keep local state
     const json = await res.json();
     if(json && Array.isArray(json.squad)){
