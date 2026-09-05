@@ -2,43 +2,88 @@
   "squad": [
     {
       "num": 8,
-      "streakType": null,
-      "streakCount": 0
-    },
-    {
-      "num": 22,
       "streakType": "miss",
-      "streakCount": 2
+      "streakCount": 1
     },
+    null,
     {
       "num": 9,
-      "streakType": null,
-      "streakCount": 0
+      "streakType": "miss",
+      "streakCount": 1
     },
     {
       "num": 35,
-      "streakType": null,
-      "streakCount": 0
+      "streakType": "miss",
+      "streakCount": 1
     },
     {
       "num": 30,
       "streakType": "miss",
-      "streakCount": 1
+      "streakCount": 2
     },
     {
       "num": 40,
       "streakType": "miss",
-      "streakCount": 1
+      "streakCount": 2
     }
   ],
   "cooldown": {
-    "10": 2,
-    "12": 2,
-    "25": 2,
-    "33": 1,
-    "45": 1
+    "10": 1,
+    "12": 1,
+    "22": 2,
+    "25": 1
   },
   "log": [
+    {
+      "seq": 15,
+      "date": "2026-09-03",
+      "result": [
+        29,
+        33,
+        39,
+        42,
+        43,
+        44
+      ],
+      "events": [
+        {
+          "num": 8,
+          "outcome": "miss",
+          "streakCount": 1,
+          "eliminated": false
+        },
+        {
+          "num": 22,
+          "outcome": "miss",
+          "streakCount": 3,
+          "eliminated": true
+        },
+        {
+          "num": 9,
+          "outcome": "miss",
+          "streakCount": 1,
+          "eliminated": false
+        },
+        {
+          "num": 35,
+          "outcome": "miss",
+          "streakCount": 1,
+          "eliminated": false
+        },
+        {
+          "num": 30,
+          "outcome": "miss",
+          "streakCount": 2,
+          "eliminated": false
+        },
+        {
+          "num": 40,
+          "outcome": "miss",
+          "streakCount": 2,
+          "eliminated": false
+        }
+      ]
+    },
     {
       "seq": 14,
       "date": "2026-08-31",
@@ -734,6 +779,6 @@
       ]
     }
   ],
-  "drawCount": 14,
+  "drawCount": 15,
   "squadStartedAt": "2026-07-14"
 }
