@@ -20,7 +20,11 @@
       "streakType": "miss",
       "streakCount": 2
     },
-    null,
+    {
+      "num": 15,
+      "streakType": null,
+      "streakCount": 0
+    },
     {
       "num": 39,
       "streakType": null,
