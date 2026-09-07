@@ -21,7 +21,11 @@
       "streakCount": 2
     },
     null,
-    null
+    {
+      "num": 39,
+      "streakType": null,
+      "streakCount": 0
+    }
   ],
   "cooldown": {
     "22": 1,
