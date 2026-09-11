@@ -138,6 +138,7 @@ body{
 .node.white-aura{box-shadow:0 0 10px 3px rgba(255,255,255,.55), 0 0 26px 10px rgba(200,215,255,.18);border-color:rgba(255,255,255,.5);}
 .node.gold-aura{box-shadow:0 0 12px 4px rgba(212,168,67,.65), 0 0 32px 13px rgba(212,168,67,.28);border-color:rgba(212,168,67,.65);}
 .node.orange-aura{box-shadow:0 0 12px 4px rgba(255,138,61,.7), 0 0 32px 13px rgba(255,138,61,.3);border-color:rgba(255,138,61,.6);}
+.node.green-aura{box-shadow:0 0 12px 4px rgba(74,222,128,.7), 0 0 32px 13px rgba(74,222,128,.3);border-color:rgba(74,222,128,.6);}
 .node.first-node{
   cursor:pointer;
 }
@@ -150,6 +151,24 @@ body{
 }
 .constel-info b{color:var(--gold);font-weight:700;}
 .disclaimer{font-size:11px;color:var(--muted);font-style:italic;margin-top:14px;opacity:.8;}
+
+.num-input-row{display:flex;gap:8px;flex-wrap:wrap;}
+.predict-num-input{
+  width:56px;background:var(--bg1);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:var(--ff-body);font-size:15px;font-weight:600;
+  padding:10px 6px;text-align:center;
+}
+.predict-num-input:focus{outline:none;border-color:var(--gold);}
+.runnerup-row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--bg1);border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;font-size:12px;margin-top:8px;
+}
+.runnerup-row.winner{border-color:rgba(255,138,61,.6);background:rgba(255,138,61,.08);}
+.runnerup-row .rr-num{font-family:var(--ff-head);font-size:16px;color:var(--white-g);min-width:26px;}
+.runnerup-row.winner .rr-num{color:var(--orange);}
+.runnerup-row .rr-gaps{color:var(--muted);flex:1;}
+.runnerup-row .rr-score{font-size:11px;color:var(--gold);white-space:nowrap;}
 
 /* ── PATTERN RANKING CHIPS ───────────────────────────────── */
 .pattern-groups{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
@@ -185,6 +204,14 @@ body{
 }
 .mini-node.white-aura{box-shadow:0 0 6px 2px rgba(255,255,255,.5), 0 0 14px 5px rgba(200,215,255,.18);}
 .mini-node.orange-aura{box-shadow:0 0 6px 2px rgba(255,138,61,.7), 0 0 16px 6px rgba(255,138,61,.3);border-color:rgba(255,138,61,.55);}
+.mini-node.green-aura{box-shadow:0 0 6px 2px rgba(74,222,128,.7), 0 0 16px 6px rgba(74,222,128,.3);border-color:rgba(74,222,128,.55);}
+
+.subtool{border-top:1px solid var(--border);margin-top:22px;padding-top:20px;}
+.subtool:first-of-type{margin-top:24px;}
+.subtool-title{font-family:var(--ff-head);font-size:19px;letter-spacing:.03em;margin-bottom:6px;}
+.subtool .card-desc{margin-bottom:14px;}
+.runnerup-row.weak-winner{border-color:rgba(74,222,128,.6);background:rgba(74,222,128,.08);}
+.runnerup-row.weak-winner .rr-num{color:#4ade80;}
 .mini-link{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   width:38px;flex-shrink:0;
@@ -245,6 +272,56 @@ body{
 
     <div class="constel-info" id="constel-info">Enter or roll a first number, then weave to see the chain.</div>
     <p class="disclaimer">✨ For fun only — TOTO draws are independent random events. No pattern here can predict the next draw.</p>
+  </div>
+
+  <!-- ═══ YOUR 6 NUMBERS: ADDITIONAL NUMBER + WEAKEST LINK ═══ -->
+  <div class="card">
+    <h3>Your 6 Numbers</h3>
+    <p class="card-desc">Enter the 6 numbers you're planning to play, then run either check below. These use the same gap-history idea as the constellation, but applied to numbers you've already chosen.</p>
+
+    <div class="controls-row" id="predict-inputs-row">
+      <div class="field">
+        <label>Your 6 numbers</label>
+        <div class="num-input-row">
+          <input type="number" class="predict-num-input" min="1" max="49" placeholder="#1">
+          <input type="number" class="predict-num-input" min="1" max="49" placeholder="#2">
+          <input type="number" class="predict-num-input" min="1" max="49" placeholder="#3">
+          <input type="number" class="predict-num-input" min="1" max="49" placeholder="#4">
+          <input type="number" class="predict-num-input" min="1" max="49" placeholder="#5">
+          <input type="number" class="predict-num-input" min="1" max="49" placeholder="#6">
+        </div>
+      </div>
+    </div>
+
+    <!-- Predict additional number -->
+    <div class="subtool">
+      <h4 class="subtool-title">🔮 Predict My Additional Number</h4>
+      <p class="card-desc">For every possible 7th number, this looks at every historical draw where that number was the actual additional number, and checks what gap usually sat right before and right after it. Whichever candidate's history best matches the gap your 6 numbers would create around it gets picked. Ties are broken at random; if nothing in history matches at all, a number is picked at random instead.</p>
+      <button class="btn btn-primary" id="p-predict-btn">🔮 Find My Additional Number</button>
+
+      <div class="constellation-wrap" id="predict-wrap" style="height:170px;">
+        <svg id="predict-svg" viewBox="0 0 760 170" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="nodes-layer" id="predict-nodes"></div>
+      </div>
+      <div class="constel-info" id="predict-info">Enter your 6 numbers above, then hit find.</div>
+      <div id="predict-runnerups"></div>
+      <p class="disclaimer">✨ For fun only — the real additional number is drawn independently and can't actually be predicted. Remember: swapping one of your 6 for this only helps you match the additional-number prize tier, at the cost of one jackpot slot.</p>
+    </div>
+
+    <!-- Weakest link check -->
+    <div class="subtool">
+      <h4 class="subtool-title">🟢 Weakest Link Check</h4>
+      <p class="card-desc">This looks at every historical draw's 6 main winning numbers (additional number not included) and builds a before/after gap profile for each number 1–49. It then checks which of your 6 numbers has the least historical support for the exact gap it sits in relative to its neighbours in your list — highlighted in green.</p>
+      <button class="btn btn-ghost" id="p-weakest-btn">🟢 Find Weakest Link</button>
+
+      <div class="constellation-wrap" id="weakest-wrap" style="height:170px;">
+        <svg id="weakest-svg" viewBox="0 0 760 170" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="nodes-layer" id="weakest-nodes"></div>
+      </div>
+      <div class="constel-info" id="weakest-info">Enter your 6 numbers above, then hit find.</div>
+      <div id="weakest-runnerups"></div>
+      <p class="disclaimer">✨ Important: every number has exactly the same 1-in-49 chance every draw. This is a pattern-conformity novelty, not a real predictor of what will or won't be drawn — use it (or ignore it) as you like.</p>
+    </div>
   </div>
 
   <!-- ═══ PATTERN RANKINGS ═══ -->
@@ -458,12 +535,49 @@ function minePositionalGaps(allDraws){
   return pos.map(m=>[...m.entries()].sort((a,b)=>b[1]-a[1]));
 }
 
-let patterns3=[], patterns4=[], positionalGaps=[];
+// For each number 1-49, collect {before,after} gap pairs from every historical
+// draw where that number was the actual additional number.
+function buildAdditionalProfiles(allDraws){
+  const profile = {};
+  for(let n=1;n<=49;n++) profile[n]=[];
+  for(const d of allDraws){
+    if(d.add==null) continue;
+    const {chain} = drawChain(d);
+    const idx = chain.findIndex(c=>c.isAdd);
+    if(idx<0) continue; // additional collided with a main number, skip
+    const before = idx>0 ? chain[idx].n - chain[idx-1].n : null;
+    const after = idx<chain.length-1 ? chain[idx+1].n - chain[idx].n : null;
+    if(!profile[d.add]) profile[d.add]=[];
+    profile[d.add].push({before, after});
+  }
+  return profile;
+}
+
+// For each number 1-49, collect {before,after} gap pairs from every historical
+// draw's 6 main winning numbers (additional number excluded).
+function buildMainNumberProfile(allDraws){
+  const profile = {};
+  for(let n=1;n<=49;n++) profile[n]=[];
+  for(const d of allDraws){
+    const sorted = [...new Set(d.nums)].sort((a,b)=>a-b);
+    if(sorted.length!==6) continue;
+    for(let i=0;i<6;i++){
+      const before = i>0 ? sorted[i]-sorted[i-1] : null;
+      const after = i<5 ? sorted[i+1]-sorted[i] : null;
+      profile[sorted[i]].push({before, after});
+    }
+  }
+  return profile;
+}
+
+let patterns3=[], patterns4=[], positionalGaps=[], additionalProfile={}, mainNumberProfile={};
 
 function buildEverything(){
   patterns3 = minePatterns(draws,3);
   patterns4 = minePatterns(draws,4);
   positionalGaps = minePositionalGaps(draws);
+  additionalProfile = buildAdditionalProfiles(draws);
+  mainNumberProfile = buildMainNumberProfile(draws);
 
   document.getElementById('p-csv-status').textContent =
     `✓ ${draws.length} draws loaded · ${patterns3.length} distinct 3-step runs · ${patterns4.length} distinct 4-step runs`;
@@ -683,6 +797,252 @@ document.getElementById('p-showmore-btn').addEventListener('click', ()=>{
   visibleChains += 25;
   renderChains();
 });
+
+// ═══════════════════════════════════════════════════════════
+// PREDICT MY ADDITIONAL NUMBER
+// ═══════════════════════════════════════════════════════════
+function predictAdditional(userNums){
+  const sorted = [...new Set(userNums)].sort((a,b)=>a-b);
+  const candidates = [];
+  for(let n=1;n<=49;n++) if(!sorted.includes(n)) candidates.push(n);
+
+  const results = candidates.map(A=>{
+    let insertIdx = sorted.findIndex(x=>x>A);
+    let before=null, after=null;
+    if(insertIdx===-1){ // bigger than all 6
+      insertIdx = sorted.length;
+      before = A - sorted[sorted.length-1];
+    } else if(insertIdx===0){ // smaller than all 6
+      after = sorted[0] - A;
+    } else {
+      before = A - sorted[insertIdx-1];
+      after = sorted[insertIdx] - A;
+    }
+
+    const entries = additionalProfile[A] || [];
+    let full=0, partial=0;
+    for(const e of entries){
+      const beforeApplicable = before!=null;
+      const afterApplicable = after!=null;
+      const beforeMatches = beforeApplicable && e.before===before;
+      const afterMatches = afterApplicable && e.after===after;
+      if(beforeApplicable && afterApplicable){
+        if(beforeMatches && afterMatches) full++;
+        else if(beforeMatches || afterMatches) partial++;
+      } else if(beforeApplicable && beforeMatches){
+        full++;
+      } else if(afterApplicable && afterMatches){
+        full++;
+      }
+    }
+    const score = full*10 + partial;
+    return {A, before, after, full, partial, score, sample:entries.length, insertIdx};
+  });
+
+  const maxScore = Math.max(...results.map(r=>r.score));
+  let pool, usedFallback=false;
+  if(maxScore>0){
+    pool = results.filter(r=>r.score===maxScore);
+  } else {
+    pool = results;
+    usedFallback = true;
+  }
+  const chosen = pool[Math.floor(Math.random()*pool.length)];
+  const ranked = [...results].sort((a,b)=>b.score-a.score);
+  return {chosen, ranked, usedFallback, sorted};
+}
+
+function renderChainGeneric(svgId, nodesId, chainArr, gapsArr){
+  const svg = document.getElementById(svgId);
+  const layer = document.getElementById(nodesId);
+  svg.innerHTML=''; layer.innerHTML='';
+  const total = chainArr.length;
+  const W=760, H=170, pad=50;
+  const positions=[];
+  for(let i=0;i<total;i++){
+    positions.push({x: pad + (W-2*pad)*(i/(total-1)), y: H/2});
+  }
+  const svgNS='http://www.w3.org/2000/svg';
+  for(let i=0;i<total-1;i++){
+    const a=positions[i], b=positions[i+1];
+    const line=document.createElementNS(svgNS,'line');
+    line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
+    line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
+    line.setAttribute('stroke','rgba(212,168,67,0.55)');
+    line.setAttribute('stroke-width','1.4');
+    svg.appendChild(line);
+    const mx=(a.x+b.x)/2, my=a.y-14;
+    const label=document.createElementNS(svgNS,'text');
+    label.setAttribute('x',mx);label.setAttribute('y',my);
+    label.setAttribute('text-anchor','middle');
+    label.setAttribute('class','gap-label');
+    label.textContent='+'+gapsArr[i];
+    svg.appendChild(label);
+  }
+  for(let i=0;i<total;i++){
+    const {x,y}=positions[i];
+    const div=document.createElement('div');
+    div.style.left=(x/W*100)+'%';
+    div.style.top=(y/H*100)+'%';
+    div.className='node show pop '+(chainArr[i].auraClass||'white-aura');
+    div.style.animationDelay=(i*0.08)+'s';
+    div.textContent=chainArr[i].n;
+    layer.appendChild(div);
+  }
+}
+
+function renderPredictionChain(chainArr, gapsArr){
+  renderChainGeneric('predict-svg','predict-nodes',
+    chainArr.map(c=>({n:c.n, auraClass:c.isPredicted?'orange-aura':'white-aura'})), gapsArr);
+}
+
+function runPrediction(){
+  const info = document.getElementById('predict-info');
+  const runnerWrap = document.getElementById('predict-runnerups');
+  runnerWrap.innerHTML='';
+
+  if(!draws.length){
+    info.textContent = 'Load toto.csv first — no history to learn from yet.';
+    return;
+  }
+  const inputs = [...document.querySelectorAll('.predict-num-input')];
+  const vals = inputs.map(inp=>parseInt(inp.value));
+  if(vals.some(v=>!v || v<1 || v>49)){
+    info.textContent = 'Please fill in all 6 numbers, each between 1 and 49.';
+    return;
+  }
+  if(new Set(vals).size !== 6){
+    info.textContent = 'Please enter 6 different numbers.';
+    return;
+  }
+
+  const {chosen, ranked, usedFallback, sorted} = predictAdditional(vals);
+
+  const finalSorted = [...sorted];
+  finalSorted.splice(chosen.insertIdx, 0, chosen.A);
+  const chainArr = finalSorted.map(n=>({n, isPredicted:n===chosen.A}));
+  const gapsArr=[];
+  for(let i=1;i<finalSorted.length;i++) gapsArr.push(finalSorted[i]-finalSorted[i-1]);
+
+  let sideDesc;
+  if(chosen.before!=null && chosen.after!=null) sideDesc = `sitting between a <b>+${chosen.before}</b> before it and a <b>+${chosen.after}</b> after it`;
+  else if(chosen.before!=null) sideDesc = `sitting after a <b>+${chosen.before}</b> gap, as the highest number`;
+  else sideDesc = `sitting before a <b>+${chosen.after}</b> gap, as the lowest number`;
+
+  if(usedFallback){
+    info.innerHTML = `No number in history matched this exact gap profile as an additional number, so <b>${chosen.A}</b> was picked at random from the ${49-6} candidates.<br>Chain: <b>${chainArr.map(c=>c.n).join(' → ')}</b>`;
+  } else {
+    info.innerHTML = `<b>${chosen.A}</b> was chosen — historically, when ${chosen.A} was the additional number, it matched ${sideDesc} ${chosen.full} time(s)${chosen.partial?` (plus ${chosen.partial} partial match${chosen.partial>1?'es':''})`:''} out of ${chosen.sample} appearance(s) as an additional number.<br>Chain: <b>${chainArr.map(c=>c.n).join(' → ')}</b>`;
+  }
+
+  renderPredictionChain(chainArr, gapsArr);
+
+  // runner-up transparency list (top 6 by score)
+  const top = ranked.slice(0,6);
+  const heading = document.createElement('div');
+  heading.style.cssText='font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;margin-bottom:4px;';
+  heading.textContent='Candidate ranking';
+  runnerWrap.appendChild(heading);
+  top.forEach(r=>{
+    const row=document.createElement('div');
+    row.className='runnerup-row'+(r.A===chosen.A?' winner':'');
+    const gapsTxt = [
+      r.before!=null?`+${r.before} before`:null,
+      r.after!=null?`+${r.after} after`:null
+    ].filter(Boolean).join(' · ');
+    row.innerHTML = `<span class="rr-num">${r.A}</span><span class="rr-gaps">${gapsTxt}</span><span class="rr-score">${r.full} exact${r.partial?` · ${r.partial} partial`:''} of ${r.sample}</span>`;
+    runnerWrap.appendChild(row);
+  });
+}
+
+document.getElementById('p-predict-btn').addEventListener('click', runPrediction);
+
+// ═══════════════════════════════════════════════════════════
+// WEAKEST LINK CHECK
+// ═══════════════════════════════════════════════════════════
+function findWeakestLink(userNums){
+  const sorted = [...new Set(userNums)].sort((a,b)=>a-b);
+  const info = sorted.map((num,i)=>{
+    const before = i>0 ? sorted[i]-sorted[i-1] : null;
+    const after = i<sorted.length-1 ? sorted[i+1]-sorted[i] : null;
+    const entries = mainNumberProfile[num] || [];
+    let full=0, partial=0;
+    for(const e of entries){
+      const beforeApplicable = before!=null;
+      const afterApplicable = after!=null;
+      const beforeMatches = beforeApplicable && e.before===before;
+      const afterMatches = afterApplicable && e.after===after;
+      if(beforeApplicable && afterApplicable){
+        if(beforeMatches && afterMatches) full++;
+        else if(beforeMatches || afterMatches) partial++;
+      } else if(beforeApplicable && beforeMatches){
+        full++;
+      } else if(afterApplicable && afterMatches){
+        full++;
+      }
+    }
+    const score = full*10 + partial;
+    return {num, before, after, full, partial, score, sample:entries.length};
+  });
+  const minScore = Math.min(...info.map(r=>r.score));
+  const pool = info.filter(r=>r.score===minScore);
+  const weakest = pool[Math.floor(Math.random()*pool.length)];
+  const ranked = [...info].sort((a,b)=>a.score-b.score);
+  return {weakest, ranked, sorted};
+}
+
+function runWeakestLink(){
+  const info = document.getElementById('weakest-info');
+  const runnerWrap = document.getElementById('weakest-runnerups');
+  runnerWrap.innerHTML='';
+
+  if(!draws.length){
+    info.textContent = 'Load toto.csv first — no history to learn from yet.';
+    return;
+  }
+  const inputs = [...document.querySelectorAll('.predict-num-input')];
+  const vals = inputs.map(inp=>parseInt(inp.value));
+  if(vals.some(v=>!v || v<1 || v>49)){
+    info.textContent = 'Please fill in all 6 numbers, each between 1 and 49.';
+    return;
+  }
+  if(new Set(vals).size !== 6){
+    info.textContent = 'Please enter 6 different numbers.';
+    return;
+  }
+
+  const {weakest, ranked, sorted} = findWeakestLink(vals);
+
+  const chainArr = sorted.map(n=>({n, auraClass: n===weakest.num ? 'green-aura' : 'white-aura'}));
+  const gapsArr = [];
+  for(let i=1;i<sorted.length;i++) gapsArr.push(sorted[i]-sorted[i-1]);
+
+  let sideDesc;
+  if(weakest.before!=null && weakest.after!=null) sideDesc = `flanked by <b>+${weakest.before}</b> before and <b>+${weakest.after}</b> after`;
+  else if(weakest.before!=null) sideDesc = `sitting after a <b>+${weakest.before}</b> gap, as your highest number`;
+  else sideDesc = `sitting before a <b>+${weakest.after}</b> gap, as your lowest number`;
+
+  info.innerHTML = `<b>${weakest.num}</b> is the weakest link — ${sideDesc}, that exact context matched only ${weakest.full} time(s)${weakest.partial?` (plus ${weakest.partial} partial)`:''} out of ${weakest.sample} times ${weakest.num} has appeared as a main winning number historically.<br>All 49 numbers still have an equal 1-in-49 chance each draw — this is purely a pattern-fit novelty.`;
+
+  renderChainGeneric('weakest-svg','weakest-nodes', chainArr, gapsArr);
+
+  const heading = document.createElement('div');
+  heading.style.cssText='font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;margin-bottom:4px;';
+  heading.textContent='Your 6 numbers, ranked weakest to strongest fit';
+  runnerWrap.appendChild(heading);
+  ranked.forEach(r=>{
+    const row=document.createElement('div');
+    row.className='runnerup-row'+(r.num===weakest.num?' weak-winner':'');
+    const gapsTxt = [
+      r.before!=null?`+${r.before} before`:null,
+      r.after!=null?`+${r.after} after`:null
+    ].filter(Boolean).join(' · ');
+    row.innerHTML = `<span class="rr-num">${r.num}</span><span class="rr-gaps">${gapsTxt}</span><span class="rr-score">${r.full} exact${r.partial?` · ${r.partial} partial`:''} of ${r.sample}</span>`;
+    runnerWrap.appendChild(row);
+  });
+}
+
+document.getElementById('p-weakest-btn').addEventListener('click', runWeakestLink);
 
 // initial empty constellation while CSV loads
 renderConstellation(null,null);
