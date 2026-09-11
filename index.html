@@ -406,7 +406,7 @@ body::before{
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media(max-width:600px){
   .topbar{padding-top:20px;}
-  .draw-pill{display:none;}
+  .draw-pill:not(.patterns-link){display:none;}
   .hero{padding:28px 0 24px;}
   .pair-grid{grid-template-columns:1fr 1fr;}
   .stat-row{grid-template-columns:1fr 1fr;}
@@ -1048,7 +1048,7 @@ body::before{
   <nav class="topbar fade-up">
     <div class="logo">TOTO <span>ANALYSER</span></div>
     <div class="topbar-right">
-      <a href="./toto-patterns.html" class="draw-pill" style="text-decoration:none;cursor:pointer;">✨<span>Patterns</span></a>
+      <a href="./toto-patterns.html" class="draw-pill patterns-link" style="text-decoration:none;cursor:pointer;">✨<span>Patterns</span></a>
       <div class="draw-pill"><div class="dot"></div><span id="pill-text">Next Draw</span></div>
       <div class="toggle" onclick="toggleTheme()">
         <span class="toggle-lbl" id="theme-lbl">Day</span>
