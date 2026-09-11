@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toto Patterns · Constellation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,600;1,9..40,700&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ──────────────────────────────────────────────── */
+:root{
+  --bg1:       #05060f;
+  --bg2:       #0a0e22;
+  --surface:   rgba(255,255,255,0.035);
+  --surface2:  rgba(255,255,255,0.06);
+  --border:    rgba(255,255,255,0.10);
+  --text:      #eef0ff;
+  --muted:     #8b90b3;
+  --gold:      #d4a843;
+  --gold-soft: rgba(212,168,67,0.14);
+  --orange:    #ff8a3d;
+  --white-g:   #dfe8ff;
+  --shadow:    0 8px 40px rgba(0,0,0,0.5);
+  --radius:    16px;
+  --ff-head:   'Bebas Neue', sans-serif;
+  --ff-body:   'DM Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--ff-body);
+  color:var(--text);
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(90,70,180,0.28), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(30,90,160,0.22), transparent),
+    radial-gradient(ellipse 70% 50% at 50% 110%, rgba(120,60,150,0.18), transparent),
+    linear-gradient(180deg, var(--bg1), var(--bg2) 40%, var(--bg1));
+  overflow-x:hidden;
+  position:relative;
+}
+#starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.star{position:absolute;background:#fff;border-radius:50%;opacity:.7;animation:twinkle ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes drift{0%{transform:translateY(0)}100%{transform:translateY(-40px)}}
+
+.site-wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 20px 90px;}
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:26px 0 6px;flex-wrap:wrap;gap:14px;}
+.logo{font-family:var(--ff-head);font-size:clamp(26px,5vw,40px);letter-spacing:.06em;line-height:1;}
+.logo span{color:var(--gold);}
+.back-link{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;
+  border:1px solid var(--border);border-radius:100px;padding:8px 16px;
+  background:var(--surface);
+  transition:color .2s, border-color .2s, background .2s;
+}
+.back-link:hover{color:var(--text);border-color:var(--gold);background:var(--gold-soft);}
+
+.eyebrow{font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.page-title{font-family:var(--ff-head);font-size:clamp(34px,7vw,58px);letter-spacing:.03em;line-height:1;margin:2px 0 10px;}
+.page-title em{color:var(--gold);font-style:normal;}
+.page-sub{color:var(--muted);font-size:13.5px;max-width:640px;line-height:1.6;margin-bottom:26px;}
+
+/* ── STATUS / CSV BAR ────────────────────────────────────── */
+.csv-bar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--border);border-radius:100px;
+  padding:10px 18px;margin-bottom:30px;font-size:12px;color:var(--muted);
+}
+.csv-bar label{
+  display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+  background:var(--surface2);border:1px solid var(--border);border-radius:100px;
+  padding:6px 14px;font-weight:600;color:var(--text);font-size:11.5px;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.csv-bar input[type="file"]{display:none;}
+#p-csv-status{font-weight:600;color:var(--text);}
+
+/* ── SECTION CARD ────────────────────────────────────────── */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:26px 24px;margin-bottom:34px;box-shadow:var(--shadow);
+  backdrop-filter: blur(6px);
+}
+.card h3{font-family:var(--ff-head);font-size:24px;letter-spacing:.03em;margin-bottom:4px;}
+.card .card-desc{color:var(--muted);font-size:12.5px;line-height:1.6;margin-bottom:18px;max-width:680px;}
+
+/* ── CONSTELLATION GENERATOR ─────────────────────────────── */
+.controls-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:22px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.field input[type="number"]{
+  width:110px;background:var(--bg1);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:var(--ff-body);font-size:16px;font-weight:600;
+  padding:10px 12px;text-align:center;
+}
+.field input[type="number"]:focus{outline:none;border-color:var(--gold);}
+.btn{
+  border:none;border-radius:10px;padding:11px 20px;font-family:var(--ff-body);
+  font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;transition:transform .12s, opacity .2s, box-shadow .2s;
+}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:linear-gradient(135deg, var(--gold), #f0c866);color:#241a05;box-shadow:0 4px 20px rgba(212,168,67,.35);}
+.btn-primary:hover{box-shadow:0 6px 26px rgba(212,168,67,.5);}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--gold);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+.constellation-wrap{position:relative;width:100%;height:250px;margin-bottom:6px;}
+@media(max-width:640px){.constellation-wrap{height:340px;}}
+.constellation-wrap svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+.gap-label{
+  font-family:var(--ff-body);font-size:11px;font-weight:700;fill:var(--gold);
+  paint-order:stroke; stroke:#05060f; stroke-width:4px; stroke-linejoin:round;
+}
+.nodes-layer{position:absolute;inset:0;}
+.node{
+  position:absolute;transform:translate(-50%,-50%);
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-head);font-size:19px;letter-spacing:.02em;
+  background:radial-gradient(circle at 32% 30%, #232a52, #060714 72%);
+  border:1px solid rgba(255,255,255,0.18);color:var(--white-g);
+  transition:box-shadow .4s, border-color .4s, transform .3s, opacity .4s;
+  opacity:0;
+}
+.node.show{opacity:1;}
+.node.empty-slot{
+  border:2px dashed rgba(255,255,255,.28);background:transparent;color:var(--muted);
+  font-family:var(--ff-body);font-size:11px;font-weight:600;
+}
+.node.white-aura{box-shadow:0 0 10px 3px rgba(255,255,255,.55), 0 0 26px 10px rgba(200,215,255,.18);border-color:rgba(255,255,255,.5);}
+.node.gold-aura{box-shadow:0 0 12px 4px rgba(212,168,67,.65), 0 0 32px 13px rgba(212,168,67,.28);border-color:rgba(212,168,67,.65);}
+.node.orange-aura{box-shadow:0 0 12px 4px rgba(255,138,61,.7), 0 0 32px 13px rgba(255,138,61,.3);border-color:rgba(255,138,61,.6);}
+.node.first-node{
+  cursor:pointer;
+}
+@keyframes popIn{0%{transform:translate(-50%,-50%) scale(.3);opacity:0;}70%{transform:translate(-50%,-50%) scale(1.15);opacity:1;}100%{transform:translate(-50%,-50%) scale(1);opacity:1;}}
+.node.pop{animation:popIn .5s cubic-bezier(.3,1.5,.5,1) forwards;}
+
+.constel-info{
+  margin-top:14px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;font-size:12px;color:var(--muted);line-height:1.7;
+}
+.constel-info b{color:var(--gold);font-weight:700;}
+.disclaimer{font-size:11px;color:var(--muted);font-style:italic;margin-top:14px;opacity:.8;}
+
+/* ── PATTERN RANKING CHIPS ───────────────────────────────── */
+.pattern-groups{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+@media(max-width:640px){.pattern-groups{grid-template-columns:1fr;}}
+.pattern-groups h4{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.chip-list{display:flex;flex-direction:column;gap:8px;}
+.chip{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--bg1);border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;font-size:12.5px;
+}
+.chip .seq{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--white-g);font-family:var(--ff-body);}
+.chip .seq .arrow{color:var(--gold);font-weight:400;}
+.chip .cnt{font-size:11px;color:var(--muted);white-space:nowrap;}
+
+/* ── HISTORICAL CHAIN ROWS ───────────────────────────────── */
+.chain-row{
+  display:flex;align-items:center;gap:16px;padding:12px 4px;
+  border-bottom:1px solid var(--border);flex-wrap:wrap;
+}
+.chain-row:last-child{border-bottom:none;}
+.chain-meta{
+  width:120px;flex-shrink:0;font-size:11px;color:var(--muted);line-height:1.5;
+}
+.chain-meta b{color:var(--text);font-family:var(--ff-body);font-weight:700;}
+.chain-nodes{display:flex;align-items:center;flex-wrap:wrap;row-gap:10px;}
+.mini-node{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-body);font-weight:700;font-size:12px;color:var(--white-g);
+  background:radial-gradient(circle at 32% 30%, #232a52, #060714 72%);
+  border:1px solid rgba(255,255,255,.15);
+}
+.mini-node.white-aura{box-shadow:0 0 6px 2px rgba(255,255,255,.5), 0 0 14px 5px rgba(200,215,255,.18);}
+.mini-node.orange-aura{box-shadow:0 0 6px 2px rgba(255,138,61,.7), 0 0 16px 6px rgba(255,138,61,.3);border-color:rgba(255,138,61,.55);}
+.mini-link{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:38px;flex-shrink:0;
+}
+.mini-link .g{font-size:9.5px;color:var(--gold);font-weight:700;margin-bottom:2px;}
+.mini-link .l{width:100%;height:1px;background:linear-gradient(90deg, rgba(212,168,67,.1), rgba(212,168,67,.7), rgba(212,168,67,.1));}
+
+.show-more-wrap{display:flex;justify-content:center;margin-top:18px;}
+
+.legend{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:18px;font-size:11.5px;color:var(--muted);}
+.legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+.legend .dot.white{background:#fff;box-shadow:0 0 6px 2px rgba(255,255,255,.7);}
+.legend .dot.orange{background:var(--orange);box-shadow:0 0 6px 2px rgba(255,138,61,.7);}
+
+.footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:20px;opacity:.7;}
+</style>
+</head>
+<body>
+<div id="starfield"></div>
+<div class="site-wrap">
+
+  <nav class="topbar">
+    <div class="logo">TOTO <span>PATTERNS</span></div>
+    <a class="back-link" href="./index.html">← Back to Analyser</a>
+  </nav>
+
+  <div class="eyebrow">Gap Ascension Study</div>
+  <h2 class="page-title">The <em>Constellation</em></h2>
+  <p class="page-sub">Every past draw is stretched into a rising chain of 7 numbers (6 winning + the additional number) and broken down into the gaps between them. This page mines those gap chains for the most common runs of ascension, then lets you weave your own 7-star constellation from a single starting number.</p>
+
+  <div class="csv-bar">
+    <label>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Load CSV
+      <input type="file" id="p-csv-input" accept=".csv">
+    </label>
+    <span id="p-csv-status">Loading toto.csv…</span>
+  </div>
+
+  <!-- ═══ CONSTELLATION GENERATOR ═══ -->
+  <div class="card">
+    <h3>Weave a Constellation</h3>
+    <p class="card-desc">Pick — or roll — a first star. Everything after it is built by chaining together the most common ascension patterns found in the loaded history, adjusted so the full run of 7 numbers always lands within 1–49.</p>
+
+    <div class="controls-row">
+      <div class="field">
+        <label for="p-start-input">First number (1–43)</label>
+        <input type="number" id="p-start-input" min="1" max="43" placeholder="—">
+      </div>
+      <button class="btn btn-ghost" id="p-random-btn">🎲 Random Start</button>
+      <button class="btn btn-primary" id="p-generate-btn">✨ Weave Constellation</button>
+    </div>
+
+    <div class="constellation-wrap" id="constel-wrap">
+      <svg id="constel-svg" viewBox="0 0 880 240" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="nodes-layer" id="constel-nodes"></div>
+    </div>
+
+    <div class="constel-info" id="constel-info">Enter or roll a first number, then weave to see the chain.</div>
+    <p class="disclaimer">✨ For fun only — TOTO draws are independent random events. No pattern here can predict the next draw.</p>
+  </div>
+
+  <!-- ═══ PATTERN RANKINGS ═══ -->
+  <div class="card">
+    <h3>Most Common Ascensions</h3>
+    <p class="card-desc">Across every loaded draw, these are the most frequent short runs of consecutive gaps — a 3-step run (4 numbers) and a 4-step run (5 numbers). The weaver above tries to splice a matching pair of these together first.</p>
+    <div class="pattern-groups">
+      <div>
+        <h4>Top 3-step runs</h4>
+        <div class="chip-list" id="chips-3"></div>
+      </div>
+      <div>
+        <h4>Top 4-step runs</h4>
+        <div class="chip-list" id="chips-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ HISTORICAL GAP CHAINS ═══ -->
+  <div class="card">
+    <h3>Historical Gap Chains</h3>
+    <p class="card-desc">Every loaded draw, stretched into its rising 7-number chain with the gap between each pair of stars.</p>
+    <div class="legend">
+      <span><span class="dot white"></span>Winning number</span>
+      <span><span class="dot orange"></span>Additional number</span>
+    </div>
+    <div id="chain-list"></div>
+    <div class="show-more-wrap"><button class="btn btn-ghost" id="p-showmore-btn">Show more draws</button></div>
+  </div>
+
+  <p class="footer-note" id="p-footer-note"></p>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STARFIELD
+// ═══════════════════════════════════════════════════════════
+(function(){
+  const field = document.getElementById('starfield');
+  const n = window.innerWidth < 640 ? 70 : 130;
+  for(let i=0;i<n;i++){
+    const s = document.createElement('div');
+    s.className='star';
+    const size = Math.random()*2.2+0.6;
+    s.style.width = size+'px';
+    s.style.height = size+'px';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*100+'%';
+    s.style.animationDuration = (Math.random()*3+2.5)+'s';
+    s.style.animationDelay = (Math.random()*4)+'s';
+    field.appendChild(s);
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════
+// CSV PARSING (mirrors main analyser's parser)
+// ═══════════════════════════════════════════════════════════
+let draws = []; // [{drawNo,date,nums:[6],add}]
+
+function splitLine(line){
+  if(line.includes('\t')) return line.split('\t').map(c=>c.trim().replace(/^"|"$/g,''));
+  const cols=[];
+  let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){inQ=!inQ;}
+    else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+    else cur+=ch;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2) return;
+
+  const headerLine=lines[0];
+  const headers=splitLine(headerLine).map(h=>h.toLowerCase().trim());
+  const hasHeader=/draw|date|number/i.test(headerLine);
+  const data=hasHeader?lines.slice(1):lines;
+
+  let iDraw=-1, iDate=-1, iNums=[], iAdd=-1;
+
+  if(hasHeader){
+    let winStart=-1;
+    headers.forEach((h,i)=>{
+      if(/draw/i.test(h)&&!/number/i.test(h)) iDraw=i;
+      if(/date/i.test(h)) iDate=i;
+      const m=h.match(/winning number\s*(\d+)/i);
+      if(m){
+        const n=parseInt(m[1])-1;
+        iNums[n]=i;
+        if(n===0) winStart=i;
+      }
+      if(/additional number/i.test(h)) iAdd=i;
+    });
+    if(winStart>=0 && iNums.filter(x=>x>=0).length===1){
+      for(let k=1;k<6;k++) iNums[k]=winStart+k;
+      if(iAdd<0) iAdd=winStart+6;
+    }
+  }
+
+  const useHeaderMode = iNums.length===6;
+  const parsed=[];
+  for(const line of data){
+    if(!line.trim()) continue;
+    const cols=splitLine(line);
+    if(cols.length<3) continue;
+
+    let nums=null, add=null, date=null;
+    if(useHeaderMode){
+      nums=iNums.map(idx=>parseInt(cols[idx]||'')).filter(n=>n>=1&&n<=49);
+      if(nums.length!==6) nums=null;
+      if(iAdd>=0) add=parseInt(cols[iAdd])||null;
+      if(iDate>=0) date=(cols[iDate]||'').trim()||null;
+    } else {
+      for(let i=0;i<cols.length-5;i++){
+        const chunk=cols.slice(i,i+6).map(c=>parseInt(c));
+        if(chunk.every(n=>n>=1&&n<=49)&&new Set(chunk).size===6){
+          nums=chunk;
+          add=parseInt(cols[i+6])||null;
+          break;
+        }
+      }
+      for(const c of cols){
+        if(/\d{4}/.test(c)&&(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/i.test(c)||/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}/.test(c))){
+          date=c;break;
+        }
+      }
+    }
+
+    const drawNo = iDraw>=0 ? parseInt(cols[iDraw])||null : parseInt(cols[0])||null;
+    if(nums&&nums.length===6) parsed.push({drawNo,date:date||'',nums,add});
+  }
+
+  if(!parsed.length){
+    document.getElementById('p-csv-status').textContent='Could not parse any draws.';
+    return;
+  }
+
+  const CUTOFF_DRAW=2993;
+  const filtered=parsed.filter(d=>!d.drawNo||d.drawNo>=CUTOFF_DRAW);
+  draws = filtered.length>0 ? filtered : parsed;
+
+  // Most recent first (CSV is already newest-first, but sort defensively by drawNo desc)
+  draws.sort((a,b)=>(b.drawNo||0)-(a.drawNo||0));
+
+  document.getElementById('p-csv-status').textContent =
+    `✓ Loaded ${draws.length} draws — mining gap patterns…`;
+
+  buildEverything();
+}
+
+document.getElementById('p-csv-input').addEventListener('change', function(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>parseCSV(ev.target.result);
+  r.readAsText(f);
+});
+
+(async function autoLoad(){
+  try{
+    const r = await fetch('./toto.csv');
+    if(!r.ok) throw new Error('no file');
+    const txt = await r.text();
+    parseCSV(txt);
+  } catch(e){
+    document.getElementById('p-csv-status').textContent =
+      'Could not auto-load toto.csv — please upload it manually.';
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════
+// GAP ANALYSIS
+// ═══════════════════════════════════════════════════════════
+function drawChain(d){
+  // Merge the 6 winning numbers + additional number into one ascending, deduped chain.
+  const withFlags = d.nums.map(n=>({n, isAdd:false}));
+  if(d.add!=null && !d.nums.includes(d.add)) withFlags.push({n:d.add, isAdd:true});
+  withFlags.sort((a,b)=>a.n-b.n);
+  const gaps=[];
+  for(let i=1;i<withFlags.length;i++) gaps.push(withFlags[i].n - withFlags[i-1].n);
+  return {chain:withFlags, gaps};
+}
+
+function minePatterns(allDraws, windowLen){
+  const freq = new Map();
+  for(const d of allDraws){
+    const {gaps} = drawChain(d);
+    if(gaps.length < windowLen) continue;
+    for(let i=0;i+windowLen<=gaps.length;i++){
+      const win = gaps.slice(i,i+windowLen);
+      const key = win.join(',');
+      freq.set(key, (freq.get(key)||0)+1);
+    }
+  }
+  return [...freq.entries()]
+    .map(([key,count])=>({pattern:key.split(',').map(Number), count}))
+    .sort((a,b)=>b.count-a.count || a.pattern.join().localeCompare(b.pattern.join()));
+}
+
+// positional single-step gap frequency, used as a fallback fill
+function minePositionalGaps(allDraws){
+  // pos[i] = Map(gapValue -> count) for gap index i (0..5)
+  const pos = [new Map(),new Map(),new Map(),new Map(),new Map(),new Map()];
+  for(const d of allDraws){
+    const {gaps} = drawChain(d);
+    gaps.forEach((g,i)=>{ if(pos[i]){ pos[i].set(g,(pos[i].get(g)||0)+1); } });
+  }
+  return pos.map(m=>[...m.entries()].sort((a,b)=>b[1]-a[1]));
+}
+
+let patterns3=[], patterns4=[], positionalGaps=[];
+
+function buildEverything(){
+  patterns3 = minePatterns(draws,3);
+  patterns4 = minePatterns(draws,4);
+  positionalGaps = minePositionalGaps(draws);
+
+  document.getElementById('p-csv-status').textContent =
+    `✓ ${draws.length} draws loaded · ${patterns3.length} distinct 3-step runs · ${patterns4.length} distinct 4-step runs`;
+
+  renderPatternChips();
+  visibleChains = 25;
+  renderChains();
+  document.getElementById('p-footer-note').textContent =
+    `Patterns recompute automatically from whatever is in toto.csv — add more draws and reload to sharpen them.`;
+
+  // seed a default start number for convenience
+  if(!document.getElementById('p-start-input').value){
+    document.getElementById('p-start-input').value = randomStart();
+  }
+  renderConstellation(null,null); // empty state
+}
+
+function randomStart(){ return Math.floor(Math.random()*43)+1; }
+
+function renderPatternChips(){
+  const c3 = document.getElementById('chips-3');
+  const c4 = document.getElementById('chips-4');
+  c3.innerHTML=''; c4.innerHTML='';
+  patterns3.slice(0,8).forEach(p=>c3.appendChild(chipEl(p)));
+  patterns4.slice(0,8).forEach(p=>c4.appendChild(chipEl(p)));
+  if(!patterns3.length) c3.innerHTML='<div class="chip"><span class="cnt">No data yet</span></div>';
+  if(!patterns4.length) c4.innerHTML='<div class="chip"><span class="cnt">No data yet</span></div>';
+}
+function chipEl(p){
+  const div=document.createElement('div');
+  div.className='chip';
+  const seq = p.pattern.map(g=>'+'+g).join('<span class="arrow"> → </span>');
+  div.innerHTML = `<span class="seq">${seq}</span><span class="cnt">×${p.count}</span>`;
+  return div;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONSTELLATION GENERATOR LOGIC
+// ═══════════════════════════════════════════════════════════
+function tryOverlapCombos(start){
+  // Look for a top 4-step pattern (covers gaps 0-3) whose LAST gap
+  // matches the FIRST gap of a top 3-step pattern (covers gaps 3-5).
+  const P4 = patterns4.slice(0,40);
+  const P3 = patterns3.slice(0,40);
+  const combos=[];
+  for(const p4 of P4){
+    for(const p3 of P3){
+      if(p4.pattern[3] === p3.pattern[0]){
+        const gaps = [...p4.pattern, ...p3.pattern.slice(1)]; // 6 gaps total
+        const total = gaps.reduce((a,b)=>a+b,0);
+        if(start + total <= 49){
+          combos.push({gaps, score:p4.count+p3.count, desc:{p4,p3}});
+        }
+      }
+    }
+  }
+  combos.sort((a,b)=>b.score-a.score);
+  return combos[0] || null;
+}
+
+function greedyFallback(start){
+  // Fill 6 gaps one at a time using positional frequency, always
+  // keeping the running total within budget (49 - start).
+  const budget = 49 - start;
+  const gaps=[];
+  let used=0;
+  for(let i=0;i<6;i++){
+    const remainingSlots = 6 - i - 1; // slots still needed after this one
+    const candidates = positionalGaps[i] && positionalGaps[i].length
+      ? positionalGaps[i]
+      : [[1,1]];
+    let chosen=null;
+    for(const [g] of candidates){
+      // leave at least 1 for each remaining slot
+      if(used + g + remainingSlots <= budget){ chosen=g; break; }
+    }
+    if(chosen==null) chosen = Math.max(1, budget - used - remainingSlots);
+    gaps.push(chosen);
+    used += chosen;
+  }
+  return gaps;
+}
+
+function weaveConstellation(){
+  const input = document.getElementById('p-start-input');
+  let start = parseInt(input.value);
+  if(!start || start<1) start=randomStart();
+  if(start>43) start=43;
+  input.value = start;
+
+  if(!draws.length){
+    document.getElementById('constel-info').textContent = 'Load toto.csv first — no history to learn from yet.';
+    return;
+  }
+
+  let gaps, infoHtml;
+  const combo = tryOverlapCombos(start);
+  if(combo){
+    gaps = combo.gaps;
+    const {p4,p3} = combo.desc;
+    infoHtml = `Spliced a <b>4-step run</b> [${p4.pattern.map(g=>'+'+g).join(', ')}] (seen ${p4.count}×) with a <b>3-step run</b> [${p3.pattern.map(g=>'+'+g).join(', ')}] (seen ${p3.count}×), overlapping at <b>+${p4.pattern[3]}</b>.`;
+  } else {
+    gaps = greedyFallback(start);
+    infoHtml = `No common 4-step + 3-step combo fit under 49 from <b>${start}</b>, so the weaver fell back to the single most common gap at each position that still fits.`;
+  }
+
+  const nums=[start];
+  for(const g of gaps) nums.push(nums[nums.length-1]+g);
+
+  document.getElementById('constel-info').innerHTML = infoHtml +
+    `<br>Chain: <b>${nums.join(' → ')}</b>`;
+
+  renderConstellation(nums, gaps);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONSTELLATION RENDER (top generator widget)
+// ═══════════════════════════════════════════════════════════
+function nodePos(i,total){
+  const w=880,h=240,pad=60;
+  const x = pad + (w-2*pad)*(i/(total-1));
+  const y = 120 + Math.sin(i*1.05)*68;
+  return {x,y};
+}
+
+function renderConstellation(nums, gaps){
+  const svg = document.getElementById('constel-svg');
+  const layer = document.getElementById('constel-nodes');
+  svg.innerHTML=''; layer.innerHTML='';
+  const total=7;
+  const positions=[];
+  for(let i=0;i<total;i++) positions.push(nodePos(i,total));
+
+  // lines
+  for(let i=0;i<total-1;i++){
+    const a=positions[i], b=positions[i+1];
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
+    line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+    line.setAttribute('stroke', gaps ? 'rgba(212,168,67,0.55)' : 'rgba(255,255,255,0.12)');
+    line.setAttribute('stroke-width','1.4');
+    svg.appendChild(line);
+
+    if(gaps){
+      const mx=(a.x+b.x)/2, my=(a.y+b.y)/2-8;
+      const label=document.createElementNS('http://www.w3.org/2000/svg','text');
+      label.setAttribute('x',mx); label.setAttribute('y',my);
+      label.setAttribute('text-anchor','middle');
+      label.setAttribute('class','gap-label');
+      label.textContent='+'+gaps[i];
+      svg.appendChild(label);
+    }
+  }
+
+  // nodes
+  for(let i=0;i<total;i++){
+    const {x,y}=positions[i];
+    const div=document.createElement('div');
+    div.style.left=(x/880*100)+'%';
+    div.style.top=(y/240*100)+'%';
+    if(nums){
+      div.className='node show pop '+(i===0?'gold-aura':'white-aura');
+      div.style.animationDelay=(i*0.12)+'s';
+      div.textContent=nums[i];
+    } else {
+      div.className='node show '+(i===0?'first-node empty-slot':'empty-slot');
+      div.textContent = i===0 ? '?' : '·';
+    }
+    layer.appendChild(div);
+  }
+}
+
+document.getElementById('p-generate-btn').addEventListener('click', weaveConstellation);
+document.getElementById('p-random-btn').addEventListener('click', ()=>{
+  document.getElementById('p-start-input').value = randomStart();
+});
+
+// ═══════════════════════════════════════════════════════════
+// HISTORICAL CHAIN LIST
+// ═══════════════════════════════════════════════════════════
+let visibleChains = 25;
+function renderChains(){
+  const wrap = document.getElementById('chain-list');
+  wrap.innerHTML='';
+  const slice = draws.slice(0, visibleChains);
+  for(const d of slice){
+    const {chain,gaps} = drawChain(d);
+    const row=document.createElement('div');
+    row.className='chain-row';
+
+    const meta=document.createElement('div');
+    meta.className='chain-meta';
+    meta.innerHTML = `<b>#${d.drawNo||'—'}</b><br>${d.date||''}`;
+    row.appendChild(meta);
+
+    const nodesWrap=document.createElement('div');
+    nodesWrap.className='chain-nodes';
+    chain.forEach((c,i)=>{
+      const n=document.createElement('div');
+      n.className='mini-node '+(c.isAdd?'orange-aura':'white-aura');
+      n.textContent=c.n;
+      nodesWrap.appendChild(n);
+      if(i<chain.length-1){
+        const link=document.createElement('div');
+        link.className='mini-link';
+        link.innerHTML = `<span class="g">+${gaps[i]}</span><span class="l"></span>`;
+        nodesWrap.appendChild(link);
+      }
+    });
+    row.appendChild(nodesWrap);
+    wrap.appendChild(row);
+  }
+  document.getElementById('p-showmore-btn').style.display =
+    visibleChains >= draws.length ? 'none' : 'inline-block';
+}
+document.getElementById('p-showmore-btn').addEventListener('click', ()=>{
+  visibleChains += 25;
+  renderChains();
+});
+
+// initial empty constellation while CSV loads
+renderConstellation(null,null);
+</script>
+</body>
+</html>
