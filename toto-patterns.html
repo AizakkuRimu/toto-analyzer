@@ -254,6 +254,7 @@ body{
     <div class="controls-row" style="margin-top:14px;">
       <button class="btn btn-ghost" id="p-mark-additional-btn" style="color:var(--orange);border-color:rgba(255,138,61,.4);">🟠 Mark Additional Number</button>
       <button class="btn btn-ghost" id="p-mark-weak-btn" style="color:#4ade80;border-color:rgba(74,222,128,.4);">🟢 Mark Weakest Link</button>
+      <button class="btn btn-ghost" id="p-copy-btn">📋 Copy Numbers</button>
     </div>
     <div class="constel-info" id="constel-mark-info" style="display:none;"></div>
 
@@ -836,6 +837,38 @@ function markWeakestLink(){
 
 document.getElementById('p-mark-additional-btn').addEventListener('click', markAdditionalNumber);
 document.getElementById('p-mark-weak-btn').addEventListener('click', markWeakestLink);
+
+// ═══════════════════════════════════════════════════════════
+// COPY NUMBERS (with (additional) and <weakest> markers)
+// ═══════════════════════════════════════════════════════════
+function copyConstellation(){
+  const markInfo = document.getElementById('constel-mark-info');
+  if(!currentConstelNums){
+    markInfo.style.display='block';
+    markInfo.textContent = 'Weave a constellation first.';
+    return;
+  }
+  const dateStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
+  const parts = currentConstelNums.map((n,i)=>{
+    if(i===markedAdditionalIdx) return `(${n})`;
+    if(i===markedWeakIdx) return `<${n}>`;
+    return `${n}`;
+  });
+  const text = `${dateStr}: ${parts.join(', ')}`;
+  const btn = document.getElementById('p-copy-btn');
+  const done = ()=>{
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(()=>{ btn.textContent = orig; }, 1500);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>window.prompt('Copy this:', text));
+  } else {
+    window.prompt('Copy this:', text);
+  }
+}
+
+document.getElementById('p-copy-btn').addEventListener('click', copyConstellation);
 
 // initial empty constellation while CSV loads
 renderConstellation(null,null);
