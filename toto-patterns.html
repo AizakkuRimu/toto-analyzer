@@ -206,6 +206,24 @@ body{
 .legend .dot.orange{background:var(--orange);box-shadow:0 0 6px 2px rgba(255,138,61,.7);}
 
 .footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:20px;opacity:.7;}
+
+/* ── PATTERN TOGGLES ─────────────────────────────────────── */
+.toggle-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.toggle-btn{
+  display:flex;align-items:center;gap:8px;flex:1 1 220px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;cursor:pointer;color:var(--text);font-family:var(--ff-body);
+  transition:border-color .2s, background .2s, box-shadow .2s;text-align:left;
+}
+.toggle-btn:hover{border-color:var(--gold);}
+.toggle-btn.active{border-color:var(--gold);background:var(--gold-soft);box-shadow:0 0 0 1px rgba(212,168,67,.4) inset;}
+.toggle-btn.detected .tg-icon{filter:drop-shadow(0 0 4px rgba(74,222,128,.9));}
+.tg-icon{font-size:18px;flex-shrink:0;}
+.tg-label{font-weight:700;font-size:12px;flex:1;letter-spacing:.01em;}
+.tg-stat{font-size:10px;color:var(--muted);white-space:nowrap;}
+.toggle-btn.active .tg-stat{color:var(--gold);}
+.chain-badges{display:flex;gap:4px;margin-left:auto;flex-shrink:0;align-self:center;}
+.chain-badge{font-size:13px;line-height:1;}
 </style>
 </head>
 <body>
@@ -259,6 +277,30 @@ body{
     <div class="constel-info" id="constel-mark-info" style="display:none;"></div>
 
     <p class="disclaimer">✨ For fun only — TOTO draws are independent random events. No pattern here can predict the next draw.</p>
+  </div>
+
+  <!-- ═══ PATTERN TOGGLES ═══ -->
+  <div class="card">
+    <h3>Pattern Toggles</h3>
+    <p class="card-desc">Every past draw is checked for four number-shape patterns. Flip any toggle on and the 7 numbers above are reshaped to guarantee that pattern — spliced in from a real historical example of it — while keeping any other active toggles satisfied too.</p>
+
+    <div class="toggle-row" id="toggle-row">
+      <button class="toggle-btn" id="tg-front" data-key="front">
+        <span class="tg-icon">🔟</span><span class="tg-label">Same Front Digit</span><span class="tg-stat" id="tg-front-stat">—</span>
+      </button>
+      <button class="toggle-btn" id="tg-back" data-key="back">
+        <span class="tg-icon">🎯</span><span class="tg-label">Same Back Digit</span><span class="tg-stat" id="tg-back-stat">—</span>
+      </button>
+      <button class="toggle-btn" id="tg-flip" data-key="flip">
+        <span class="tg-icon">🔄</span><span class="tg-label">Flipped Numbers</span><span class="tg-stat" id="tg-flip-stat">—</span>
+      </button>
+      <button class="toggle-btn" id="tg-neigh" data-key="neigh">
+        <span class="tg-icon">🤝</span><span class="tg-label">Neighbouring Numbers</span><span class="tg-stat" id="tg-neigh-stat">—</span>
+      </button>
+    </div>
+
+    <div class="constel-info" id="toggle-detect-info">Weave a constellation to see which patterns it currently contains.</div>
+    <div class="constel-info" id="toggle-suggest-info" style="border-color:rgba(212,168,67,.35);display:none;"></div>
   </div>
 
   <!-- ═══ PATTERN RANKINGS ═══ -->
@@ -509,17 +551,244 @@ function buildMainNumberProfile(allDraws){
 
 let patterns3=[], patterns4=[], positionalGaps=[], additionalProfile={}, mainNumberProfile={};
 
+// ═══════════════════════════════════════════════════════════
+// FOUR NUMBER-SHAPE PATTERN DETECTORS
+// (1) same front digit  (2) same back digit  (3) flipped numbers  (4) neighbours
+// ═══════════════════════════════════════════════════════════
+function frontDigit(n){ return Math.floor(n/10); }
+function backDigit(n){ return n%10; }
+function flipOf(n){
+  if(n<10) return null; // single digits have no meaningful "flip"
+  const t=Math.floor(n/10), u=n%10;
+  const r=u*10+t;
+  if(r<1||r>49||r===n) return null;
+  return r;
+}
+function groupByKey(nums, fn){
+  const m=new Map();
+  for(const n of nums){ const k=fn(n); if(!m.has(k)) m.set(k,[]); m.get(k).push(n); }
+  return m;
+}
+// nums: array of 7 unique numbers (6 main + additional, treated as one chain)
+function detectPatterns(nums){
+  const frontGroups=[...groupByKey(nums, frontDigit).values()].filter(g=>g.length>=2).map(g=>g.sort((a,b)=>a-b));
+  const backGroups=[...groupByKey(nums, backDigit).values()].filter(g=>g.length>=2).map(g=>g.sort((a,b)=>a-b));
+
+  const flipped=[]; const seen=new Set();
+  for(const n of nums){
+    const r=flipOf(n);
+    if(r!=null && nums.includes(r) && !seen.has(n) && !seen.has(r)){
+      flipped.push([Math.min(n,r), Math.max(n,r)]);
+      seen.add(n); seen.add(r);
+    }
+  }
+
+  const sorted=[...new Set(nums)].sort((a,b)=>a-b);
+  const neighRuns=[]; let run=sorted.length?[sorted[0]]:[];
+  for(let i=1;i<sorted.length;i++){
+    if(sorted[i]===sorted[i-1]+1) run.push(sorted[i]);
+    else { if(run.length>=2) neighRuns.push([...run]); run=[sorted[i]]; }
+  }
+  if(run.length>=2) neighRuns.push([...run]);
+
+  return {
+    front:{active:frontGroups.length>0, groups:frontGroups},
+    back:{active:backGroups.length>0, groups:backGroups},
+    flip:{active:flipped.length>0, pairs:flipped},
+    neigh:{active:neighRuns.length>0, runs:neighRuns}
+  };
+}
+function maskOf(pat){ return (pat.front.active?1:0)|(pat.back.active?2:0)|(pat.flip.active?4:0)|(pat.neigh.active?8:0); }
+const TOGGLE_KEYS=['front','back','flip','neigh'];
+const TOGGLE_BITS={front:1,back:2,flip:4,neigh:8};
+const TOGGLE_LABELS={front:'Same Front Digit',back:'Same Back Digit',flip:'Flipped Numbers',neigh:'Neighbouring Numbers'};
+
+// ── Mine every historical draw for these 4 patterns ──
+let toggleRecords=[], toggleTransitions=new Map();
+let patternBank={front:[],back:[],flip:[],neigh:[]};
+
+function buildToggleHistory(){
+  const asc=[...draws].sort((a,b)=>(a.drawNo||0)-(b.drawNo||0)); // oldest → newest, for transitions
+  toggleRecords = asc.map(d=>{
+    const {chain}=drawChain(d);
+    const nums=chain.map(c=>c.n);
+    const pat=detectPatterns(nums);
+    return {drawNo:d.drawNo, date:d.date, nums, pat, mask:maskOf(pat)};
+  });
+
+  patternBank={front:[],back:[],flip:[],neigh:[]};
+  for(const r of toggleRecords){
+    r.pat.front.groups.forEach(g=>patternBank.front.push(g));
+    r.pat.back.groups.forEach(g=>patternBank.back.push(g));
+    r.pat.flip.pairs.forEach(p=>patternBank.flip.push(p));
+    r.pat.neigh.runs.forEach(run=>patternBank.neigh.push(run));
+  }
+
+  toggleTransitions=new Map();
+  for(let i=0;i<toggleRecords.length-1;i++){
+    const from=toggleRecords[i].mask, to=toggleRecords[i+1].mask;
+    if(!toggleTransitions.has(from)) toggleTransitions.set(from, new Map());
+    const m=toggleTransitions.get(from);
+    m.set(to,(m.get(to)||0)+1);
+  }
+}
+
+function toggleStatPct(key){
+  if(!toggleRecords.length) return null;
+  const bit=TOGGLE_BITS[key];
+  let count=0;
+  for(const r of toggleRecords) if(r.mask & bit) count++;
+  return Math.round(count/toggleRecords.length*100);
+}
+
+function renderToggleStats(){
+  TOGGLE_KEYS.forEach(k=>{
+    const el=document.getElementById('tg-'+k+'-stat');
+    if(!el) return;
+    const pct=toggleStatPct(k);
+    el.textContent = pct==null ? '—' : pct+'% of draws';
+  });
+}
+
+function describeMask(m){
+  if(m===0) return 'none of the four patterns';
+  return TOGGLE_KEYS.filter(k=>m&TOGGLE_BITS[k]).map(k=>TOGGLE_LABELS[k]).join(' + ');
+}
+
+function suggestNextToggles(){
+  const el=document.getElementById('toggle-suggest-info');
+  if(!toggleRecords.length){ el.style.display='none'; return; }
+  el.style.display='block';
+  const last=toggleRecords[toggleRecords.length-1];
+  const trans=toggleTransitions.get(last.mask);
+  if(!trans || !trans.size){
+    el.innerHTML = `Last loaded draw (#${last.drawNo||'—'}) showed <b>${describeMask(last.mask)}</b>. Not enough history yet after that exact combo to suggest what tends to follow it.`;
+    return;
+  }
+  let bestMask=null,bestCount=-1;
+  for(const [m,c] of trans.entries()) if(c>bestCount){bestCount=c;bestMask=m;}
+  const total=[...trans.values()].reduce((a,b)=>a+b,0);
+  el.innerHTML = `Last loaded draw (#${last.drawNo||'—'}) showed <b>${describeMask(last.mask)}</b>. Historically, the draw right after that combo has most often gone on to show <b>${describeMask(bestMask)}</b> (${bestCount}/${total} times). Suggested toggles for your next weave: <b>${bestMask===0?'leave all off':TOGGLE_KEYS.filter(k=>bestMask&TOGGLE_BITS[k]).map(k=>TOGGLE_LABELS[k]).join(', ')}</b>.`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOGGLE-DRIVEN NUMBER RESHAPING
+// Injects a real historical example of a pattern into the current
+// 7-number set, trying to preserve everything else already true.
+// ═══════════════════════════════════════════════════════════
+let activeToggles={front:false, back:false, flip:false, neigh:false};
+
+function pickWeighted(bank){
+  if(!bank || !bank.length) return null;
+  return bank[Math.floor(Math.random()*bank.length)]; // bank has one entry per historical occurrence, so this is frequency-weighted
+}
+
+function tryInjectPattern(nums, key){
+  for(let attempt=0; attempt<40; attempt++){
+    let candidate=[...nums];
+    let unit=null;
+    if(key==='front' || key==='back'){
+      const bank = key==='front'?patternBank.front:patternBank.back;
+      unit = pickWeighted(bank);
+      if(!unit){
+        const digit=Math.floor(Math.random()*(key==='front'?5:10));
+        const cands=[]; for(let n=1;n<=49;n++) if((key==='front'?frontDigit(n):backDigit(n))===digit) cands.push(n);
+        unit = cands.sort(()=>Math.random()-0.5).slice(0,2);
+      }
+      unit = unit.slice(0, Math.min(unit.length,3)); // cap so other toggles still have room
+    } else if(key==='flip'){
+      unit = pickWeighted(patternBank.flip);
+      if(!unit){ for(let n=10;n<=49;n++){ const r=flipOf(n); if(r){ unit=[Math.min(n,r),Math.max(n,r)]; break; } } }
+    } else if(key==='neigh'){
+      unit = pickWeighted(patternBank.neigh);
+      if(!unit){ const s=Math.floor(Math.random()*47)+1; unit=[s,s+1]; }
+      unit = unit.slice(0, Math.min(unit.length,3));
+    }
+    if(!unit || unit.length<2) continue;
+
+    candidate = candidate.filter(n=>!unit.includes(n));
+    while(candidate.length + unit.length > 7) candidate.pop();
+    candidate = [...new Set([...candidate, ...unit])];
+    while(candidate.length<7){
+      const n=Math.floor(Math.random()*49)+1;
+      if(!candidate.includes(n)) candidate.push(n);
+    }
+    candidate = candidate.slice(0,7);
+    if(new Set(candidate).size===7) return candidate;
+  }
+  return null;
+}
+
+function applyActiveToggles(baseNums){
+  let nums=[...baseNums];
+  const order=TOGGLE_KEYS.filter(k=>activeToggles[k]);
+  if(!order.length) return nums.sort((a,b)=>a-b);
+
+  for(let pass=0; pass<4; pass++){
+    let allGood=true;
+    for(const key of order){
+      const pat=detectPatterns(nums);
+      if(!pat[key].active){
+        allGood=false;
+        const injected=tryInjectPattern(nums, key);
+        if(injected) nums=injected;
+      }
+    }
+    if(allGood) break;
+  }
+  return nums.sort((a,b)=>a-b);
+}
+
+function updateToggleDetectionInfo(nums){
+  const el=document.getElementById('toggle-detect-info');
+  if(!nums){
+    el.textContent='Weave a constellation to see which patterns it currently contains.';
+    TOGGLE_KEYS.forEach(k=>{ const b=document.getElementById('tg-'+k); if(b) b.classList.remove('detected'); });
+    return;
+  }
+  const pat=detectPatterns(nums);
+  const parts=[];
+  if(pat.front.active) parts.push(`<b>Same front digit</b>: ${pat.front.groups.map(g=>g.join(', ')).join(' · ')}`);
+  if(pat.back.active) parts.push(`<b>Same back digit</b>: ${pat.back.groups.map(g=>g.join(', ')).join(' · ')}`);
+  if(pat.flip.active) parts.push(`<b>Flipped pair</b>: ${pat.flip.pairs.map(p=>p.join(' ↔ ')).join(' · ')}`);
+  if(pat.neigh.active) parts.push(`<b>Neighbouring run</b>: ${pat.neigh.runs.map(r=>r.join('-')).join(' · ')}`);
+  el.innerHTML = parts.length ? parts.join('<br>') : 'This constellation currently has none of the four patterns.';
+  TOGGLE_KEYS.forEach(k=>{
+    const b=document.getElementById('tg-'+k);
+    if(b) b.classList.toggle('detected', pat[k].active);
+  });
+}
+
+TOGGLE_KEYS.forEach(key=>{
+  const btn=document.getElementById('tg-'+key);
+  btn.addEventListener('click', ()=>{
+    activeToggles[key]=!activeToggles[key];
+    btn.classList.toggle('active', activeToggles[key]);
+    if(!currentConstelNums || !draws.length) return;
+    const finalNums = applyActiveToggles(currentConstelNums);
+    const freshGaps=[]; for(let i=1;i<finalNums.length;i++) freshGaps.push(finalNums[i]-finalNums[i-1]);
+    const onList = TOGGLE_KEYS.filter(k=>activeToggles[k]).map(k=>TOGGLE_LABELS[k]).join(', ') || '—';
+    document.getElementById('constel-info').innerHTML =
+      `Reshaped to include: <b>${onList}</b><br>Chain: <b>${finalNums.join(' → ')}</b>`;
+    renderConstellation(finalNums, freshGaps);
+    updateToggleDetectionInfo(finalNums);
+  });
+});
+
 function buildEverything(){
   patterns3 = minePatterns(draws,3);
   patterns4 = minePatterns(draws,4);
   positionalGaps = minePositionalGaps(draws);
   additionalProfile = buildAdditionalProfiles(draws);
   mainNumberProfile = buildMainNumberProfile(draws);
+  buildToggleHistory();
 
   document.getElementById('p-csv-status').textContent =
     `✓ ${draws.length} draws loaded · ${patterns3.length} distinct 3-step runs · ${patterns4.length} distinct 4-step runs`;
 
   renderPatternChips();
+  renderToggleStats();
+  suggestNextToggles();
   visibleChains = 25;
   renderChains();
   document.getElementById('p-footer-note').textContent =
@@ -624,10 +893,21 @@ function weaveConstellation(){
   const nums=[start];
   for(const g of gaps) nums.push(nums[nums.length-1]+g);
 
-  document.getElementById('constel-info').innerHTML = infoHtml +
-    `<br>Chain: <b>${nums.join(' → ')}</b>`;
+  const hasToggles = TOGGLE_KEYS.some(k=>activeToggles[k]);
+  const finalNums = hasToggles ? applyActiveToggles(nums) : nums;
+  const finalGaps = hasToggles
+    ? (()=>{ const gg=[]; for(let i=1;i<finalNums.length;i++) gg.push(finalNums[i]-finalNums[i-1]); return gg; })()
+    : gaps;
 
-  renderConstellation(nums, gaps);
+  const toggleNote = hasToggles
+    ? `<br>Reshaped for: <b>${TOGGLE_KEYS.filter(k=>activeToggles[k]).map(k=>TOGGLE_LABELS[k]).join(', ')}</b>`
+    : '';
+
+  document.getElementById('constel-info').innerHTML = infoHtml + toggleNote +
+    `<br>Chain: <b>${finalNums.join(' → ')}</b>`;
+
+  renderConstellation(finalNums, finalGaps);
+  updateToggleDetectionInfo(finalNums);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -735,6 +1015,21 @@ function renderChains(){
       }
     });
     row.appendChild(nodesWrap);
+
+    const pat = detectPatterns(chain.map(c=>c.n));
+    const badges=document.createElement('div');
+    badges.className='chain-badges';
+    TOGGLE_KEYS.forEach(k=>{
+      if(pat[k].active){
+        const b=document.createElement('span');
+        b.className='chain-badge';
+        b.title=TOGGLE_LABELS[k];
+        b.textContent = k==='front'?'🔟':k==='back'?'🎯':k==='flip'?'🔄':'🤝';
+        badges.appendChild(b);
+      }
+    });
+    row.appendChild(badges);
+
     wrap.appendChild(row);
   }
   document.getElementById('p-showmore-btn').style.display =
@@ -872,6 +1167,7 @@ document.getElementById('p-copy-btn').addEventListener('click', copyConstellatio
 
 // initial empty constellation while CSV loads
 renderConstellation(null,null);
+updateToggleDetectionInfo(null);
 </script>
 </body>
 </html>
