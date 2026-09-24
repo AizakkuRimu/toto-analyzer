@@ -251,7 +251,7 @@ body{
   <!-- ═══ CONSTELLATION GENERATOR ═══ -->
   <div class="card">
     <h3>Weave a Constellation</h3>
-    <p class="card-desc">Pick — or roll — a first star. Everything after it is built by chaining together the most common ascension patterns found in the loaded history, adjusted so the full run of 7 numbers always lands within 1–49.</p>
+    <p class="card-desc">Pick — or roll — a first star. The weaver builds a pool of real candidate chains from the ranked ascension patterns and randomized fallbacks, scores each one by gap-run frequency + pair affinity + all 4 shape patterns combined, then weighted-randomly picks among the strongest — so weaving the same number twice won't keep handing back the same 3–4 combos, while still leaning on what the data actually supports. Always lands within 1–49.</p>
 
     <div class="controls-row">
       <div class="field">
@@ -317,6 +317,13 @@ body{
         <div class="chip-list" id="chips-4"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ═══ PAIR AFFINITY ═══ -->
+  <div class="card">
+    <h3>Number Pair Affinity</h3>
+    <p class="card-desc">Every pair of numbers that has ever landed in the same draw together, ranked by how often that exact pair repeats across all loaded history — the kind of pairing (like two numbers that keep showing up together) that's easy to spot by eye in one draw but only means something once it's counted across all of them. The weaver below factors this in when scoring candidates.</p>
+    <div class="chip-list" id="chips-pairs"></div>
   </div>
 
   <!-- ═══ HISTORICAL GAP CHAINS ═══ -->
@@ -549,7 +556,76 @@ function buildMainNumberProfile(allDraws){
   return profile;
 }
 
-let patterns3=[], patterns4=[], positionalGaps=[], additionalProfile={}, mainNumberProfile={};
+// Every unordered pair that has ever appeared together among a draw's 6 main
+// numbers, with how many times that exact pair has co-occurred historically.
+// This is the "pairs falling into categories together" the eye naturally
+// spots (e.g. 20&25, 44&47) — but counted properly across all draws instead
+// of just the one draw in front of you.
+function buildPairFrequency(allDraws){
+  const freq = new Map();
+  let max = 0;
+  for(const d of allDraws){
+    const sorted = [...new Set(d.nums)].sort((a,b)=>a-b);
+    if(sorted.length!==6) continue;
+    for(let i=0;i<sorted.length;i++){
+      for(let j=i+1;j<sorted.length;j++){
+        const key = sorted[i]+','+sorted[j];
+        const c = (freq.get(key)||0)+1;
+        freq.set(key,c);
+        if(c>max) max=c;
+      }
+    }
+  }
+  return {freq, max};
+}
+function pairKey(a,b){ return a<b ? a+','+b : b+','+a; }
+function pairCount(pairFreq, a, b){ return (pairFreq.freq.get(pairKey(a,b))||0); }
+// Sum of historical co-occurrence counts across every pair inside a 7-number
+// chain (21 pairs for 6 main + additional treated together) — a rough
+// "how often has data actually seen numbers like these fall together" score.
+function pairAffinityScore(pairFreq, nums){
+  let total=0, hits=0;
+  for(let i=0;i<nums.length;i++){
+    for(let j=i+1;j<nums.length;j++){
+      const c=pairCount(pairFreq,nums[i],nums[j]);
+      total+=c;
+      if(c>0) hits++;
+    }
+  }
+  return {total, hits};
+}
+function topPairs(pairFreq, n){
+  return [...pairFreq.freq.entries()]
+    .map(([key,count])=>({pair:key.split(',').map(Number), count}))
+    .sort((a,b)=>b.count-a.count || a.pair.join().localeCompare(b.pair.join()))
+    .slice(0,n);
+}
+
+// Historical hit-rate for each of the 4 shape patterns, used to weight how
+// much a pattern match should count toward a candidate's overall score.
+function patternBonusScore(pat){
+  let bonus=0;
+  TOGGLE_KEYS.forEach(k=>{
+    if(pat[k].active){
+      const pct = toggleStatPct(k);
+      bonus += (pct==null?25:pct); // rarer-but-present patterns still count, common ones count more
+    }
+  });
+  return bonus;
+}
+
+function weightedRandomPick(items, scoreFn){
+  // items already sorted desc by score is fine either way; this weights by
+  // score so stronger candidates are more likely but not guaranteed, which
+  // is what actually breaks the "always the same 3-4 combos" repetition.
+  const scored = items.map(it=>({it, s:Math.max(scoreFn(it),0.0001)}));
+  const total = scored.reduce((a,b)=>a+b.s,0);
+  let r = Math.random()*total;
+  for(const {it,s} of scored){ r-=s; if(r<=0) return it; }
+  return scored[scored.length-1].it;
+}
+
+let patterns3=[], patterns4=[], positionalGaps=[], additionalProfile={}, mainNumberProfile={}, pairFreq={freq:new Map(),max:0};
 
 // ═══════════════════════════════════════════════════════════
 // FOUR NUMBER-SHAPE PATTERN DETECTORS
@@ -781,12 +857,14 @@ function buildEverything(){
   positionalGaps = minePositionalGaps(draws);
   additionalProfile = buildAdditionalProfiles(draws);
   mainNumberProfile = buildMainNumberProfile(draws);
+  pairFreq = buildPairFrequency(draws);
   buildToggleHistory();
 
   document.getElementById('p-csv-status').textContent =
     `✓ ${draws.length} draws loaded · ${patterns3.length} distinct 3-step runs · ${patterns4.length} distinct 4-step runs`;
 
   renderPatternChips();
+  renderPairChips();
   renderToggleStats();
   suggestNextToggles();
   visibleChains = 25;
@@ -820,14 +898,31 @@ function chipEl(p){
   return div;
 }
 
+function renderPairChips(){
+  const el = document.getElementById('chips-pairs');
+  if(!el) return;
+  el.innerHTML='';
+  const pairs = topPairs(pairFreq, 12);
+  if(!pairs.length){ el.innerHTML='<div class="chip"><span class="cnt">No data yet</span></div>'; return; }
+  pairs.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='chip';
+    div.innerHTML = `<span class="seq">${p.pair[0]} <span class="arrow">＆</span> ${p.pair[1]}</span><span class="cnt">×${p.count} draws</span>`;
+    el.appendChild(div);
+  });
+}
+
 // ═══════════════════════════════════════════════════════════
 // CONSTELLATION GENERATOR LOGIC
 // ═══════════════════════════════════════════════════════════
-function tryOverlapCombos(start){
-  // Look for a top 4-step pattern (covers gaps 0-3) whose LAST gap
+function tryOverlapCombosPool(start, poolSize){
+  // Look for top 4-step patterns (covers gaps 0-3) whose LAST gap
   // matches the FIRST gap of a top 3-step pattern (covers gaps 3-5).
-  const P4 = patterns4.slice(0,40);
-  const P3 = patterns3.slice(0,40);
+  // Returns EVERY fitting combo (not just the single best), so the caller
+  // can weigh several real, data-backed options against each other instead
+  // of the weaver always collapsing onto the one highest-count combo.
+  const P4 = patterns4.slice(0, poolSize||60);
+  const P3 = patterns3.slice(0, poolSize||60);
   const combos=[];
   for(const p4 of P4){
     for(const p3 of P3){
@@ -841,24 +936,34 @@ function tryOverlapCombos(start){
     }
   }
   combos.sort((a,b)=>b.score-a.score);
-  return combos[0] || null;
+  return combos;
 }
 
-function greedyFallback(start){
+function greedyFallback(start, randomize){
   // Fill 6 gaps one at a time using positional frequency, always
-  // keeping the running total within budget (49 - start).
+  // keeping the running total within budget (49 - start). When randomize
+  // is true, sample (weighted by real frequency) from the top few gap
+  // options at each position instead of always taking the single most
+  // common one — so the fallback path varies too, not just the combo path.
   const budget = 49 - start;
   const gaps=[];
   let used=0;
   for(let i=0;i<6;i++){
     const remainingSlots = 6 - i - 1; // slots still needed after this one
-    const candidates = positionalGaps[i] && positionalGaps[i].length
+    const all = positionalGaps[i] && positionalGaps[i].length
       ? positionalGaps[i]
       : [[1,1]];
+    const feasible = all.filter(([g])=> used+g+remainingSlots<=budget);
+    const candidates = feasible.length ? feasible : all;
     let chosen=null;
-    for(const [g] of candidates){
-      // leave at least 1 for each remaining slot
-      if(used + g + remainingSlots <= budget){ chosen=g; break; }
+    if(randomize && candidates.length){
+      const pool = candidates.slice(0,4);
+      const totalW = pool.reduce((a,[,c])=>a+c,0);
+      let r = Math.random()*totalW;
+      for(const [g,c] of pool){ r-=c; if(r<=0){ chosen=g; break; } }
+      if(chosen==null) chosen=pool[0][0];
+    } else if(candidates.length){
+      chosen = candidates[0][0];
     }
     if(chosen==null) chosen = Math.max(1, budget - used - remainingSlots);
     gaps.push(chosen);
@@ -867,6 +972,19 @@ function greedyFallback(start){
   return gaps;
 }
 
+function gapsToNums(start, gaps){
+  const nums=[start];
+  for(const g of gaps) nums.push(nums[nums.length-1]+g);
+  return nums;
+}
+
+// Build a diverse pool of candidate 7-star chains from every angle the tool
+// knows about — top combos across their whole ranked pool (not just #1),
+// plus several randomized greedy fallbacks — then score each candidate
+// using ALL FOUR shape patterns + pair-affinity + the gap-run frequency
+// together, and weighted-randomly pick among the strongest few. This is
+// what actually breaks the "same 3-4 combos every time" repetition while
+// still favouring numbers the data supports.
 function weaveConstellation(){
   const input = document.getElementById('p-start-input');
   let start = parseInt(input.value);
@@ -879,16 +997,53 @@ function weaveConstellation(){
     return;
   }
 
-  let gaps, infoHtml;
-  const combo = tryOverlapCombos(start);
-  if(combo){
-    gaps = combo.gaps;
-    const {p4,p3} = combo.desc;
+  const comboPool = tryOverlapCombosPool(start, 60);
+  const candidates=[]; // {nums, gaps, source, sourceScore, comboDesc}
+  const seen = new Set();
+  const addCandidate = (gaps, source, sourceScore, comboDesc)=>{
+    const nums = gapsToNums(start, gaps);
+    const key = nums.join(',');
+    if(seen.has(key)) return;
+    seen.add(key);
+    candidates.push({nums, gaps, source, sourceScore, comboDesc});
+  };
+
+  // Take a healthy slice of the ranked combo pool (not just the top one)
+  comboPool.slice(0,15).forEach(c=>addCandidate(c.gaps, 'combo', c.score, c.desc));
+  // Several randomized greedy fallbacks, so there's always variety even
+  // when few/no overlap combos fit under 49 from this start number.
+  for(let i=0;i<10;i++) addCandidate(greedyFallback(start,true), 'fallback', 1, null);
+  if(!candidates.length) addCandidate(greedyFallback(start,false), 'fallback', 1, null);
+
+  // Composite score: real gap-run frequency + pair-affinity across the
+  // whole chain + how many of the 4 shape patterns it naturally contains,
+  // weighted by how common each of those patterns actually is historically.
+  candidates.forEach(c=>{
+    const pat = detectPatterns(c.nums);
+    const {total:pairTotal, hits:pairHits} = pairAffinityScore(pairFreq, c.nums);
+    const patBonus = patternBonusScore(pat);
+    c.pat = pat;
+    c.pairTotal = pairTotal;
+    c.pairHits = pairHits;
+    c.patBonus = patBonus;
+    c.composite = c.sourceScore*6 + pairTotal*1.5 + patBonus;
+  });
+
+  candidates.sort((a,b)=>b.composite-a.composite);
+  const shortlist = candidates.slice(0, Math.min(8, candidates.length));
+  const picked = weightedRandomPick(shortlist, c=>c.composite);
+
+  let gaps = picked.gaps;
+  let infoHtml;
+  if(picked.source==='combo'){
+    const {p4,p3} = picked.comboDesc;
     infoHtml = `Spliced a <b>4-step run</b> [${p4.pattern.map(g=>'+'+g).join(', ')}] (seen ${p4.count}×) with a <b>3-step run</b> [${p3.pattern.map(g=>'+'+g).join(', ')}] (seen ${p3.count}×), overlapping at <b>+${p4.pattern[3]}</b>.`;
   } else {
-    gaps = greedyFallback(start);
-    infoHtml = `No common 4-step + 3-step combo fit under 49 from <b>${start}</b>, so the weaver fell back to the single most common gap at each position that still fits.`;
+    infoHtml = `No overlap combo from the ranked pool won out here, so this chain leans on the most-supported single gap at each position (with some real historical variety mixed in).`;
   }
+  infoHtml += picked.pairHits
+    ? ` Contains <b>${picked.pairHits}</b> pair${picked.pairHits===1?'':'s'} that have co-occurred historically (${picked.pairTotal} combined past appearances).`
+    : ` No pair in this chain has historically co-occurred yet — a rarer combination.`;
 
   const nums=[start];
   for(const g of gaps) nums.push(nums[nums.length-1]+g);
