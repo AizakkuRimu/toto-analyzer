@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Toto Patterns · Constellation</title>
+<title>Toto Patterns · Scoreboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,600;1,9..40,700&display=swap" rel="stylesheet">
@@ -20,6 +20,9 @@
   --gold:      #d4a843;
   --gold-soft: rgba(212,168,67,0.14);
   --orange:    #ff8a3d;
+  --green:     #4ade80;
+  --red:       #ff6b6b;
+  --blue:      #7dd3fc;
   --white-g:   #dfe8ff;
   --shadow:    0 8px 40px rgba(0,0,0,0.5);
   --radius:    16px;
@@ -43,7 +46,6 @@ body{
 #starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
 .star{position:absolute;background:#fff;border-radius:50%;opacity:.7;animation:twinkle ease-in-out infinite;}
 @keyframes twinkle{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:1;transform:scale(1.15)}}
-@keyframes drift{0%{transform:translateY(0)}100%{transform:translateY(-40px)}}
 
 .site-wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 20px 90px;}
 
@@ -64,7 +66,7 @@ body{
 .eyebrow{font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
 .page-title{font-family:var(--ff-head);font-size:clamp(34px,7vw,58px);letter-spacing:.03em;line-height:1;margin:2px 0 10px;}
 .page-title em{color:var(--gold);font-style:normal;}
-.page-sub{color:var(--muted);font-size:13.5px;max-width:640px;line-height:1.6;margin-bottom:26px;}
+.page-sub{color:var(--muted);font-size:13.5px;max-width:680px;line-height:1.6;margin-bottom:26px;}
 
 /* ── STATUS / CSV BAR ────────────────────────────────────── */
 .csv-bar{
@@ -88,88 +90,108 @@ body{
   backdrop-filter: blur(6px);
 }
 .card h3{font-family:var(--ff-head);font-size:24px;letter-spacing:.03em;margin-bottom:4px;}
-.card .card-desc{color:var(--muted);font-size:12.5px;line-height:1.6;margin-bottom:18px;max-width:680px;}
-
-/* ── CONSTELLATION GENERATOR ─────────────────────────────── */
-.controls-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:22px;}
-.field{display:flex;flex-direction:column;gap:6px;}
-.field label{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
-.field input[type="number"]{
-  width:110px;background:var(--bg1);border:1px solid var(--border);border-radius:10px;
-  color:var(--text);font-family:var(--ff-body);font-size:16px;font-weight:600;
-  padding:10px 12px;text-align:center;
+.card .card-desc{color:var(--muted);font-size:12.5px;line-height:1.6;margin-bottom:18px;max-width:760px;}
+.card .rule-box{
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:12px 16px;margin-bottom:18px;font-size:11.5px;color:var(--muted);line-height:1.8;
 }
-.field input[type="number"]:focus{outline:none;border-color:var(--gold);}
+.card .rule-box b{color:var(--gold);font-weight:700;}
+.card .rule-box code{color:var(--white-g);font-family:var(--ff-body);}
+
 .btn{
   border:none;border-radius:10px;padding:11px 20px;font-family:var(--ff-body);
   font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;
   cursor:pointer;transition:transform .12s, opacity .2s, box-shadow .2s;
 }
 .btn:active{transform:scale(.96);}
-.btn-primary{background:linear-gradient(135deg, var(--gold), #f0c866);color:#241a05;box-shadow:0 4px 20px rgba(212,168,67,.35);}
-.btn-primary:hover{box-shadow:0 6px 26px rgba(212,168,67,.5);}
 .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
 .btn-ghost:hover{border-color:var(--gold);}
-.btn:disabled{opacity:.4;cursor:not-allowed;}
 
-.constellation-wrap{position:relative;width:100%;height:250px;margin-bottom:6px;}
-@media(max-width:640px){.constellation-wrap{height:340px;}}
-.constellation-wrap svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
-.gap-label{
-  font-family:var(--ff-body);font-size:11px;font-weight:700;fill:var(--gold);
-  paint-order:stroke; stroke:#05060f; stroke-width:4px; stroke-linejoin:round;
+/* ── DRAW WINDOW STRIP ───────────────────────────────────── */
+.window-strip{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.window-row{
+  display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:10px;
+  background:var(--bg1);border:1px solid var(--border);flex-wrap:wrap;
 }
-.nodes-layer{position:absolute;inset:0;}
-.node{
-  position:absolute;transform:translate(-50%,-50%);
-  width:52px;height:52px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff-head);font-size:19px;letter-spacing:.02em;
+.window-row.is-latest{border-color:rgba(212,168,67,.5);background:var(--gold-soft);}
+.window-row.is-draw8{opacity:.65;border-style:dashed;}
+.window-tag{
+  width:64px;flex-shrink:0;font-size:10.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--gold);
+}
+.window-meta{width:150px;flex-shrink:0;font-size:11px;color:var(--muted);line-height:1.5;}
+.window-meta b{color:var(--text);}
+.window-nums{display:flex;gap:6px;flex-wrap:wrap;}
+.window-nums .wn{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11.5px;font-weight:700;color:var(--white-g);
   background:radial-gradient(circle at 32% 30%, #232a52, #060714 72%);
-  border:1px solid rgba(255,255,255,0.18);color:var(--white-g);
-  transition:box-shadow .4s, border-color .4s, transform .3s, opacity .4s;
-  opacity:0;
+  border:1px solid rgba(255,255,255,.15);
 }
-.node.show{opacity:1;}
-.node.empty-slot{
-  border:2px dashed rgba(255,255,255,.28);background:transparent;color:var(--muted);
-  font-family:var(--ff-body);font-size:11px;font-weight:600;
-}
-.node.white-aura{box-shadow:0 0 10px 3px rgba(255,255,255,.55), 0 0 26px 10px rgba(200,215,255,.18);border-color:rgba(255,255,255,.5);}
-.node.gold-aura{box-shadow:0 0 12px 4px rgba(212,168,67,.65), 0 0 32px 13px rgba(212,168,67,.28);border-color:rgba(212,168,67,.65);}
-.node.orange-aura{box-shadow:0 0 12px 4px rgba(255,138,61,.7), 0 0 32px 13px rgba(255,138,61,.3);border-color:rgba(255,138,61,.6);}
-.node.green-aura{box-shadow:0 0 12px 4px rgba(74,222,128,.7), 0 0 32px 13px rgba(74,222,128,.3);border-color:rgba(74,222,128,.6);}
-.node.mark-additional{color:var(--orange) !important;box-shadow:0 0 12px 4px rgba(255,138,61,.7), 0 0 32px 13px rgba(255,138,61,.3);border-color:rgba(255,138,61,.6);}
-.node.mark-weak{color:#4ade80 !important;box-shadow:0 0 12px 4px rgba(74,222,128,.7), 0 0 32px 13px rgba(74,222,128,.3);border-color:rgba(74,222,128,.6);}
-.node.first-node{
-  cursor:pointer;
-}
-@keyframes popIn{0%{transform:translate(-50%,-50%) scale(.3);opacity:0;}70%{transform:translate(-50%,-50%) scale(1.15);opacity:1;}100%{transform:translate(-50%,-50%) scale(1);opacity:1;}}
-.node.pop{animation:popIn .5s cubic-bezier(.3,1.5,.5,1) forwards;}
+.window-nums .wn.is-add{border-color:rgba(255,138,61,.6);color:var(--orange);}
 
-.constel-info{
-  margin-top:14px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);
-  border-radius:12px;font-size:12px;color:var(--muted);line-height:1.7;
+/* ── GENERIC SCORE TABLES ────────────────────────────────── */
+.score-table-wrap{overflow-x:auto;}
+table.score-table{width:100%;border-collapse:collapse;font-size:12px;}
+table.score-table th{
+  text-align:left;padding:8px 10px;color:var(--muted);font-size:10.5px;
+  letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);
+  white-space:nowrap;
 }
-.constel-info b{color:var(--gold);font-weight:700;}
-.disclaimer{font-size:11px;color:var(--muted);font-style:italic;margin-top:14px;opacity:.8;}
+table.score-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap;}
+table.score-table tr:last-child td{border-bottom:none;}
+table.score-table tr.top7{background:var(--gold-soft);}
+table.score-table .num-badge{
+  display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  border-radius:50%;font-weight:700;font-size:11.5px;color:var(--white-g);
+  background:radial-gradient(circle at 32% 30%, #232a52, #060714 72%);
+  border:1px solid rgba(255,255,255,.15);
+}
+tr.top7 .num-badge{border-color:rgba(212,168,67,.7);box-shadow:0 0 8px 2px rgba(212,168,67,.4);color:var(--gold);}
+td.pos, td.neg{font-weight:700;}
+td.pos{color:var(--green);}
+td.neg{color:var(--red);}
+td.zero{color:var(--muted);}
+.row-status{display:flex;gap:3px;}
+.row-status span{
+  width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;background:rgba(255,255,255,.04);
+}
+.st-survive{color:var(--green);}
+.st-fell{color:var(--red);}
+.st-revive{color:var(--gold);}
+.st-new{color:var(--blue);}
+.st-base{color:var(--muted);}
+.st-absent{color:rgba(255,255,255,.12);}
 
-
-/* ── PATTERN RANKING CHIPS ───────────────────────────────── */
-.pattern-groups{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
-@media(max-width:640px){.pattern-groups{grid-template-columns:1fr;}}
-.pattern-groups h4{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
-.chip-list{display:flex;flex-direction:column;gap:8px;}
+/* ── CHIP LIST (kinship groups, ghost list) ─────────────── */
+.chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
 .chip{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  display:inline-flex;align-items:center;gap:6px;
   background:var(--bg1);border:1px solid var(--border);border-radius:10px;
-  padding:8px 12px;font-size:12.5px;
+  padding:7px 12px;font-size:12px;
 }
-.chip .seq{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--white-g);font-family:var(--ff-body);}
-.chip .seq .arrow{color:var(--gold);font-weight:400;}
-.chip .cnt{font-size:11px;color:var(--muted);white-space:nowrap;}
+.chip b{color:var(--gold);}
+.chip .tag{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
 
-/* ── HISTORICAL CHAIN ROWS ───────────────────────────────── */
+/* ── FINAL PICK STRIP ────────────────────────────────────── */
+.pick-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.pick-node{
+  width:56px;height:56px;border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 30%, #2a2350, #0a0a18 72%);
+  border:1px solid rgba(212,168,67,.6);
+  box-shadow:0 0 12px 3px rgba(212,168,67,.45), 0 0 30px 10px rgba(212,168,67,.15);
+}
+.pick-node .n{font-family:var(--ff-head);font-size:20px;color:var(--gold);line-height:1;}
+.pick-node .r{font-size:8.5px;color:var(--muted);margin-top:2px;}
+
+/* ── HISTORICAL CHAIN ROWS (kept) ────────────────────────── */
+.legend{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:18px;font-size:11.5px;color:var(--muted);}
+.legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+.legend .dot.white{background:#fff;box-shadow:0 0 6px 2px rgba(255,255,255,.7);}
+.legend .dot.orange{background:var(--orange);box-shadow:0 0 6px 2px rgba(255,138,61,.7);}
+
 .chain-row{
   display:flex;align-items:center;gap:16px;padding:12px 4px;
   border-bottom:1px solid var(--border);flex-wrap:wrap;
@@ -189,7 +211,6 @@ body{
 }
 .mini-node.white-aura{box-shadow:0 0 6px 2px rgba(255,255,255,.5), 0 0 14px 5px rgba(200,215,255,.18);}
 .mini-node.orange-aura{box-shadow:0 0 6px 2px rgba(255,138,61,.7), 0 0 16px 6px rgba(255,138,61,.3);border-color:rgba(255,138,61,.55);}
-.mini-node.green-aura{box-shadow:0 0 6px 2px rgba(74,222,128,.7), 0 0 16px 6px rgba(74,222,128,.3);border-color:rgba(74,222,128,.55);}
 
 .mini-link{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -199,31 +220,10 @@ body{
 .mini-link .l{width:100%;height:1px;background:linear-gradient(90deg, rgba(212,168,67,.1), rgba(212,168,67,.7), rgba(212,168,67,.1));}
 
 .show-more-wrap{display:flex;justify-content:center;margin-top:18px;}
-
-.legend{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:18px;font-size:11.5px;color:var(--muted);}
-.legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;}
-.legend .dot.white{background:#fff;box-shadow:0 0 6px 2px rgba(255,255,255,.7);}
-.legend .dot.orange{background:var(--orange);box-shadow:0 0 6px 2px rgba(255,138,61,.7);}
-
-.footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:20px;opacity:.7;}
-
-/* ── PATTERN TOGGLES ─────────────────────────────────────── */
-.toggle-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
-.toggle-btn{
-  display:flex;align-items:center;gap:8px;flex:1 1 220px;
-  background:var(--surface2);border:1px solid var(--border);border-radius:12px;
-  padding:12px 14px;cursor:pointer;color:var(--text);font-family:var(--ff-body);
-  transition:border-color .2s, background .2s, box-shadow .2s;text-align:left;
-}
-.toggle-btn:hover{border-color:var(--gold);}
-.toggle-btn.active{border-color:var(--gold);background:var(--gold-soft);box-shadow:0 0 0 1px rgba(212,168,67,.4) inset;}
-.toggle-btn.detected .tg-icon{filter:drop-shadow(0 0 4px rgba(74,222,128,.9));}
-.tg-icon{font-size:18px;flex-shrink:0;}
-.tg-label{font-weight:700;font-size:12px;flex:1;letter-spacing:.01em;}
-.tg-stat{font-size:10px;color:var(--muted);white-space:nowrap;}
-.toggle-btn.active .tg-stat{color:var(--gold);}
 .chain-badges{display:flex;gap:4px;margin-left:auto;flex-shrink:0;align-self:center;}
 .chain-badge{font-size:13px;line-height:1;}
+
+.footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:20px;opacity:.7;}
 </style>
 </head>
 <body>
@@ -235,9 +235,9 @@ body{
     <a class="back-link" href="./index.html">← Back to Analyser</a>
   </nav>
 
-  <div class="eyebrow">Gap Ascension Study</div>
-  <h2 class="page-title">The <em>Constellation</em></h2>
-  <p class="page-sub">Every past draw is stretched into a rising chain of 7 numbers (6 winning + the additional number) and broken down into the gaps between them. This page mines those gap chains for the most common runs of ascension, then lets you weave your own 7-star constellation from a single starting number.</p>
+  <div class="eyebrow">Deterministic 7-Draw Scoring</div>
+  <h2 class="page-title">The <em>Scoreboard</em></h2>
+  <p class="page-sub">Every number 1–49 is scored across six rules run only over the last 7 draws (plus one extra older draw for a single punishment check): a row-by-row survival trail, kinship bonuses between numbers, an ascension/punishment pass, and a ghost-number cleanup. The 7 highest-scoring numbers at the end are the pick for the next draw.</p>
 
   <div class="csv-bar">
     <label>
@@ -248,82 +248,87 @@ body{
     <span id="p-csv-status">Loading toto.csv…</span>
   </div>
 
-  <!-- ═══ CONSTELLATION GENERATOR ═══ -->
+  <!-- ═══ DRAW WINDOW ═══ -->
   <div class="card">
-    <h3>Weave a Constellation</h3>
-    <p class="card-desc">Pick — or roll — a first star. The weaver builds a pool of real candidate chains from the ranked ascension patterns and randomized fallbacks, scores each one by gap-run frequency + pair affinity + all 4 shape patterns combined, then weighted-randomly picks among the strongest — so weaving the same number twice won't keep handing back the same 3–4 combos, while still leaning on what the data actually supports. Always lands within 1–49.</p>
-
-    <div class="controls-row">
-      <div class="field">
-        <label for="p-start-input">First number (1–43)</label>
-        <input type="number" id="p-start-input" min="1" max="43" placeholder="—">
-      </div>
-      <button class="btn btn-ghost" id="p-random-btn">🎲 Random Start</button>
-      <button class="btn btn-primary" id="p-generate-btn">✨ Weave Constellation</button>
-    </div>
-
-    <div class="constellation-wrap" id="constel-wrap">
-      <svg id="constel-svg" viewBox="0 0 880 240" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="nodes-layer" id="constel-nodes"></div>
-    </div>
-
-    <div class="constel-info" id="constel-info">Enter or roll a first number, then weave to see the chain.</div>
-
-    <div class="controls-row" style="margin-top:14px;">
-      <button class="btn btn-ghost" id="p-mark-additional-btn" style="color:var(--orange);border-color:rgba(255,138,61,.4);">🟠 Mark Additional Number</button>
-      <button class="btn btn-ghost" id="p-mark-weak-btn" style="color:#4ade80;border-color:rgba(74,222,128,.4);">🟢 Mark Weakest Link</button>
-      <button class="btn btn-ghost" id="p-copy-btn">📋 Copy Numbers</button>
-    </div>
-    <div class="constel-info" id="constel-mark-info" style="display:none;"></div>
-
-    <p class="disclaimer">✨ For fun only — TOTO draws are independent random events. No pattern here can predict the next draw.</p>
+    <h3>The 7-Draw Window</h3>
+    <p class="card-desc">The oldest of the seven is <b>Draw 1</b>, the most recent is <b>Draw 7</b> ("the last draw"). One extra older draw ("Draw 0" / the 8th most-recent draw) is shown too — it is used only for the Step 5 punishment check, never for anything else.</p>
+    <div class="window-strip" id="window-strip"></div>
   </div>
 
-  <!-- ═══ PATTERN TOGGLES ═══ -->
+  <!-- ═══ STEP 1–3: SURVIVAL TRAIL ═══ -->
   <div class="card">
-    <h3>Pattern Toggles</h3>
-    <p class="card-desc">Every past draw is checked for four number-shape patterns. Flip any toggle on and the 7 numbers above are reshaped to guarantee that pattern — spliced in from a real historical example of it — while keeping any other active toggles satisfied too.</p>
-
-    <div class="toggle-row" id="toggle-row">
-      <button class="toggle-btn" id="tg-front" data-key="front">
-        <span class="tg-icon">🔟</span><span class="tg-label">Same Front Digit</span><span class="tg-stat" id="tg-front-stat">—</span>
-      </button>
-      <button class="toggle-btn" id="tg-back" data-key="back">
-        <span class="tg-icon">🎯</span><span class="tg-label">Same Back Digit</span><span class="tg-stat" id="tg-back-stat">—</span>
-      </button>
-      <button class="toggle-btn" id="tg-flip" data-key="flip">
-        <span class="tg-icon">🔄</span><span class="tg-label">Flipped Numbers</span><span class="tg-stat" id="tg-flip-stat">—</span>
-      </button>
-      <button class="toggle-btn" id="tg-neigh" data-key="neigh">
-        <span class="tg-icon">🤝</span><span class="tg-label">Neighbouring Numbers</span><span class="tg-stat" id="tg-neigh-stat">—</span>
-      </button>
+    <h3>① Survival Trail</h3>
+    <p class="card-desc">Walking row by row from Draw 1 to Draw 7, every number is tracked for whether it carried over, dropped out, came back, or showed up for the first time.</p>
+    <div class="rule-box">
+      <b>+1</b> survives into the next row it appears in again &nbsp;·&nbsp;
+      <b>−3</b> falls off the row after it stops appearing &nbsp;·&nbsp;
+      <b>+2</b> revives after having fallen off earlier &nbsp;·&nbsp;
+      <b>+1</b> totally new the first time it ever appears in the window
     </div>
-
-    <div class="constel-info" id="toggle-detect-info">Weave a constellation to see which patterns it currently contains.</div>
-    <div class="constel-info" id="toggle-suggest-info" style="border-color:rgba(212,168,67,.35);display:none;"></div>
-  </div>
-
-  <!-- ═══ PATTERN RANKINGS ═══ -->
-  <div class="card">
-    <h3>Most Common Ascensions</h3>
-    <p class="card-desc">Across every loaded draw, these are the most frequent short runs of consecutive gaps — a 3-step run (4 numbers) and a 4-step run (5 numbers). The weaver above tries to splice a matching pair of these together first.</p>
-    <div class="pattern-groups">
-      <div>
-        <h4>Top 3-step runs</h4>
-        <div class="chip-list" id="chips-3"></div>
-      </div>
-      <div>
-        <h4>Top 4-step runs</h4>
-        <div class="chip-list" id="chips-4"></div>
-      </div>
+    <div class="score-table-wrap">
+      <table class="score-table">
+        <thead><tr><th>#</th><th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th><th>D6</th><th>D7</th><th>Points</th></tr></thead>
+        <tbody id="survival-tbody"></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- ═══ PAIR AFFINITY ═══ -->
+  <!-- ═══ STEP 4: KINSHIP BONUSES ═══ -->
   <div class="card">
-    <h3>Number Pair Affinity</h3>
-    <p class="card-desc">Every pair of numbers that has ever landed in the same draw together, ranked by how often that exact pair repeats across all loaded history — the kind of pairing (like two numbers that keep showing up together) that's easy to spot by eye in one draw but only means something once it's counted across all of them. The weaver below factors this in when scoring candidates.</p>
-    <div class="chip-list" id="chips-pairs"></div>
+    <h3>② Kinship Bonuses</h3>
+    <p class="card-desc">Every number that appeared anywhere across the 7 draws is checked against every other such number for shared traits. Each qualifying relationship is worth a flat <b>+1</b> — a number can rack up more than one.</p>
+    <div class="rule-box">
+      <b>+1</b> shares a front digit with another number in the pool &nbsp;·&nbsp;
+      <b>+1</b> shares a back digit &nbsp;·&nbsp;
+      <b>+1</b> is the digit-flip of another number in the pool &nbsp;·&nbsp;
+      <b>+1</b> per number inside a run of neighbouring (consecutive) numbers, e.g. 44‑45‑46 gives each of those three +1
+    </div>
+    <div class="chip-list" id="kinship-groups"></div>
+    <div class="score-table-wrap">
+      <table class="score-table">
+        <thead><tr><th>#</th><th>Kinship reasons</th><th>Points</th></tr></thead>
+        <tbody id="kinship-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 5: ASCENSION & PUNISHMENT ═══ -->
+  <div class="card">
+    <h3>③ Ascension &amp; Punishment</h3>
+    <p class="card-desc">Draws 1–6 (everything except the last draw itself) are each stretched into their sorted 7-star chain, and every run of 3, 4, 5 and 6 consecutive stars in that chain is logged as an "ascension". A number scores for every ascension it appears in from a <em>different</em> draw than the one currently being judged — the last draw's own numbers can't score off their own chain. Separately, every number from the extra 8th (pre-window) draw is checked against the whole 7-draw window: if it never reappeared there, it's punished.</p>
+    <div class="rule-box">
+      <b>+1</b> per 3-run &nbsp;·&nbsp; <b>+2</b> per 4-run &nbsp;·&nbsp; <b>+3</b> per 5-run &nbsp;·&nbsp; <b>+4</b> per 6-run it belongs to (all cumulative across draws 1–6) &nbsp;·&nbsp;
+      <b>−1</b> flat if a number appears in none of those ascensions at all.<br>
+      <b>Punishment:</b> every number in the extra 8th (pre-window) draw that did <em>not</em> reappear anywhere across the 7-draw window takes a <b>−1</b>.
+    </div>
+    <div id="punishment-note" class="chip-list"></div>
+    <div class="score-table-wrap">
+      <table class="score-table">
+        <thead><tr><th>#</th><th>3-runs</th><th>4-runs</th><th>5-runs</th><th>6-runs</th><th>Punish</th><th>Points</th></tr></thead>
+        <tbody id="ascension-tbody"></tbody>
+      </table>
+    </div>
+    <p class="card-desc" style="margin-top:12px;">Every other number (not shown above) never appeared across draws 1–6 at all, so it takes the flat <b>−1</b> for this step.</p>
+  </div>
+
+  <!-- ═══ STEP 6: GHOST NUMBERS ═══ -->
+  <div class="card">
+    <h3>④ Ghost Numbers</h3>
+    <p class="card-desc">Numbers that didn't appear anywhere at all across all 7 draws. Normally that's a flat <b>−1</b> — but if either neighbour (n−1 or n+1) is sitting in the provisional top 5 (steps 1–3 rank + kinship + step 5 combined, before this step), the ghost gets a vote of confidence instead: <b>+2</b>.</p>
+    <div class="chip-list" id="ghost-list"></div>
+  </div>
+
+  <!-- ═══ FINAL SCOREBOARD ═══ -->
+  <div class="card">
+    <h3>Final Scoreboard &amp; Next-Draw Pick</h3>
+    <p class="card-desc">All four categories summed. The 7 highest-scoring numbers (gold rows) are the pick for the next draw.</p>
+    <div class="pick-strip" id="pick-strip"></div>
+    <div class="score-table-wrap">
+      <table class="score-table">
+        <thead><tr><th>Rank</th><th>#</th><th>① Survival</th><th>② Kinship</th><th>③ Ascension+Punish</th><th>④ Ghost</th><th>TOTAL</th></tr></thead>
+        <tbody id="final-tbody"></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- ═══ HISTORICAL GAP CHAINS ═══ -->
@@ -365,7 +370,7 @@ body{
 // ═══════════════════════════════════════════════════════════
 // CSV PARSING (mirrors main analyser's parser)
 // ═══════════════════════════════════════════════════════════
-let draws = []; // [{drawNo,date,nums:[6],add}]
+let draws = []; // [{drawNo,date,nums:[6],add}], newest first
 
 function splitLine(line){
   if(line.includes('\t')) return line.split('\t').map(c=>c.trim().replace(/^"|"$/g,''));
@@ -457,9 +462,9 @@ function parseCSV(text){
   draws.sort((a,b)=>(b.drawNo||0)-(a.drawNo||0));
 
   document.getElementById('p-csv-status').textContent =
-    `✓ Loaded ${draws.length} draws — mining gap patterns…`;
+    `✓ Loaded ${draws.length} draws — scoring the last 7…`;
 
-  buildEverything();
+  runAnalysis();
 }
 
 document.getElementById('p-csv-input').addEventListener('change', function(e){
@@ -482,7 +487,7 @@ document.getElementById('p-csv-input').addEventListener('change', function(e){
 })();
 
 // ═══════════════════════════════════════════════════════════
-// GAP ANALYSIS
+// GAP / CHAIN HELPERS
 // ═══════════════════════════════════════════════════════════
 function drawChain(d){
   // Merge the 6 winning numbers + additional number into one ascending, deduped chain.
@@ -493,139 +498,6 @@ function drawChain(d){
   for(let i=1;i<withFlags.length;i++) gaps.push(withFlags[i].n - withFlags[i-1].n);
   return {chain:withFlags, gaps};
 }
-
-function minePatterns(allDraws, windowLen){
-  const freq = new Map();
-  for(const d of allDraws){
-    const {gaps} = drawChain(d);
-    if(gaps.length < windowLen) continue;
-    for(let i=0;i+windowLen<=gaps.length;i++){
-      const win = gaps.slice(i,i+windowLen);
-      const key = win.join(',');
-      freq.set(key, (freq.get(key)||0)+1);
-    }
-  }
-  return [...freq.entries()]
-    .map(([key,count])=>({pattern:key.split(',').map(Number), count}))
-    .sort((a,b)=>b.count-a.count || a.pattern.join().localeCompare(b.pattern.join()));
-}
-
-// positional single-step gap frequency, used as a fallback fill
-function minePositionalGaps(allDraws){
-  // pos[i] = Map(gapValue -> count) for gap index i (0..5)
-  const pos = [new Map(),new Map(),new Map(),new Map(),new Map(),new Map()];
-  for(const d of allDraws){
-    const {gaps} = drawChain(d);
-    gaps.forEach((g,i)=>{ if(pos[i]){ pos[i].set(g,(pos[i].get(g)||0)+1); } });
-  }
-  return pos.map(m=>[...m.entries()].sort((a,b)=>b[1]-a[1]));
-}
-
-// For each number 1-49, collect {before,after} gap pairs from every historical
-// draw where that number was the actual additional number.
-function buildAdditionalProfiles(allDraws){
-  const profile = {};
-  for(let n=1;n<=49;n++) profile[n]=[];
-  for(const d of allDraws){
-    if(d.add==null) continue;
-    const {chain} = drawChain(d);
-    const idx = chain.findIndex(c=>c.isAdd);
-    if(idx<0) continue; // additional collided with a main number, skip
-    const before = idx>0 ? chain[idx].n - chain[idx-1].n : null;
-    const after = idx<chain.length-1 ? chain[idx+1].n - chain[idx].n : null;
-    if(!profile[d.add]) profile[d.add]=[];
-    profile[d.add].push({before, after});
-  }
-  return profile;
-}
-
-// For each number 1-49, collect {before,after} gap pairs from every historical
-// draw's 6 main winning numbers (additional number excluded).
-function buildMainNumberProfile(allDraws){
-  const profile = {};
-  for(let n=1;n<=49;n++) profile[n]=[];
-  for(const d of allDraws){
-    const sorted = [...new Set(d.nums)].sort((a,b)=>a-b);
-    if(sorted.length!==6) continue;
-    for(let i=0;i<6;i++){
-      const before = i>0 ? sorted[i]-sorted[i-1] : null;
-      const after = i<5 ? sorted[i+1]-sorted[i] : null;
-      profile[sorted[i]].push({before, after});
-    }
-  }
-  return profile;
-}
-
-// Every unordered pair that has ever appeared together among a draw's 6 main
-// numbers, with how many times that exact pair has co-occurred historically.
-// This is the "pairs falling into categories together" the eye naturally
-// spots (e.g. 20&25, 44&47) — but counted properly across all draws instead
-// of just the one draw in front of you.
-function buildPairFrequency(allDraws){
-  const freq = new Map();
-  let max = 0;
-  for(const d of allDraws){
-    const sorted = [...new Set(d.nums)].sort((a,b)=>a-b);
-    if(sorted.length!==6) continue;
-    for(let i=0;i<sorted.length;i++){
-      for(let j=i+1;j<sorted.length;j++){
-        const key = sorted[i]+','+sorted[j];
-        const c = (freq.get(key)||0)+1;
-        freq.set(key,c);
-        if(c>max) max=c;
-      }
-    }
-  }
-  return {freq, max};
-}
-function pairKey(a,b){ return a<b ? a+','+b : b+','+a; }
-function pairCount(pairFreq, a, b){ return (pairFreq.freq.get(pairKey(a,b))||0); }
-// Sum of historical co-occurrence counts across every pair inside a 7-number
-// chain (21 pairs for 6 main + additional treated together) — a rough
-// "how often has data actually seen numbers like these fall together" score.
-function pairAffinityScore(pairFreq, nums){
-  let total=0, hits=0;
-  for(let i=0;i<nums.length;i++){
-    for(let j=i+1;j<nums.length;j++){
-      const c=pairCount(pairFreq,nums[i],nums[j]);
-      total+=c;
-      if(c>0) hits++;
-    }
-  }
-  return {total, hits};
-}
-function topPairs(pairFreq, n){
-  return [...pairFreq.freq.entries()]
-    .map(([key,count])=>({pair:key.split(',').map(Number), count}))
-    .sort((a,b)=>b.count-a.count || a.pair.join().localeCompare(b.pair.join()))
-    .slice(0,n);
-}
-
-// Historical hit-rate for each of the 4 shape patterns, used to weight how
-// much a pattern match should count toward a candidate's overall score.
-function patternBonusScore(pat){
-  let bonus=0;
-  TOGGLE_KEYS.forEach(k=>{
-    if(pat[k].active){
-      const pct = toggleStatPct(k);
-      bonus += (pct==null?25:pct); // rarer-but-present patterns still count, common ones count more
-    }
-  });
-  return bonus;
-}
-
-function weightedRandomPick(items, scoreFn){
-  // items already sorted desc by score is fine either way; this weights by
-  // score so stronger candidates are more likely but not guaranteed, which
-  // is what actually breaks the "always the same 3-4 combos" repetition.
-  const scored = items.map(it=>({it, s:Math.max(scoreFn(it),0.0001)}));
-  const total = scored.reduce((a,b)=>a+b.s,0);
-  let r = Math.random()*total;
-  for(const {it,s} of scored){ r-=s; if(r<=0) return it; }
-  return scored[scored.length-1].it;
-}
-
-let patterns3=[], patterns4=[], positionalGaps=[], additionalProfile={}, mainNumberProfile={}, pairFreq={freq:new Map(),max:0};
 
 // ═══════════════════════════════════════════════════════════
 // FOUR NUMBER-SHAPE PATTERN DETECTORS
@@ -645,7 +517,6 @@ function groupByKey(nums, fn){
   for(const n of nums){ const k=fn(n); if(!m.has(k)) m.set(k,[]); m.get(k).push(n); }
   return m;
 }
-// nums: array of 7 unique numbers (6 main + additional, treated as one chain)
 function detectPatterns(nums){
   const frontGroups=[...groupByKey(nums, frontDigit).values()].filter(g=>g.length>=2).map(g=>g.sort((a,b)=>a-b));
   const backGroups=[...groupByKey(nums, backDigit).values()].filter(g=>g.length>=2).map(g=>g.sort((a,b)=>a-b));
@@ -674,471 +545,326 @@ function detectPatterns(nums){
     neigh:{active:neighRuns.length>0, runs:neighRuns}
   };
 }
-function maskOf(pat){ return (pat.front.active?1:0)|(pat.back.active?2:0)|(pat.flip.active?4:0)|(pat.neigh.active?8:0); }
 const TOGGLE_KEYS=['front','back','flip','neigh'];
-const TOGGLE_BITS={front:1,back:2,flip:4,neigh:8};
 const TOGGLE_LABELS={front:'Same Front Digit',back:'Same Back Digit',flip:'Flipped Numbers',neigh:'Neighbouring Numbers'};
 
-// ── Mine every historical draw for these 4 patterns ──
-let toggleRecords=[], toggleTransitions=new Map();
-let patternBank={front:[],back:[],flip:[],neigh:[]};
-
-function buildToggleHistory(){
-  const asc=[...draws].sort((a,b)=>(a.drawNo||0)-(b.drawNo||0)); // oldest → newest, for transitions
-  toggleRecords = asc.map(d=>{
-    const {chain}=drawChain(d);
-    const nums=chain.map(c=>c.n);
-    const pat=detectPatterns(nums);
-    return {drawNo:d.drawNo, date:d.date, nums, pat, mask:maskOf(pat)};
-  });
-
-  patternBank={front:[],back:[],flip:[],neigh:[]};
-  for(const r of toggleRecords){
-    r.pat.front.groups.forEach(g=>patternBank.front.push(g));
-    r.pat.back.groups.forEach(g=>patternBank.back.push(g));
-    r.pat.flip.pairs.forEach(p=>patternBank.flip.push(p));
-    r.pat.neigh.runs.forEach(run=>patternBank.neigh.push(run));
-  }
-
-  toggleTransitions=new Map();
-  for(let i=0;i<toggleRecords.length-1;i++){
-    const from=toggleRecords[i].mask, to=toggleRecords[i+1].mask;
-    if(!toggleTransitions.has(from)) toggleTransitions.set(from, new Map());
-    const m=toggleTransitions.get(from);
-    m.set(to,(m.get(to)||0)+1);
-  }
-}
-
-function toggleStatPct(key){
-  if(!toggleRecords.length) return null;
-  const bit=TOGGLE_BITS[key];
-  let count=0;
-  for(const r of toggleRecords) if(r.mask & bit) count++;
-  return Math.round(count/toggleRecords.length*100);
-}
-
-function renderToggleStats(){
-  TOGGLE_KEYS.forEach(k=>{
-    const el=document.getElementById('tg-'+k+'-stat');
-    if(!el) return;
-    const pct=toggleStatPct(k);
-    el.textContent = pct==null ? '—' : pct+'% of draws';
-  });
-}
-
-function describeMask(m){
-  if(m===0) return 'none of the four patterns';
-  return TOGGLE_KEYS.filter(k=>m&TOGGLE_BITS[k]).map(k=>TOGGLE_LABELS[k]).join(' + ');
-}
-
-function suggestNextToggles(){
-  const el=document.getElementById('toggle-suggest-info');
-  if(!toggleRecords.length){ el.style.display='none'; return; }
-  el.style.display='block';
-  const last=toggleRecords[toggleRecords.length-1];
-  const trans=toggleTransitions.get(last.mask);
-  if(!trans || !trans.size){
-    el.innerHTML = `Last loaded draw (#${last.drawNo||'—'}) showed <b>${describeMask(last.mask)}</b>. Not enough history yet after that exact combo to suggest what tends to follow it.`;
-    return;
-  }
-  let bestMask=null,bestCount=-1;
-  for(const [m,c] of trans.entries()) if(c>bestCount){bestCount=c;bestMask=m;}
-  const total=[...trans.values()].reduce((a,b)=>a+b,0);
-  el.innerHTML = `Last loaded draw (#${last.drawNo||'—'}) showed <b>${describeMask(last.mask)}</b>. Historically, the draw right after that combo has most often gone on to show <b>${describeMask(bestMask)}</b> (${bestCount}/${total} times). Suggested toggles for your next weave: <b>${bestMask===0?'leave all off':TOGGLE_KEYS.filter(k=>bestMask&TOGGLE_BITS[k]).map(k=>TOGGLE_LABELS[k]).join(', ')}</b>.`;
-}
-
 // ═══════════════════════════════════════════════════════════
-// TOGGLE-DRIVEN NUMBER RESHAPING
-// Injects a real historical example of a pattern into the current
-// 7-number set, trying to preserve everything else already true.
+// STEP 1–6 SCORING ENGINE
 // ═══════════════════════════════════════════════════════════
-let activeToggles={front:false, back:false, flip:false, neigh:false};
+function computeScoreboard(){
+  const result = {
+    ready:false, window:[], draw8:null, chains:[], sets:[], windowUnion:new Set(),
+    survival:{}, survivalDetail:{}, kinship:{}, kinshipReasons:{}, kinshipGroups:null,
+    ascension:{}, ascensionSet:new Set(), punishment:{}, punishmentDetail:[],
+    step5:{}, ghost:{}, ghostReason:{}, total:{}, ranked:[], top5Prelim:[], top7:[]
+  };
+  if(draws.length < 7) return result;
 
-function pickWeighted(bank){
-  if(!bank || !bank.length) return null;
-  return bank[Math.floor(Math.random()*bank.length)]; // bank has one entry per historical occurrence, so this is frequency-weighted
-}
+  const windowDesc = draws.slice(0,7);          // newest first: draw7..draw1
+  const winChron = [...windowDesc].reverse();   // oldest->newest: draw1..draw7
+  result.window = winChron;
+  result.draw8 = draws.length>=8 ? draws[7] : null;
 
-function tryInjectPattern(nums, key){
-  for(let attempt=0; attempt<40; attempt++){
-    let candidate=[...nums];
-    let unit=null;
-    if(key==='front' || key==='back'){
-      const bank = key==='front'?patternBank.front:patternBank.back;
-      unit = pickWeighted(bank);
-      if(!unit){
-        const digit=Math.floor(Math.random()*(key==='front'?5:10));
-        const cands=[]; for(let n=1;n<=49;n++) if((key==='front'?frontDigit(n):backDigit(n))===digit) cands.push(n);
-        unit = cands.sort(()=>Math.random()-0.5).slice(0,2);
-      }
-      unit = unit.slice(0, Math.min(unit.length,3)); // cap so other toggles still have room
-    } else if(key==='flip'){
-      unit = pickWeighted(patternBank.flip);
-      if(!unit){ for(let n=10;n<=49;n++){ const r=flipOf(n); if(r){ unit=[Math.min(n,r),Math.max(n,r)]; break; } } }
-    } else if(key==='neigh'){
-      unit = pickWeighted(patternBank.neigh);
-      if(!unit){ const s=Math.floor(Math.random()*47)+1; unit=[s,s+1]; }
-      unit = unit.slice(0, Math.min(unit.length,3));
-    }
-    if(!unit || unit.length<2) continue;
+  const chains = winChron.map(d=>drawChain(d).chain.map(c=>c.n)); // sorted asc per draw
+  const sets = chains.map(arr=>new Set(arr));
+  result.chains = chains; result.sets = sets;
 
-    candidate = candidate.filter(n=>!unit.includes(n));
-    while(candidate.length + unit.length > 7) candidate.pop();
-    candidate = [...new Set([...candidate, ...unit])];
-    while(candidate.length<7){
-      const n=Math.floor(Math.random()*49)+1;
-      if(!candidate.includes(n)) candidate.push(n);
-    }
-    candidate = candidate.slice(0,7);
-    if(new Set(candidate).size===7) return candidate;
+  for(let n=1;n<=49;n++){
+    result.survival[n]=0; result.kinship[n]=0; result.ascension[n]=0;
+    result.punishment[n]=0; result.ghost[n]=0; result.survivalDetail[n]=[];
   }
-  return null;
-}
 
-function applyActiveToggles(baseNums){
-  let nums=[...baseNums];
-  const order=TOGGLE_KEYS.filter(k=>activeToggles[k]);
-  if(!order.length) return nums.sort((a,b)=>a-b);
-
-  for(let pass=0; pass<4; pass++){
-    let allGood=true;
-    for(const key of order){
-      const pat=detectPatterns(nums);
-      if(!pat[key].active){
-        allGood=false;
-        const injected=tryInjectPattern(nums, key);
-        if(injected) nums=injected;
+  // ── STEP 1–3: survival trail ──
+  for(let i=0;i<7;i++){
+    for(const n of sets[i]){
+      if(i===0){ result.survivalDetail[n].push({row:1,type:'base'}); continue; }
+      if(sets[i-1].has(n)){
+        result.survival[n]+=1;
+        result.survivalDetail[n].push({row:i+1,type:'survive'});
+      } else {
+        let seenBefore=false;
+        for(let j=0;j<i;j++) if(sets[j].has(n)){ seenBefore=true; break; }
+        if(seenBefore){ result.survival[n]+=2; result.survivalDetail[n].push({row:i+1,type:'revive'}); }
+        else { result.survival[n]+=1; result.survivalDetail[n].push({row:i+1,type:'new'}); }
       }
     }
-    if(allGood) break;
-  }
-  return nums.sort((a,b)=>a-b);
-}
-
-function updateToggleDetectionInfo(nums){
-  const el=document.getElementById('toggle-detect-info');
-  if(!nums){
-    el.textContent='Weave a constellation to see which patterns it currently contains.';
-    TOGGLE_KEYS.forEach(k=>{ const b=document.getElementById('tg-'+k); if(b) b.classList.remove('detected'); });
-    return;
-  }
-  const pat=detectPatterns(nums);
-  const parts=[];
-  if(pat.front.active) parts.push(`<b>Same front digit</b>: ${pat.front.groups.map(g=>g.join(', ')).join(' · ')}`);
-  if(pat.back.active) parts.push(`<b>Same back digit</b>: ${pat.back.groups.map(g=>g.join(', ')).join(' · ')}`);
-  if(pat.flip.active) parts.push(`<b>Flipped pair</b>: ${pat.flip.pairs.map(p=>p.join(' ↔ ')).join(' · ')}`);
-  if(pat.neigh.active) parts.push(`<b>Neighbouring run</b>: ${pat.neigh.runs.map(r=>r.join('-')).join(' · ')}`);
-  el.innerHTML = parts.length ? parts.join('<br>') : 'This constellation currently has none of the four patterns.';
-  TOGGLE_KEYS.forEach(k=>{
-    const b=document.getElementById('tg-'+k);
-    if(b) b.classList.toggle('detected', pat[k].active);
-  });
-}
-
-TOGGLE_KEYS.forEach(key=>{
-  const btn=document.getElementById('tg-'+key);
-  btn.addEventListener('click', ()=>{
-    activeToggles[key]=!activeToggles[key];
-    btn.classList.toggle('active', activeToggles[key]);
-    if(!currentConstelNums || !draws.length) return;
-    const finalNums = applyActiveToggles(currentConstelNums);
-    const freshGaps=[]; for(let i=1;i<finalNums.length;i++) freshGaps.push(finalNums[i]-finalNums[i-1]);
-    const onList = TOGGLE_KEYS.filter(k=>activeToggles[k]).map(k=>TOGGLE_LABELS[k]).join(', ') || '—';
-    document.getElementById('constel-info').innerHTML =
-      `Reshaped to include: <b>${onList}</b><br>Chain: <b>${finalNums.join(' → ')}</b>`;
-    renderConstellation(finalNums, freshGaps);
-    updateToggleDetectionInfo(finalNums);
-  });
-});
-
-function buildEverything(){
-  patterns3 = minePatterns(draws,3);
-  patterns4 = minePatterns(draws,4);
-  positionalGaps = minePositionalGaps(draws);
-  additionalProfile = buildAdditionalProfiles(draws);
-  mainNumberProfile = buildMainNumberProfile(draws);
-  pairFreq = buildPairFrequency(draws);
-  buildToggleHistory();
-
-  document.getElementById('p-csv-status').textContent =
-    `✓ ${draws.length} draws loaded · ${patterns3.length} distinct 3-step runs · ${patterns4.length} distinct 4-step runs`;
-
-  renderPatternChips();
-  renderPairChips();
-  renderToggleStats();
-  suggestNextToggles();
-  visibleChains = 25;
-  renderChains();
-  document.getElementById('p-footer-note').textContent =
-    `Patterns recompute automatically from whatever is in toto.csv — add more draws and reload to sharpen them.`;
-
-  // seed a default start number for convenience
-  if(!document.getElementById('p-start-input').value){
-    document.getElementById('p-start-input').value = randomStart();
-  }
-  renderConstellation(null,null); // empty state
-}
-
-function randomStart(){ return Math.floor(Math.random()*43)+1; }
-
-function renderPatternChips(){
-  const c3 = document.getElementById('chips-3');
-  const c4 = document.getElementById('chips-4');
-  c3.innerHTML=''; c4.innerHTML='';
-  patterns3.slice(0,8).forEach(p=>c3.appendChild(chipEl(p)));
-  patterns4.slice(0,8).forEach(p=>c4.appendChild(chipEl(p)));
-  if(!patterns3.length) c3.innerHTML='<div class="chip"><span class="cnt">No data yet</span></div>';
-  if(!patterns4.length) c4.innerHTML='<div class="chip"><span class="cnt">No data yet</span></div>';
-}
-function chipEl(p){
-  const div=document.createElement('div');
-  div.className='chip';
-  const seq = p.pattern.map(g=>'+'+g).join('<span class="arrow"> → </span>');
-  div.innerHTML = `<span class="seq">${seq}</span><span class="cnt">×${p.count}</span>`;
-  return div;
-}
-
-function renderPairChips(){
-  const el = document.getElementById('chips-pairs');
-  if(!el) return;
-  el.innerHTML='';
-  const pairs = topPairs(pairFreq, 12);
-  if(!pairs.length){ el.innerHTML='<div class="chip"><span class="cnt">No data yet</span></div>'; return; }
-  pairs.forEach(p=>{
-    const div=document.createElement('div');
-    div.className='chip';
-    div.innerHTML = `<span class="seq">${p.pair[0]} <span class="arrow">＆</span> ${p.pair[1]}</span><span class="cnt">×${p.count} draws</span>`;
-    el.appendChild(div);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-// CONSTELLATION GENERATOR LOGIC
-// ═══════════════════════════════════════════════════════════
-function tryOverlapCombosPool(start, poolSize){
-  // Look for top 4-step patterns (covers gaps 0-3) whose LAST gap
-  // matches the FIRST gap of a top 3-step pattern (covers gaps 3-5).
-  // Returns EVERY fitting combo (not just the single best), so the caller
-  // can weigh several real, data-backed options against each other instead
-  // of the weaver always collapsing onto the one highest-count combo.
-  const P4 = patterns4.slice(0, poolSize||60);
-  const P3 = patterns3.slice(0, poolSize||60);
-  const combos=[];
-  for(const p4 of P4){
-    for(const p3 of P3){
-      if(p4.pattern[3] === p3.pattern[0]){
-        const gaps = [...p4.pattern, ...p3.pattern.slice(1)]; // 6 gaps total
-        const total = gaps.reduce((a,b)=>a+b,0);
-        if(start + total <= 49){
-          combos.push({gaps, score:p4.count+p3.count, desc:{p4,p3}});
+    if(i>=1){
+      for(const n of sets[i-1]){
+        if(!sets[i].has(n)){
+          result.survival[n]-=3;
+          result.survivalDetail[n].push({row:i+1,type:'fell_off'});
         }
       }
     }
   }
-  combos.sort((a,b)=>b.score-a.score);
-  return combos;
-}
 
-function greedyFallback(start, randomize){
-  // Fill 6 gaps one at a time using positional frequency, always
-  // keeping the running total within budget (49 - start). When randomize
-  // is true, sample (weighted by real frequency) from the top few gap
-  // options at each position instead of always taking the single most
-  // common one — so the fallback path varies too, not just the combo path.
-  const budget = 49 - start;
-  const gaps=[];
-  let used=0;
-  for(let i=0;i<6;i++){
-    const remainingSlots = 6 - i - 1; // slots still needed after this one
-    const all = positionalGaps[i] && positionalGaps[i].length
-      ? positionalGaps[i]
-      : [[1,1]];
-    const feasible = all.filter(([g])=> used+g+remainingSlots<=budget);
-    const candidates = feasible.length ? feasible : all;
-    let chosen=null;
-    if(randomize && candidates.length){
-      const pool = candidates.slice(0,4);
-      const totalW = pool.reduce((a,[,c])=>a+c,0);
-      let r = Math.random()*totalW;
-      for(const [g,c] of pool){ r-=c; if(r<=0){ chosen=g; break; } }
-      if(chosen==null) chosen=pool[0][0];
-    } else if(candidates.length){
-      chosen = candidates[0][0];
+  // ── STEP 4: kinship ──
+  const pool = [...new Set(chains.flat())];
+  const pat = detectPatterns(pool);
+  const reasonList = n=>{ if(!result.kinshipReasons[n]) result.kinshipReasons[n]=[]; return result.kinshipReasons[n]; };
+  pat.front.groups.forEach(g=>g.forEach(n=>{ result.kinship[n]+=1; reasonList(n).push('front digit ↔ '+g.filter(x=>x!==n).join(', ')); }));
+  pat.back.groups.forEach(g=>g.forEach(n=>{ result.kinship[n]+=1; reasonList(n).push('back digit ↔ '+g.filter(x=>x!==n).join(', ')); }));
+  pat.flip.pairs.forEach(p=>p.forEach(n=>{ result.kinship[n]+=1; reasonList(n).push('flip ↔ '+p.find(x=>x!==n)); }));
+  pat.neigh.runs.forEach(r=>r.forEach(n=>{ result.kinship[n]+=1; reasonList(n).push('neighbour run '+r.join('-')); }));
+  result.kinshipGroups = pat;
+
+  // ── STEP 5a: punishment — 8th (pre-window) draw numbers that never
+  // reappeared anywhere across the 7-draw window take a flat −1 ──
+  if(result.draw8){
+    const draw8Nums = drawChain(result.draw8).chain.map(c=>c.n);
+    const windowUnionEarly = new Set(chains.flat());
+    for(const x of draw8Nums){
+      if(!windowUnionEarly.has(x)){
+        result.punishment[x] = (result.punishment[x]||0) - 1;
+        result.punishmentDetail.push({x});
+      }
     }
-    if(chosen==null) chosen = Math.max(1, budget - used - remainingSlots);
-    gaps.push(chosen);
-    used += chosen;
   }
-  return gaps;
+
+  // ── STEP 5b: ascension (draws 1–6 only, excludes the last draw) ──
+  const ptsForLen = {3:1,4:2,5:3,6:4};
+  const ascensionSet = new Set();
+  const ascensionByLen = {}; // n -> {3:count,4:count,5:count,6:count}
+  for(let i=0;i<6;i++){
+    const chain = chains[i];
+    for(const n of chain) ascensionSet.add(n);
+    for(let L=3;L<=6;L++){
+      for(let s=0; s+L<=chain.length; s++){
+        const win = chain.slice(s,s+L);
+        win.forEach(n=>{
+          result.ascension[n] = (result.ascension[n]||0) + ptsForLen[L];
+          if(!ascensionByLen[n]) ascensionByLen[n]={3:0,4:0,5:0,6:0};
+          ascensionByLen[n][L] += 1;
+        });
+      }
+    }
+  }
+  for(let n=1;n<=49;n++){
+    if(!ascensionSet.has(n)) result.ascension[n] = (result.ascension[n]||0) - 1;
+  }
+  result.ascensionSet = ascensionSet;
+  result.ascensionByLen = ascensionByLen;
+
+  const step5={};
+  for(let n=1;n<=49;n++) step5[n] = (result.ascension[n]||0) + (result.punishment[n]||0);
+  result.step5 = step5;
+
+  // ── preliminary total (steps 1–5) for the top-5 lookup used by Step 6 ──
+  const prelim={};
+  for(let n=1;n<=49;n++) prelim[n] = (result.survival[n]||0) + (result.kinship[n]||0) + (step5[n]||0);
+  const rankedPrelim = [...Array(49).keys()].map(i=>i+1).sort((a,b)=> prelim[b]-prelim[a] || a-b);
+  const top5set = new Set(rankedPrelim.slice(0,5));
+  result.top5Prelim = rankedPrelim.slice(0,5);
+
+  // ── STEP 6: ghost numbers ──
+  const windowUnion = new Set(chains.flat());
+  result.windowUnion = windowUnion;
+  for(let n=1;n<=49;n++){
+    if(!windowUnion.has(n)){
+      let neighTop=null;
+      if(top5set.has(n-1)) neighTop=n-1;
+      else if(top5set.has(n+1)) neighTop=n+1;
+      if(neighTop!=null){ result.ghost[n]=2; result.ghostReason[n]='neighbour '+neighTop+' is in the prelim top 5'; }
+      else { result.ghost[n]=-1; result.ghostReason[n]='absent from all 7 draws'; }
+    }
+  }
+
+  // ── FINAL TOTAL ──
+  for(let n=1;n<=49;n++){
+    result.total[n] = (result.survival[n]||0) + (result.kinship[n]||0) + (step5[n]||0) + (result.ghost[n]||0);
+  }
+  const ranked = [...Array(49).keys()].map(i=>i+1).sort((a,b)=> result.total[b]-result.total[a] || a-b);
+  result.ranked = ranked;
+  result.top7 = ranked.slice(0,7);
+  result.ready = true;
+  return result;
 }
 
-function gapsToNums(start, gaps){
-  const nums=[start];
-  for(const g of gaps) nums.push(nums[nums.length-1]+g);
-  return nums;
-}
+// ═══════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════
+let board = computeScoreboard();
 
-// Build a diverse pool of candidate 7-star chains from every angle the tool
-// knows about — top combos across their whole ranked pool (not just #1),
-// plus several randomized greedy fallbacks — then score each candidate
-// using ALL FOUR shape patterns + pair-affinity + the gap-run frequency
-// together, and weighted-randomly pick among the strongest few. This is
-// what actually breaks the "same 3-4 combos every time" repetition while
-// still favouring numbers the data supports.
-function weaveConstellation(){
-  const input = document.getElementById('p-start-input');
-  let start = parseInt(input.value);
-  if(!start || start<1) start=randomStart();
-  if(start>43) start=43;
-  input.value = start;
+function fmtDate(d){ return d && d.date ? d.date : ''; }
 
-  if(!draws.length){
-    document.getElementById('constel-info').textContent = 'Load toto.csv first — no history to learn from yet.';
+function renderWindowStrip(){
+  const wrap = document.getElementById('window-strip');
+  wrap.innerHTML='';
+  if(!board.ready){
+    wrap.innerHTML = '<div class="window-row">Need at least 7 loaded draws to score anything.</div>';
     return;
   }
+  const rows=[];
+  if(board.draw8) rows.push({tag:'Draw 0', d:board.draw8, cls:'is-draw8'});
+  board.window.forEach((d,i)=>{
+    rows.push({tag:'Draw '+(i+1)+(i===6?' (last)':''), d, cls: i===6?'is-latest':''});
+  });
+  for(const r of rows){
+    const row=document.createElement('div');
+    row.className='window-row '+r.cls;
+    const {chain} = drawChain(r.d);
+    row.innerHTML = `
+      <div class="window-tag">${r.tag}</div>
+      <div class="window-meta"><b>#${r.d.drawNo||'—'}</b><br>${fmtDate(r.d)}</div>
+      <div class="window-nums">${chain.map(c=>`<span class="wn ${c.isAdd?'is-add':''}">${c.n}</span>`).join('')}</div>
+    `;
+    wrap.appendChild(row);
+  }
+}
 
-  const comboPool = tryOverlapCombosPool(start, 60);
-  const candidates=[]; // {nums, gaps, source, sourceScore, comboDesc}
-  const seen = new Set();
-  const addCandidate = (gaps, source, sourceScore, comboDesc)=>{
-    const nums = gapsToNums(start, gaps);
-    const key = nums.join(',');
-    if(seen.has(key)) return;
-    seen.add(key);
-    candidates.push({nums, gaps, source, sourceScore, comboDesc});
+function cellClass(v){ return v>0?'pos':v<0?'neg':'zero'; }
+function signed(v){ return v>0?('+'+v):String(v); }
+
+function renderSurvivalTable(){
+  const tbody = document.getElementById('survival-tbody');
+  tbody.innerHTML='';
+  if(!board.ready) return;
+  const active = [...board.windowUnion].sort((a,b)=> (board.survival[b]-board.survival[a]) || (a-b));
+  const typeIcon = {base:['·','st-base'], survive:['✓','st-survive'], fell_off:['✕','st-fell'], revive:['↻','st-revive'], new:['★','st-new']};
+  for(const n of active){
+    const detail = board.survivalDetail[n];
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td><span class="num-badge">${n}</span></td>`;
+    for(let row=1; row<=7; row++){
+      const evs = detail.filter(e=>e.row===row);
+      let inner = '·';
+      let cls = 'st-absent';
+      if(evs.length){
+        const e = evs[evs.length-1];
+        const [icon,c] = typeIcon[e.type];
+        inner = icon; cls = c;
+      }
+      tr.innerHTML += `<td><span class="${cls}">${inner}</span></td>`;
+    }
+    tr.innerHTML += `<td class="${cellClass(board.survival[n])}">${signed(board.survival[n])}</td>`;
+    tbody.appendChild(tr);
+  }
+  if(!active.length) tbody.innerHTML = '<tr><td colspan="9">No numbers to show yet.</td></tr>';
+}
+
+function renderKinship(){
+  const groupsWrap = document.getElementById('kinship-groups');
+  const tbody = document.getElementById('kinship-tbody');
+  groupsWrap.innerHTML=''; tbody.innerHTML='';
+  if(!board.ready || !board.kinshipGroups) return;
+  const g = board.kinshipGroups;
+  const addChip = (tag, text)=>{
+    const d=document.createElement('div'); d.className='chip';
+    d.innerHTML = `<span class="tag">${tag}</span><b>${text}</b>`;
+    groupsWrap.appendChild(d);
   };
+  g.front.groups.forEach(gr=>addChip('Front digit', gr.join(', ')));
+  g.back.groups.forEach(gr=>addChip('Back digit', gr.join(', ')));
+  g.flip.pairs.forEach(p=>addChip('Flip', p.join(' ↔ ')));
+  g.neigh.runs.forEach(r=>addChip('Neighbours', r.join('-')));
+  if(!groupsWrap.children.length) groupsWrap.innerHTML = '<div class="chip">No kinship relationships found in this window.</div>';
 
-  // Take a healthy slice of the ranked combo pool (not just the top one)
-  comboPool.slice(0,15).forEach(c=>addCandidate(c.gaps, 'combo', c.score, c.desc));
-  // Several randomized greedy fallbacks, so there's always variety even
-  // when few/no overlap combos fit under 49 from this start number.
-  for(let i=0;i<10;i++) addCandidate(greedyFallback(start,true), 'fallback', 1, null);
-  if(!candidates.length) addCandidate(greedyFallback(start,false), 'fallback', 1, null);
+  const active = [...board.windowUnion].filter(n=>board.kinship[n]>0).sort((a,b)=>board.kinship[b]-board.kinship[a] || a-b);
+  for(const n of active){
+    const tr=document.createElement('tr');
+    const reasons = (board.kinshipReasons[n]||[]).join(' · ');
+    tr.innerHTML = `<td><span class="num-badge">${n}</span></td><td>${reasons}</td><td class="${cellClass(board.kinship[n])}">${signed(board.kinship[n])}</td>`;
+    tbody.appendChild(tr);
+  }
+  if(!active.length) tbody.innerHTML = '<tr><td colspan="3">No number picked up a kinship bonus this round.</td></tr>';
+}
 
-  // Composite score: real gap-run frequency + pair-affinity across the
-  // whole chain + how many of the 4 shape patterns it naturally contains,
-  // weighted by how common each of those patterns actually is historically.
-  candidates.forEach(c=>{
-    const pat = detectPatterns(c.nums);
-    const {total:pairTotal, hits:pairHits} = pairAffinityScore(pairFreq, c.nums);
-    const patBonus = patternBonusScore(pat);
-    c.pat = pat;
-    c.pairTotal = pairTotal;
-    c.pairHits = pairHits;
-    c.patBonus = patBonus;
-    c.composite = c.sourceScore*6 + pairTotal*1.5 + patBonus;
+function renderAscension(){
+  const noteWrap = document.getElementById('punishment-note');
+  const tbody = document.getElementById('ascension-tbody');
+  noteWrap.innerHTML=''; tbody.innerHTML='';
+  if(!board.ready) return;
+
+  if(!board.draw8){
+    noteWrap.innerHTML = '<div class="chip">Not enough history for an 8th draw — punishment check skipped.</div>';
+  } else if(!board.punishmentDetail.length){
+    noteWrap.innerHTML = '<div class="chip">Every number in the 8th draw reappeared somewhere in the 7-draw window — no punishment applied.</div>';
+  } else {
+    board.punishmentDetail.forEach(p=>{
+      const d=document.createElement('div'); d.className='chip';
+      d.innerHTML = `<span class="tag">Punish</span><b>${p.x}</b> (8th draw) never reappeared in the 7-draw window → takes −1`;
+      noteWrap.appendChild(d);
+    });
+  }
+
+  const active = [...board.ascensionSet].sort((a,b)=> board.ascension[b]-board.ascension[a] || a-b);
+  for(const n of active){
+    const byLen = board.ascensionByLen[n] || {3:0,4:0,5:0,6:0};
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td><span class="num-badge">${n}</span></td>` +
+      `<td>${byLen[3]}</td><td>${byLen[4]}</td><td>${byLen[5]}</td><td>${byLen[6]}</td>` +
+      `<td class="${cellClass(board.punishment[n]||0)}">${board.punishment[n] ? signed(board.punishment[n]) : '—'}</td>` +
+      `<td class="${cellClass(board.step5[n])}">${signed(board.step5[n])}</td>`;
+    tbody.appendChild(tr);
+  }
+  if(!active.length) tbody.innerHTML = '<tr><td colspan="7">No ascension data yet.</td></tr>';
+}
+
+function renderGhosts(){
+  const wrap = document.getElementById('ghost-list');
+  wrap.innerHTML='';
+  if(!board.ready) return;
+  const ghosts = [...Array(49).keys()].map(i=>i+1).filter(n=>!board.windowUnion.has(n));
+  ghosts.sort((a,b)=> board.ghost[b]-board.ghost[a] || a-b);
+  for(const n of ghosts){
+    const d=document.createElement('div'); d.className='chip';
+    const delta = board.ghost[n];
+    d.innerHTML = `<b>${n}</b> <span class="${cellClass(delta)}">${signed(delta)}</span> <span class="tag">${board.ghostReason[n]}</span>`;
+    wrap.appendChild(d);
+  }
+  if(!ghosts.length) wrap.innerHTML = '<div class="chip">Every number from 1–49 showed up somewhere in the window.</div>';
+}
+
+function renderFinalScoreboard(){
+  const pickWrap = document.getElementById('pick-strip');
+  const tbody = document.getElementById('final-tbody');
+  pickWrap.innerHTML=''; tbody.innerHTML='';
+  if(!board.ready) return;
+
+  board.top7.forEach((n,i)=>{
+    const d=document.createElement('div'); d.className='pick-node';
+    d.innerHTML = `<div class="n">${n}</div><div class="r">#${i+1}</div>`;
+    pickWrap.appendChild(d);
   });
 
-  candidates.sort((a,b)=>b.composite-a.composite);
-  const shortlist = candidates.slice(0, Math.min(8, candidates.length));
-  const picked = weightedRandomPick(shortlist, c=>c.composite);
+  board.ranked.forEach((n,i)=>{
+    const tr=document.createElement('tr');
+    if(i<7) tr.className='top7';
+    tr.innerHTML = `<td>${i+1}</td>` +
+      `<td><span class="num-badge">${n}</span></td>` +
+      `<td class="${cellClass(board.survival[n])}">${signed(board.survival[n])}</td>` +
+      `<td class="${cellClass(board.kinship[n])}">${signed(board.kinship[n])}</td>` +
+      `<td class="${cellClass(board.step5[n])}">${signed(board.step5[n])}</td>` +
+      `<td class="${cellClass(board.ghost[n])}">${signed(board.ghost[n])}</td>` +
+      `<td class="${cellClass(board.total[n])}"><b>${signed(board.total[n])}</b></td>`;
+    tbody.appendChild(tr);
+  });
+}
 
-  let gaps = picked.gaps;
-  let infoHtml;
-  if(picked.source==='combo'){
-    const {p4,p3} = picked.comboDesc;
-    infoHtml = `Spliced a <b>4-step run</b> [${p4.pattern.map(g=>'+'+g).join(', ')}] (seen ${p4.count}×) with a <b>3-step run</b> [${p3.pattern.map(g=>'+'+g).join(', ')}] (seen ${p3.count}×), overlapping at <b>+${p4.pattern[3]}</b>.`;
-  } else {
-    infoHtml = `No overlap combo from the ranked pool won out here, so this chain leans on the most-supported single gap at each position (with some real historical variety mixed in).`;
-  }
-  infoHtml += picked.pairHits
-    ? ` Contains <b>${picked.pairHits}</b> pair${picked.pairHits===1?'':'s'} that have co-occurred historically (${picked.pairTotal} combined past appearances).`
-    : ` No pair in this chain has historically co-occurred yet — a rarer combination.`;
+function runAnalysis(){
+  board = computeScoreboard();
+  document.getElementById('p-csv-status').textContent = board.ready
+    ? `✓ ${draws.length} draws loaded — scored on the last 7 (Draw #${board.window[0].drawNo||'—'}–#${board.window[6].drawNo||'—'})`
+    : `Loaded ${draws.length} draws — need at least 7 to score.`;
 
-  const nums=[start];
-  for(const g of gaps) nums.push(nums[nums.length-1]+g);
+  renderWindowStrip();
+  renderSurvivalTable();
+  renderKinship();
+  renderAscension();
+  renderGhosts();
+  renderFinalScoreboard();
 
-  const hasToggles = TOGGLE_KEYS.some(k=>activeToggles[k]);
-  const finalNums = hasToggles ? applyActiveToggles(nums) : nums;
-  const finalGaps = hasToggles
-    ? (()=>{ const gg=[]; for(let i=1;i<finalNums.length;i++) gg.push(finalNums[i]-finalNums[i-1]); return gg; })()
-    : gaps;
+  visibleChains = 25;
+  renderChains();
 
-  const toggleNote = hasToggles
-    ? `<br>Reshaped for: <b>${TOGGLE_KEYS.filter(k=>activeToggles[k]).map(k=>TOGGLE_LABELS[k]).join(', ')}</b>`
-    : '';
-
-  document.getElementById('constel-info').innerHTML = infoHtml + toggleNote +
-    `<br>Chain: <b>${finalNums.join(' → ')}</b>`;
-
-  renderConstellation(finalNums, finalGaps);
-  updateToggleDetectionInfo(finalNums);
+  document.getElementById('p-footer-note').textContent =
+    board.ready
+      ? `Scores recompute automatically from whatever is in toto.csv — reload with fresh draws to re-run the ritual.`
+      : '';
 }
 
 // ═══════════════════════════════════════════════════════════
-// CONSTELLATION RENDER (top generator widget)
-// ═══════════════════════════════════════════════════════════
-function nodePos(i,total){
-  const w=880,h=240,pad=60;
-  const x = pad + (w-2*pad)*(i/(total-1));
-  const y = 120 + Math.sin(i*1.05)*68;
-  return {x,y};
-}
-
-let currentConstelNums=null, constelNodeEls=[], markedAdditionalIdx=-1, markedWeakIdx=-1;
-
-function renderConstellation(nums, gaps){
-  const svg = document.getElementById('constel-svg');
-  const layer = document.getElementById('constel-nodes');
-  svg.innerHTML=''; layer.innerHTML='';
-  const total=7;
-  const positions=[];
-  for(let i=0;i<total;i++) positions.push(nodePos(i,total));
-
-  currentConstelNums = nums;
-  constelNodeEls = [];
-  markedAdditionalIdx = -1;
-  markedWeakIdx = -1;
-  const markInfo = document.getElementById('constel-mark-info');
-  if(markInfo){ markInfo.style.display='none'; markInfo.innerHTML=''; }
-
-  // lines
-  for(let i=0;i<total-1;i++){
-    const a=positions[i], b=positions[i+1];
-    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-    line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
-    line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
-    line.setAttribute('stroke', gaps ? 'rgba(212,168,67,0.55)' : 'rgba(255,255,255,0.12)');
-    line.setAttribute('stroke-width','1.4');
-    svg.appendChild(line);
-
-    if(gaps){
-      const mx=(a.x+b.x)/2, my=(a.y+b.y)/2-8;
-      const label=document.createElementNS('http://www.w3.org/2000/svg','text');
-      label.setAttribute('x',mx); label.setAttribute('y',my);
-      label.setAttribute('text-anchor','middle');
-      label.setAttribute('class','gap-label');
-      label.textContent='+'+gaps[i];
-      svg.appendChild(label);
-    }
-  }
-
-  // nodes
-  for(let i=0;i<total;i++){
-    const {x,y}=positions[i];
-    const div=document.createElement('div');
-    div.style.left=(x/880*100)+'%';
-    div.style.top=(y/240*100)+'%';
-    if(nums){
-      div.className='node show pop '+(i===0?'gold-aura':'white-aura');
-      div.style.animationDelay=(i*0.12)+'s';
-      div.textContent=nums[i];
-    } else {
-      div.className='node show '+(i===0?'first-node empty-slot':'empty-slot');
-      div.textContent = i===0 ? '?' : '·';
-    }
-    layer.appendChild(div);
-    constelNodeEls.push(div);
-  }
-}
-
-document.getElementById('p-generate-btn').addEventListener('click', weaveConstellation);
-document.getElementById('p-random-btn').addEventListener('click', ()=>{
-  document.getElementById('p-start-input').value = randomStart();
-});
-
-// ═══════════════════════════════════════════════════════════
-// HISTORICAL CHAIN LIST
+// HISTORICAL CHAIN LIST (kept, unchanged behaviour)
 // ═══════════════════════════════════════════════════════════
 let visibleChains = 25;
 function renderChains(){
@@ -1195,134 +921,8 @@ document.getElementById('p-showmore-btn').addEventListener('click', ()=>{
   renderChains();
 });
 
-// ═══════════════════════════════════════════════════════════
-// MARK ADDITIONAL NUMBER / WEAKEST LINK (on the woven constellation)
-// ═══════════════════════════════════════════════════════════
-function gapScore(entries, before, after){
-  let full=0, partial=0;
-  for(const e of entries){
-    const beforeApplicable = before!=null;
-    const afterApplicable = after!=null;
-    const beforeMatches = beforeApplicable && e.before===before;
-    const afterMatches = afterApplicable && e.after===after;
-    if(beforeApplicable && afterApplicable){
-      if(beforeMatches && afterMatches) full++;
-      else if(beforeMatches || afterMatches) partial++;
-    } else if(beforeApplicable && beforeMatches){
-      full++;
-    } else if(afterApplicable && afterMatches){
-      full++;
-    }
-  }
-  return {full, partial, score: full*10+partial, sample: entries.length};
-}
-
-function scoreConstellation(profile){
-  return currentConstelNums.map((n,i)=>{
-    const before = i>0 ? n-currentConstelNums[i-1] : null;
-    const after = i<currentConstelNums.length-1 ? currentConstelNums[i+1]-n : null;
-    const {full, partial, score, sample} = gapScore(profile[n]||[], before, after);
-    return {i, n, before, after, full, partial, score, sample};
-  });
-}
-
-function markAdditionalNumber(){
-  const markInfo = document.getElementById('constel-mark-info');
-  markInfo.style.display='block';
-  if(!draws.length){
-    markInfo.textContent = 'Load toto.csv first — no history to learn from yet.';
-    return;
-  }
-  if(!currentConstelNums){
-    markInfo.textContent = 'Weave a constellation first.';
-    return;
-  }
-  const scored = scoreConstellation(additionalProfile);
-  const maxScore = Math.max(...scored.map(s=>s.score));
-  const usedFallback = maxScore<=0;
-  const pool = usedFallback ? scored : scored.filter(s=>s.score===maxScore);
-  const pick = pool[Math.floor(Math.random()*pool.length)];
-
-  if(markedAdditionalIdx>=0 && constelNodeEls[markedAdditionalIdx]) constelNodeEls[markedAdditionalIdx].classList.remove('mark-additional');
-  markedAdditionalIdx = pick.i;
-  constelNodeEls[pick.i].classList.add('mark-additional');
-
-  let sideDesc;
-  if(pick.before!=null && pick.after!=null) sideDesc = `sitting between a <b>+${pick.before}</b> before it and a <b>+${pick.after}</b> after it`;
-  else if(pick.before!=null) sideDesc = `sitting after a <b>+${pick.before}</b> gap, as the highest number`;
-  else sideDesc = `sitting before a <b>+${pick.after}</b> gap, as the lowest number`;
-
-  markInfo.innerHTML = usedFallback
-    ? `No number in this chain matched history well as an additional number, so <b>${pick.n}</b> was picked at random.`
-    : `<b>${pick.n}</b> fits best as the additional number — ${sideDesc}, matching ${pick.full} time(s)${pick.partial?` (plus ${pick.partial} partial)`:''} out of ${pick.sample} historical appearances as an additional number.`;
-}
-
-function markWeakestLink(){
-  const markInfo = document.getElementById('constel-mark-info');
-  markInfo.style.display='block';
-  if(!draws.length){
-    markInfo.textContent = 'Load toto.csv first — no history to learn from yet.';
-    return;
-  }
-  if(!currentConstelNums){
-    markInfo.textContent = 'Weave a constellation first.';
-    return;
-  }
-  const scored = scoreConstellation(mainNumberProfile);
-  const minScore = Math.min(...scored.map(s=>s.score));
-  const pool = scored.filter(s=>s.score===minScore);
-  const pick = pool[Math.floor(Math.random()*pool.length)];
-
-  if(markedWeakIdx>=0 && constelNodeEls[markedWeakIdx]) constelNodeEls[markedWeakIdx].classList.remove('mark-weak');
-  markedWeakIdx = pick.i;
-  constelNodeEls[pick.i].classList.add('mark-weak');
-
-  let sideDesc;
-  if(pick.before!=null && pick.after!=null) sideDesc = `flanked by <b>+${pick.before}</b> before and <b>+${pick.after}</b> after`;
-  else if(pick.before!=null) sideDesc = `sitting after a <b>+${pick.before}</b> gap, as the highest number`;
-  else sideDesc = `sitting before a <b>+${pick.after}</b> gap, as the lowest number`;
-
-  markInfo.innerHTML = `<b>${pick.n}</b> is the weakest link in this chain — ${sideDesc}, that exact context matched only ${pick.full} time(s)${pick.partial?` (plus ${pick.partial} partial)`:''} out of ${pick.sample} times ${pick.n} has appeared as a main winning number historically.<br>All 49 numbers still have an equal 1-in-49 chance each draw — this is purely a pattern-fit novelty.`;
-}
-
-document.getElementById('p-mark-additional-btn').addEventListener('click', markAdditionalNumber);
-document.getElementById('p-mark-weak-btn').addEventListener('click', markWeakestLink);
-
-// ═══════════════════════════════════════════════════════════
-// COPY NUMBERS (with (additional) and <weakest> markers)
-// ═══════════════════════════════════════════════════════════
-function copyConstellation(){
-  const markInfo = document.getElementById('constel-mark-info');
-  if(!currentConstelNums){
-    markInfo.style.display='block';
-    markInfo.textContent = 'Weave a constellation first.';
-    return;
-  }
-  const dateStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
-  const parts = currentConstelNums.map((n,i)=>{
-    if(i===markedAdditionalIdx) return `(${n})`;
-    if(i===markedWeakIdx) return `<${n}>`;
-    return `${n}`;
-  });
-  const text = `${dateStr}: ${parts.join(', ')}`;
-  const btn = document.getElementById('p-copy-btn');
-  const done = ()=>{
-    const orig = btn.textContent;
-    btn.textContent = '✅ Copied!';
-    setTimeout(()=>{ btn.textContent = orig; }, 1500);
-  };
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(done).catch(()=>window.prompt('Copy this:', text));
-  } else {
-    window.prompt('Copy this:', text);
-  }
-}
-
-document.getElementById('p-copy-btn').addEventListener('click', copyConstellation);
-
-// initial empty constellation while CSV loads
-renderConstellation(null,null);
-updateToggleDetectionInfo(null);
+// initial empty render while CSV loads
+renderWindowStrip();
 </script>
 </body>
 </html>
