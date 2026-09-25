@@ -185,6 +185,22 @@ td.zero{color:var(--muted);}
 }
 .pick-node .n{font-family:var(--ff-head);font-size:20px;color:var(--gold);line-height:1;}
 .pick-node .r{font-size:8.5px;color:var(--muted);margin-top:2px;}
+.pick-node.is-add{
+  border-color:rgba(74,222,128,.75);
+  box-shadow:0 0 12px 3px rgba(74,222,128,.45), 0 0 30px 10px rgba(74,222,128,.15);
+}
+.pick-node.is-add .n{color:var(--green);}
+.pick-node.is-discard{
+  border-color:rgba(255,107,107,.7);
+  opacity:.55;
+  box-shadow:none;
+}
+.pick-node.is-discard .n{color:var(--red);text-decoration:line-through;}
+
+.card-head-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+.card-head-row h3{margin-bottom:0;}
+.btn-copy{display:inline-flex;align-items:center;gap:7px;}
+.btn-copy svg{flex-shrink:0;}
 
 /* ── HISTORICAL CHAIN ROWS (kept) ────────────────────────── */
 .legend{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:18px;font-size:11.5px;color:var(--muted);}
@@ -320,9 +336,16 @@ td.zero{color:var(--muted);}
 
   <!-- ═══ FINAL SCOREBOARD ═══ -->
   <div class="card">
-    <h3>Final Scoreboard &amp; Next-Draw Pick</h3>
+    <div class="card-head-row">
+      <h3>Final Scoreboard &amp; Next-Draw Pick</h3>
+      <button class="btn btn-ghost btn-copy" id="p-copy-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy Pick
+      </button>
+    </div>
     <p class="card-desc">All four categories summed. The 7 highest-scoring numbers (gold rows) are the pick for the next draw.</p>
     <div class="pick-strip" id="pick-strip"></div>
+    <div class="rule-box" id="p-addpick-note"></div>
     <div class="score-table-wrap">
       <table class="score-table">
         <thead><tr><th>Rank</th><th>#</th><th>① Survival</th><th>② Kinship</th><th>③ Ascension+Punish</th><th>④ Ghost</th><th>TOTAL</th></tr></thead>
@@ -677,7 +700,39 @@ function computeScoreboard(){
   result.ranked = ranked;
   result.top7 = ranked.slice(0,7);
   result.ready = true;
+  result.additionalPick = computeAdditionalPick(result.top7);
   return result;
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADDITIONAL-NUMBER PICK
+// Among the top 7, find which one has come up most often — and least
+// often — as the ADDITIONAL number across the last 50 draws. Most
+// stays and is marked as the additional pick; least is marked to
+// discard. If none of the 7 ever appeared as an additional number in
+// that window, fall back to whichever was seen most/least overall
+// (as a main winning number) in the last 50 draws.
+// ═══════════════════════════════════════════════════════════
+function computeAdditionalPick(top7){
+  const last50 = draws.slice(0,50);
+  const addCount={}, winCount={};
+  top7.forEach(n=>{ addCount[n]=0; winCount[n]=0; });
+  for(const d of last50){
+    if(d.add!=null && addCount.hasOwnProperty(d.add)) addCount[d.add]++;
+    for(const n of d.nums){ if(winCount.hasOwnProperty(n)) winCount[n]++; }
+  }
+  const rank = n=>top7.indexOf(n);
+  const maxAdd = Math.max(...top7.map(n=>addCount[n]));
+  let mostAdd, leastAdd, usedFallback=false;
+  if(maxAdd>0){
+    mostAdd  = [...top7].sort((a,b)=> addCount[b]-addCount[a] || rank(a)-rank(b))[0];
+    leastAdd = [...top7].sort((a,b)=> addCount[a]-addCount[b] || rank(b)-rank(a))[0];
+  } else {
+    usedFallback = true;
+    mostAdd  = [...top7].sort((a,b)=> winCount[b]-winCount[a] || rank(a)-rank(b))[0];
+    leastAdd = [...top7].sort((a,b)=> winCount[a]-winCount[b] || rank(b)-rank(a))[0];
+  }
+  return {addCount, winCount, mostAdd, leastAdd, usedFallback, windowSize:last50.length};
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -818,14 +873,27 @@ function renderGhosts(){
 function renderFinalScoreboard(){
   const pickWrap = document.getElementById('pick-strip');
   const tbody = document.getElementById('final-tbody');
-  pickWrap.innerHTML=''; tbody.innerHTML='';
+  const noteWrap = document.getElementById('p-addpick-note');
+  pickWrap.innerHTML=''; tbody.innerHTML=''; noteWrap.innerHTML='';
   if(!board.ready) return;
 
+  const ap = board.additionalPick;
   board.top7.forEach((n,i)=>{
-    const d=document.createElement('div'); d.className='pick-node';
+    const d=document.createElement('div');
+    d.className='pick-node' + (ap && n===ap.mostAdd ? ' is-add' : '') + (ap && n===ap.leastAdd ? ' is-discard' : '');
     d.innerHTML = `<div class="n">${n}</div><div class="r">#${i+1}</div>`;
     pickWrap.appendChild(d);
   });
+
+  if(ap){
+    const basisWord = ap.usedFallback ? 'a main winning number' : 'the additional number';
+    const mostCount = ap.usedFallback ? ap.winCount[ap.mostAdd] : ap.addCount[ap.mostAdd];
+    const leastCount = ap.usedFallback ? ap.winCount[ap.leastAdd] : ap.addCount[ap.leastAdd];
+    noteWrap.innerHTML =
+      `<b>${ap.mostAdd}</b> came up as ${basisWord} <b>${mostCount}×</b> in the last ${ap.windowSize} draws — the most among the top 7 → kept, marked <code>(${ap.mostAdd})</code>.<br>` +
+      `<b>${ap.leastAdd}</b> came up ${leastCount}× — the least among the top 7 → marked <code>&lt;${ap.leastAdd}&gt;</code> for discard.` +
+      (ap.usedFallback ? '<br>None of the top 7 appeared as an additional number in that window, so this fell back to overall winning-number frequency.' : '');
+  }
 
   board.ranked.forEach((n,i)=>{
     const tr=document.createElement('tr');
@@ -919,6 +987,40 @@ function renderChains(){
 document.getElementById('p-showmore-btn').addEventListener('click', ()=>{
   visibleChains += 25;
   renderChains();
+});
+
+// ═══════════════════════════════════════════════════════════
+// COPY PICK — "date: n1, n2, (add-pick), ..., <discard>"
+// ═══════════════════════════════════════════════════════════
+function buildCopyText(){
+  if(!board.ready) return '';
+  const ap = board.additionalPick;
+  const nums = [...board.top7].sort((a,b)=>a-b);
+  const parts = nums.map(n=>{
+    if(ap && n===ap.mostAdd) return `(${n})`;
+    if(ap && n===ap.leastAdd) return `<${n}>`;
+    return String(n);
+  });
+  const dateStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
+  return `${dateStr}: ${parts.join(', ')}`;
+}
+
+document.getElementById('p-copy-btn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('p-copy-btn');
+  const text = buildCopyText();
+  if(!text) return;
+  try{
+    await navigator.clipboard.writeText(text);
+  } catch(e){
+    const ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); } catch(e2){}
+    document.body.removeChild(ta);
+  }
+  const orig = btn.innerHTML;
+  btn.innerHTML = 'Copied!';
+  setTimeout(()=>{ btn.innerHTML = orig; }, 1500);
 });
 
 // initial empty render while CSV loads
