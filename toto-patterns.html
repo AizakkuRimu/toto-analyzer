@@ -311,9 +311,9 @@ td.zero{color:var(--muted);}
   <!-- ═══ STEP 5: ASCENSION & PUNISHMENT ═══ -->
   <div class="card">
     <h3>③ Ascension &amp; Punishment</h3>
-    <p class="card-desc">Draws 1–6 (everything except the last draw itself) are each stretched into their sorted chain. Every run of 3, 4, 5 or 6 consecutive numbers has a <em>gap chain</em> — the steps between them, e.g. 1 2 4 5 7 → +1 +2 +1 +2. A gap chain only counts once the same gaps appear in at least two different draws (at any position, e.g. 4 5 7 8 10 repeats it). A number scores only if it sits inside that repeating chain in both draws (here 4, 5 and 7). In one draw a number's longest chain wins — a 6-chain stops it also scoring the 3-, 4- and 5-chains inside it. Separately, every number from the extra 8th (pre-window) draw is checked against the whole 7-draw window: if it never reappeared there, it's punished.</p>
+    <p class="card-desc">Draws 1–6 (everything except the last draw itself) are each stretched into their sorted chain. Every run of 3, 4, 5 or 6 consecutive numbers has a <em>gap chain</em> — the steps between them, e.g. 1 2 4 5 7 → +1 +2 +1 +2. A gap chain only counts once the same gaps appear in at least two different draws (at any position, e.g. 4 5 7 8 10 repeats it). A number scores only if it sits inside that repeating chain in both draws (here 4, 5 and 7). In each draw a number's longest chain wins — a 6-chain stops it also scoring the 3-, 4- and 5-chains inside it. Separately, every number from the extra 8th (pre-window) draw is checked against the whole 7-draw window: if it never reappeared there, it's punished.</p>
     <div class="rule-box">
-      <b>+1</b> for a 3-chain &nbsp;·&nbsp; <b>+2</b> for a 4-chain &nbsp;·&nbsp; <b>+3</b> for a 5-chain &nbsp;·&nbsp; <b>+4</b> for a 6-chain (each distinct repeating gap chain pays once, no stacking of shorter chains inside a longer one) &nbsp;·&nbsp;
+      <b>+1</b> for a 3-chain &nbsp;·&nbsp; <b>+2</b> for a 4-chain &nbsp;·&nbsp; <b>+3</b> for a 5-chain &nbsp;·&nbsp; <b>+4</b> for a 6-chain (paid once for every draw the number sits in a repeating gap chain; no stacking of shorter chains inside a longer one) &nbsp;·&nbsp;
       <b>−1</b> flat if a number appears in none of draws 1–6.<br>
       <b>Punishment:</b> every number in the extra 8th (pre-window) draw that did <em>not</em> reappear anywhere across the 7-draw window takes a <b>−1</b>.
     </div>
@@ -576,8 +576,8 @@ const TOGGLE_LABELS={front:'Same Front Digit',back:'Same Back Digit',flip:'Flipp
 // between them, e.g. 1 2 4 5 7 -> +1,+2,+1,+2. A signature only counts once it shows up in
 // at least two different draws. A number scores for a signature only if the number itself sits
 // inside a chain with that signature in at least two different draws. Within one draw a number's
-// longest qualifying chain wins (a 6-chain swallows the 3/4/5-chains inside it); each distinct
-// signature pays once.
+// longest qualifying chain wins (a 6-chain swallows the 3/4/5-chains inside it); the number is paid once
+// for every draw it sits in a repeating chain.
 function computeAscension(chainsArr, ptsForLen){
   const bySig = new Map();
   chainsArr.forEach((chain,di)=>{
@@ -604,23 +604,28 @@ function computeAscension(chainsArr, ptsForLen){
     const list = qual[n];
     const swallowedBy = q => list.find(o => o!==q && o.di===q.di && o.L>q.L && o.st<=q.st && o.st+o.L>=q.st+q.L);
     const kept = list.filter(q => !swallowedBy(q));
-    const seen = new Set();
+    // one payout per draw the number appears in, per repeating gap chain (longest chain wins)
+    const bySig = new Map();
     reasons[n] = {scored:[], absorbed:[]};
     for(const q of kept){
-      if(seen.has(q.sig)) continue;
-      seen.add(q.sig);
-      points[n] = (points[n]||0) + ptsForLen[q.L];
+      if(!bySig.has(q.sig)) bySig.set(q.sig, new Map());
+      if(!bySig.get(q.sig).has(q.di)) bySig.get(q.sig).set(q.di, q);
+    }
+    for(const [sig,perDraw] of bySig){
+      const wins = [...perDraw.values()].sort((x,y)=>x.di-y.di);
+      const L = wins[0].L;
+      const total = ptsForLen[L]*wins.length;
+      points[n] = (points[n]||0) + total;
       if(!byLen[n]) byLen[n] = {3:0,4:0,5:0,6:0};
-      byLen[n][q.L] += 1;
-      const gaps = q.sig.split(':')[1].split(',').map(g=>'+'+g).join(' ');
-      const wins = list.filter(o=>o.sig===q.sig && !swallowedBy(o)).map(o=>({di:o.di, nums:o.nums}));
-      reasons[n].scored.push({L:q.L, pts:ptsForLen[q.L], gaps, wins});
+      byLen[n][L] += wins.length;
+      const gaps = sig.split(':')[1].split(',').map(g=>'+'+g).join(' ');
+      reasons[n].scored.push({L, pts:ptsForLen[L], total, gaps, wins:wins.map(o=>({di:o.di, nums:o.nums}))});
     }
     for(const q of list){
       const big = swallowedBy(q);
       if(big) reasons[n].absorbed.push({L:q.L, di:q.di, nums:q.nums, intoL:big.L});
     }
-    sigs[n] = [...seen];
+    sigs[n] = [...bySig.keys()];
   }
   return {points, byLen, sigs, reasons};
 }
@@ -883,7 +888,7 @@ function ascWhy(n){
   if(r && r.scored.length){
     html += r.scored.map(sc=>{
       const where = sc.wins.map(w=>drawLbl(w.di)+': '+w.nums.join(' ')).join(' &nbsp;|&nbsp; ');
-      return `<div style="margin:4px 0"><b>+${sc.pts}</b> — ${sc.L}-number chain, gaps <b>${sc.gaps}</b><br><span class="tag">${where}</span></div>`;
+      return `<div style="margin:4px 0"><b>+${sc.total}</b> (+${sc.pts} × ${sc.wins.length} draw${sc.wins.length>1?'s':''}) — ${sc.L}-number chain, gaps <b>${sc.gaps}</b><br><span class="tag">${where}</span></div>`;
     }).join('');
     if(r.absorbed.length){
       html += `<div style="margin-top:6px;opacity:.7">Not counted again (inside a longer chain): ` +
