@@ -320,11 +320,15 @@ td.zero{color:var(--muted);}
     <div id="punishment-note" class="chip-list"></div>
     <div class="score-table-wrap">
       <table class="score-table">
-        <thead><tr><th>#</th><th>3-runs</th><th>4-runs</th><th>5-runs</th><th>6-runs</th><th>Punish</th><th>Points</th><th>Why</th></tr></thead>
+        <thead><tr><th>#</th><th>2-runs</th><th>3-runs</th><th>4-runs</th><th>5-runs</th><th>6-runs</th><th>Punish</th><th>Points</th><th>Why</th></tr></thead>
         <tbody id="ascension-tbody"></tbody>
       </table>
     </div>
     <p class="card-desc" style="margin-top:12px;">Every other number (not shown above) never appeared across draws 1–6 at all, so it takes the flat <b>−1</b> for this step.</p>
+
+    <h4 style="margin:18px 0 6px;">Gap Chain Directory</h4>
+    <p class="card-desc">Every repeating gap chain found across draws 1–6 — same length, same gaps, showing up in two or more of those draws — with the actual numbers that formed it each time. This is the raw material the scoring above is built from.</p>
+    <div id="ascension-directory"></div>
   </div>
 
   <!-- ═══ STEP 6: GHOST NUMBERS ═══ -->
@@ -627,7 +631,16 @@ function computeAscension(chainsArr, ptsForLen){
     }
     sigs[n] = [...bySig.keys()];
   }
-  return {points, byLen, sigs, reasons};
+  const directory = [];
+  for(const [sig,wins] of bySig){
+    const drawSet = new Set(wins.map(w=>w.di));
+    if(drawSet.size < 2) continue;
+    const L = wins[0].L;
+    const gaps = sig.split(':')[1].split(',').map(g=>'+'+g).join(' ');
+    directory.push({ sig, L, gaps, occurrences: wins.map(w=>({di:w.di, nums:w.nums})) });
+  }
+  directory.sort((a,b)=> b.L-a.L || b.occurrences.length-a.occurrences.length || a.sig.localeCompare(b.sig));
+  return {points, byLen, sigs, reasons, directory};
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -637,7 +650,7 @@ function computeScoreboard(){
   const result = {
     ready:false, window:[], draw8:null, chains:[], sets:[], windowUnion:new Set(),
     survival:{}, survivalDetail:{}, kinship:{}, kinshipReasons:{}, kinshipGroups:null,
-    ascension:{}, ascensionSet:new Set(), ascensionReasons:{}, punishment:{}, punishmentDetail:[],
+    ascension:{}, ascensionSet:new Set(), ascensionReasons:{}, ascensionDirectory:[], punishment:{}, punishmentDetail:[],
     step5:{}, ghost:{}, ghostReason:{}, ghostStreak:{}, total:{}, ranked:[], top5Prelim:[], top7:[]
   };
   if(draws.length < 7) return result;
@@ -715,6 +728,7 @@ function computeScoreboard(){
   result.ascensionSet = ascensionSet;
   result.ascensionByLen = asc.byLen;
   result.ascensionReasons = asc.reasons;
+  result.ascensionDirectory = asc.directory;
 
   const step5={};
   for(let n=1;n<=49;n++) step5[n] = (result.ascension[n]||0) + (result.punishment[n]||0);
@@ -922,16 +936,41 @@ function renderAscension(){
 
   const active = [...board.ascensionSet].sort((a,b)=> board.ascension[b]-board.ascension[a] || a-b);
   for(const n of active){
-    const byLen = board.ascensionByLen[n] || {3:0,4:0,5:0,6:0};
+    const byLen = board.ascensionByLen[n] || {2:0,3:0,4:0,5:0,6:0};
     const tr=document.createElement('tr');
     tr.innerHTML = `<td><span class="num-badge">${n}</span></td>` +
-      `<td>${byLen[3]}</td><td>${byLen[4]}</td><td>${byLen[5]}</td><td>${byLen[6]}</td>` +
+      `<td>${byLen[2]}</td><td>${byLen[3]}</td><td>${byLen[4]}</td><td>${byLen[5]}</td><td>${byLen[6]}</td>` +
       `<td class="${cellClass(board.punishment[n]||0)}">${board.punishment[n] ? signed(board.punishment[n]) : '—'}</td>` +
       `<td class="${cellClass(board.step5[n])}">${signed(board.step5[n])}</td>` +
       `<td>${ascWhy(n)}</td>`;
     tbody.appendChild(tr);
   }
-  if(!active.length) tbody.innerHTML = '<tr><td colspan="8">No ascension data yet.</td></tr>';
+  if(!active.length) tbody.innerHTML = '<tr><td colspan="9">No ascension data yet.</td></tr>';
+
+  renderAscensionDirectory();
+}
+
+function renderAscensionDirectory(){
+  const wrap = document.getElementById('ascension-directory');
+  wrap.innerHTML = '';
+  if(!board.ready) return;
+  const dir = board.ascensionDirectory || [];
+  if(!dir.length){
+    wrap.innerHTML = '<div class="chip">No gap chain repeats across draws 1–6.</div>';
+    return;
+  }
+  for(const entry of dir){
+    const d = document.createElement('div');
+    d.style.margin = '8px 0';
+    d.style.padding = '8px 10px';
+    d.style.border = '1px solid var(--line, #444)';
+    d.style.borderRadius = '8px';
+    const occHtml = entry.occurrences.map(o =>
+      `<span class="tag">Draw ${o.di+1}: ${o.nums.join(' ')}</span>`
+    ).join(' ');
+    d.innerHTML = `<b>${entry.L}-chain</b> &nbsp; gaps <b>${entry.gaps}</b> &nbsp; <span style="opacity:.7">(${entry.occurrences.length} draws)</span><br><div style="margin-top:4px">${occHtml}</div>`;
+    wrap.appendChild(d);
+  }
 }
 
 function renderGhosts(){
