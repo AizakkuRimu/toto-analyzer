@@ -320,7 +320,7 @@ td.zero{color:var(--muted);}
     <div id="punishment-note" class="chip-list"></div>
     <div class="score-table-wrap">
       <table class="score-table">
-        <thead><tr><th>#</th><th>3-runs</th><th>4-runs</th><th>5-runs</th><th>6-runs</th><th>Punish</th><th>Points</th></tr></thead>
+        <thead><tr><th>#</th><th>3-runs</th><th>4-runs</th><th>5-runs</th><th>6-runs</th><th>Punish</th><th>Points</th><th>Why</th></tr></thead>
         <tbody id="ascension-tbody"></tbody>
       </table>
     </div>
@@ -596,24 +596,33 @@ function computeAscension(chainsArr, ptsForLen){
     const drawsFor = {};
     for(const w of wins) for(const n of w.nums){ (drawsFor[n] = drawsFor[n] || new Set()).add(w.di); }
     for(const w of wins) for(const n of w.nums){
-      if(drawsFor[n].size >= 2){ (qual[n] = qual[n] || []).push({sig, di:w.di, st:w.st, L:w.L}); }
+      if(drawsFor[n].size >= 2){ (qual[n] = qual[n] || []).push({sig, di:w.di, st:w.st, L:w.L, nums:w.nums}); }
     }
   }
-  const points = {}, byLen = {}, sigs = {};
+  const points = {}, byLen = {}, sigs = {}, reasons = {};
   for(const n in qual){
     const list = qual[n];
-    const kept = list.filter(q => !list.some(o => o!==q && o.di===q.di && o.L>q.L && o.st<=q.st && o.st+o.L>=q.st+q.L));
+    const swallowedBy = q => list.find(o => o!==q && o.di===q.di && o.L>q.L && o.st<=q.st && o.st+o.L>=q.st+q.L);
+    const kept = list.filter(q => !swallowedBy(q));
     const seen = new Set();
+    reasons[n] = {scored:[], absorbed:[]};
     for(const q of kept){
       if(seen.has(q.sig)) continue;
       seen.add(q.sig);
       points[n] = (points[n]||0) + ptsForLen[q.L];
       if(!byLen[n]) byLen[n] = {3:0,4:0,5:0,6:0};
       byLen[n][q.L] += 1;
+      const gaps = q.sig.split(':')[1].split(',').map(g=>'+'+g).join(' ');
+      const wins = list.filter(o=>o.sig===q.sig && !swallowedBy(o)).map(o=>({di:o.di, nums:o.nums}));
+      reasons[n].scored.push({L:q.L, pts:ptsForLen[q.L], gaps, wins});
+    }
+    for(const q of list){
+      const big = swallowedBy(q);
+      if(big) reasons[n].absorbed.push({L:q.L, di:q.di, nums:q.nums, intoL:big.L});
     }
     sigs[n] = [...seen];
   }
-  return {points, byLen, sigs};
+  return {points, byLen, sigs, reasons};
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -623,7 +632,7 @@ function computeScoreboard(){
   const result = {
     ready:false, window:[], draw8:null, chains:[], sets:[], windowUnion:new Set(),
     survival:{}, survivalDetail:{}, kinship:{}, kinshipReasons:{}, kinshipGroups:null,
-    ascension:{}, ascensionSet:new Set(), punishment:{}, punishmentDetail:[],
+    ascension:{}, ascensionSet:new Set(), ascensionReasons:{}, punishment:{}, punishmentDetail:[],
     step5:{}, ghost:{}, ghostReason:{}, ghostStreak:{}, total:{}, ranked:[], top5Prelim:[], top7:[]
   };
   if(draws.length < 7) return result;
@@ -700,6 +709,7 @@ function computeScoreboard(){
   }
   result.ascensionSet = ascensionSet;
   result.ascensionByLen = asc.byLen;
+  result.ascensionReasons = asc.reasons;
 
   const step5={};
   for(let n=1;n<=49;n++) step5[n] = (result.ascension[n]||0) + (result.punishment[n]||0);
@@ -866,6 +876,27 @@ function renderKinship(){
   if(!active.length) tbody.innerHTML = '<tr><td colspan="3">No number picked up a kinship bonus this round.</td></tr>';
 }
 
+function ascWhy(n){
+  const r = (board.ascensionReasons||{})[n];
+  const drawLbl = di => 'Draw '+(di+1);
+  let html = '';
+  if(r && r.scored.length){
+    html += r.scored.map(sc=>{
+      const where = sc.wins.map(w=>drawLbl(w.di)+': '+w.nums.join(' ')).join(' &nbsp;|&nbsp; ');
+      return `<div style="margin:4px 0"><b>+${sc.pts}</b> — ${sc.L}-number chain, gaps <b>${sc.gaps}</b><br><span class="tag">${where}</span></div>`;
+    }).join('');
+    if(r.absorbed.length){
+      html += `<div style="margin-top:6px;opacity:.7">Not counted again (inside a longer chain): ` +
+        r.absorbed.map(a=>`${a.L}-chain ${a.nums.join(' ')} (${drawLbl(a.di)}) sits inside a ${a.intoL}-chain`).join('; ') + `</div>`;
+    }
+  } else if(board.ascensionSet.has(n)){
+    html = 'Appeared in draws 1–6, but no gap chain containing it repeats (with it inside) in two different draws — 0 points.';
+  } else {
+    html = 'Did not appear in draws 1–6 at all — flat −1.';
+  }
+  return `<details><summary style="cursor:pointer;color:var(--gold)">why</summary><div style="font-size:.85em;margin-top:6px;min-width:220px">${html}</div></details>`;
+}
+
 function renderAscension(){
   const noteWrap = document.getElementById('punishment-note');
   const tbody = document.getElementById('ascension-tbody');
@@ -891,10 +922,11 @@ function renderAscension(){
     tr.innerHTML = `<td><span class="num-badge">${n}</span></td>` +
       `<td>${byLen[3]}</td><td>${byLen[4]}</td><td>${byLen[5]}</td><td>${byLen[6]}</td>` +
       `<td class="${cellClass(board.punishment[n]||0)}">${board.punishment[n] ? signed(board.punishment[n]) : '—'}</td>` +
-      `<td class="${cellClass(board.step5[n])}">${signed(board.step5[n])}</td>`;
+      `<td class="${cellClass(board.step5[n])}">${signed(board.step5[n])}</td>` +
+      `<td>${ascWhy(n)}</td>`;
     tbody.appendChild(tr);
   }
-  if(!active.length) tbody.innerHTML = '<tr><td colspan="7">No ascension data yet.</td></tr>';
+  if(!active.length) tbody.innerHTML = '<tr><td colspan="8">No ascension data yet.</td></tr>';
 }
 
 function renderGhosts(){
