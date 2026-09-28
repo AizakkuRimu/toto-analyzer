@@ -330,7 +330,7 @@ td.zero{color:var(--muted);}
   <!-- ═══ STEP 6: GHOST NUMBERS ═══ -->
   <div class="card">
     <h3>④ Ghost Numbers</h3>
-    <p class="card-desc">Numbers that didn't appear anywhere at all across all 7 draws. Normally that's a flat <b>−1</b> — but if either neighbour (n−1 or n+1) is sitting in the provisional top 5 (steps 1–3 rank + kinship + step 5 combined, before this step), the ghost gets a vote of confidence instead: <b>+2</b>.</p>
+    <p class="card-desc">Numbers absent from the most recent draws earn a bonus based on how long they've been missing — only the highest category reached counts (no stacking): <b>2 draws +1</b> · <b>3 draws +3</b> · <b>4 draws +5</b> · <b>5 draws +7</b> · <b>6 draws +9</b> · <b>7 draws +12</b>. If either neighbour (n−1 or n+1) is in the provisional top 5 (steps 1–3 rank + kinship + step 5, before this step), the ghost also gets <b>+2</b>.</p>
     <div class="chip-list" id="ghost-list"></div>
   </div>
 
@@ -579,7 +579,7 @@ function computeScoreboard(){
     ready:false, window:[], draw8:null, chains:[], sets:[], windowUnion:new Set(),
     survival:{}, survivalDetail:{}, kinship:{}, kinshipReasons:{}, kinshipGroups:null,
     ascension:{}, ascensionSet:new Set(), punishment:{}, punishmentDetail:[],
-    step5:{}, ghost:{}, ghostReason:{}, total:{}, ranked:[], top5Prelim:[], top7:[]
+    step5:{}, ghost:{}, ghostReason:{}, ghostStreak:{}, total:{}, ranked:[], top5Prelim:[], top7:[]
   };
   if(draws.length < 7) return result;
 
@@ -682,14 +682,23 @@ function computeScoreboard(){
   // ── STEP 6: ghost numbers ──
   const windowUnion = new Set(chains.flat());
   result.windowUnion = windowUnion;
+  // Absence streak = how many of the most recent draws (counting back from the
+  // newest) the number has been missing from. Only the category it lands in scores.
+  const GHOST_TIERS = {2:1, 3:3, 4:5, 5:7, 6:9, 7:12}; // x -> bonus
+  result.ghostStreak = {};
   for(let n=1;n<=49;n++){
-    if(!windowUnion.has(n)){
-      let neighTop=null;
-      if(top5set.has(n-1)) neighTop=n-1;
-      else if(top5set.has(n+1)) neighTop=n+1;
-      if(neighTop!=null){ result.ghost[n]=2; result.ghostReason[n]='neighbour '+neighTop+' is in the prelim top 5'; }
-      else { result.ghost[n]=-1; result.ghostReason[n]='absent from all 7 draws'; }
-    }
+    let streak=0;
+    for(let i=6;i>=0;i--){ if(sets[i].has(n)) break; streak++; }
+    if(streak<2) continue;
+    result.ghostStreak[n]=streak;
+    const bonus = GHOST_TIERS[streak];
+    let pts = bonus;
+    let reason = 'absent from last '+streak+' draws (Category '+(streak===7?6:streak-1)+')';
+    let neighTop=null;
+    if(top5set.has(n-1)) neighTop=n-1;
+    else if(top5set.has(n+1)) neighTop=n+1;
+    if(neighTop!=null){ pts+=2; reason+=' + neighbour '+neighTop+' in prelim top 5 (+2)'; }
+    result.ghost[n]=pts; result.ghostReason[n]=reason;
   }
 
   // ── FINAL TOTAL ──
@@ -859,7 +868,7 @@ function renderGhosts(){
   const wrap = document.getElementById('ghost-list');
   wrap.innerHTML='';
   if(!board.ready) return;
-  const ghosts = [...Array(49).keys()].map(i=>i+1).filter(n=>!board.windowUnion.has(n));
+  const ghosts = [...Array(49).keys()].map(i=>i+1).filter(n=>board.ghostStreak && board.ghostStreak[n]);
   ghosts.sort((a,b)=> board.ghost[b]-board.ghost[a] || a-b);
   for(const n of ghosts){
     const d=document.createElement('div'); d.className='chip';
@@ -867,7 +876,7 @@ function renderGhosts(){
     d.innerHTML = `<b>${n}</b> <span class="${cellClass(delta)}">${signed(delta)}</span> <span class="tag">${board.ghostReason[n]}</span>`;
     wrap.appendChild(d);
   }
-  if(!ghosts.length) wrap.innerHTML = '<div class="chip">Every number from 1–49 showed up somewhere in the window.</div>';
+  if(!ghosts.length) wrap.innerHTML = '<div class="chip">No number has been absent from the last 2+ draws.</div>';
 }
 
 function renderFinalScoreboard(){
