@@ -174,6 +174,44 @@ td.zero{color:var(--muted);}
 .chip b{color:var(--gold);}
 .chip .tag{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
 
+/* ── GAP CHAIN DIRECTORY ─────────────────────────────────── */
+.gap-directory{display:flex;flex-direction:column;gap:12px;}
+.gap-draw{
+  background:var(--bg1);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;
+}
+.gap-draw.is-excluded{border-style:dashed;opacity:.6;}
+.gap-draw-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.gap-draw-title{font-family:var(--ff-head);font-size:16px;letter-spacing:.04em;color:var(--gold);}
+.gap-draw-note{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+.gap-len-row{
+  display:flex;align-items:flex-start;gap:12px;padding:7px 0;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.gap-len-row:first-of-type{border-top:none;padding-top:0;}
+.gap-len-label{
+  flex-shrink:0;width:64px;padding-top:5px;
+  font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+}
+.gap-chain-list{display:flex;flex-wrap:wrap;gap:8px;flex:1;min-width:0;}
+.gap-chain{
+  display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:5px 9px 5px 6px;
+}
+.gap-chain .gap-nums{display:inline-flex;align-items:center;gap:3px;}
+.gap-chain .gaps-label{font-size:9.5px;color:var(--muted);margin-left:5px;white-space:nowrap;}
+.gap-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:22px;padding:0 4px;border-radius:6px;
+  background:rgba(255,255,255,.045);color:var(--white-g);font-weight:600;font-size:11px;
+}
+.gap-num.is-scored{
+  background:var(--gold-soft);color:var(--gold);border:1px solid rgba(212,168,67,.55);
+  box-shadow:0 0 7px 1px rgba(212,168,67,.35);font-weight:700;
+}
+.gap-empty{font-size:12px;color:var(--muted);}
+
 /* ── FINAL PICK STRIP ────────────────────────────────────── */
 .pick-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
 .pick-node{
@@ -327,7 +365,7 @@ td.zero{color:var(--muted);}
     <p class="card-desc" style="margin-top:12px;">Every other number (not shown above) never appeared across draws 1–6 at all, so it takes the flat <b>−1</b> for this step.</p>
 
     <h4 style="margin:18px 0 6px;">Gap Chain Directory</h4>
-    <p class="card-desc">Every 2- to 6-number window in each of the 7 draws in this window, with its gap pattern. A number shown in <span style="color:var(--gold);font-weight:700;">gold</span> actually scored from that window; Draw 7 (the most recent) is shown for reference only — it's excluded from Ascension scoring.</p>
+    <p class="card-desc">Every 2- to 6-number window in each of the 7 draws in this window, with its gap pattern. A <span class="gap-num is-scored" style="padding:1px 6px;">gold</span> number actually scored from that window; Draw 7 (the most recent) is shown for reference only — it's excluded from Ascension scoring.</p>
     <div id="ascension-directory"></div>
   </div>
 
@@ -985,37 +1023,42 @@ function renderAscensionDirectory(){
   if(!board.ready) return;
   const byDraw = board.ascensionWindowsByDraw || [];
   if(!byDraw.length){
-    wrap.innerHTML = '<div class="chip">No draw data yet.</div>';
+    wrap.innerHTML = '<div class="gap-empty">No draw data yet.</div>';
     return;
   }
   const scored = board.ascensionScoredLookup || new Set();
+  const outer = document.createElement('div');
+  outer.className = 'gap-directory';
+
   byDraw.forEach((wins, di) => {
-    const section = document.createElement('div');
-    section.style.margin = '10px 0';
     const excluded = di === 6;
-    const heading = document.createElement('h5');
-    heading.style.margin = '10px 0 4px';
-    heading.innerHTML = `Draw ${di+1}` + (excluded ? ' <span style="opacity:.6;font-weight:400">(most recent — excluded from Ascension scoring)</span>' : '');
-    section.appendChild(heading);
+    const section = document.createElement('div');
+    section.className = 'gap-draw' + (excluded ? ' is-excluded' : '');
+
+    const head = document.createElement('div');
+    head.className = 'gap-draw-head';
+    head.innerHTML = `<span class="gap-draw-title">Draw ${di+1}</span>` +
+      (excluded ? '<span class="gap-draw-note">Most recent · excluded from scoring</span>' : '');
+    section.appendChild(head);
 
     for(let L=2; L<=6; L++){
       const atLen = wins.filter(w=>w.L===L);
       if(!atLen.length) continue;
       const row = document.createElement('div');
-      row.style.margin = '4px 0';
-      row.style.paddingLeft = '8px';
+      row.className = 'gap-len-row';
       const chainsHtml = atLen.map(w => {
         const numsHtml = w.nums.map(n => {
           const isScored = !excluded && scored.has(di+':'+n);
-          return isScored ? `<b style="color:var(--gold);">${n}</b>` : `${n}`;
-        }).join(' ');
-        return `<span class="tag">${numsHtml} <span style="opacity:.6">(${w.gaps})</span></span>`;
-      }).join(' ');
-      row.innerHTML = `<b>${L}-chains:</b> ${chainsHtml}`;
+          return `<span class="gap-num${isScored ? ' is-scored' : ''}">${n}</span>`;
+        }).join('');
+        return `<span class="gap-chain"><span class="gap-nums">${numsHtml}</span><span class="gaps-label">${w.gaps}</span></span>`;
+      }).join('');
+      row.innerHTML = `<span class="gap-len-label">${L}-chain</span><span class="gap-chain-list">${chainsHtml}</span>`;
       section.appendChild(row);
     }
-    wrap.appendChild(section);
+    outer.appendChild(section);
   });
+  wrap.appendChild(outer);
 }
 
 function renderGhosts(){
