@@ -311,9 +311,9 @@ td.zero{color:var(--muted);}
   <!-- ═══ STEP 5: ASCENSION & PUNISHMENT ═══ -->
   <div class="card">
     <h3>③ Ascension &amp; Punishment</h3>
-    <p class="card-desc">Draws 1–6 (everything except the last draw itself) are each stretched into their sorted chain. Every run of 3, 4, 5 or 6 consecutive numbers has a <em>gap chain</em> — the steps between them, e.g. 1 2 4 5 7 → +1 +2 +1 +2. A gap chain only counts once the same gaps appear in at least two different draws (at any position, e.g. 4 5 7 8 10 repeats it). A number scores only if it sits inside that repeating chain in both draws (here 4, 5 and 7). In each draw a number's longest chain wins — a 6-chain stops it also scoring the 3-, 4- and 5-chains inside it. Separately, every number from the extra 8th (pre-window) draw is checked against the whole 7-draw window: if it never reappeared there, it's punished.</p>
+    <p class="card-desc">Draws 1–6 (everything except the last draw itself) are each stretched into their sorted chain. Every run of 2, 3, 4, 5 or 6 consecutive numbers has a <em>gap chain</em> — the steps between them, e.g. 1 2 4 5 7 → +1 +2 +1 +2. A gap chain only counts once the same gaps appear in at least two different draws (at any position, e.g. 4 5 7 8 10 repeats it). A number scores only if it sits inside that repeating chain in both draws (here 4, 5 and 7). In each draw a number's longest chain wins — a 6-chain stops it also scoring the 3-, 4- and 5-chains inside it. Separately, every number from the extra 8th (pre-window) draw is checked against the whole 7-draw window: if it never reappeared there, it's punished.</p>
     <div class="rule-box">
-      <b>+1</b> for a 3-chain &nbsp;·&nbsp; <b>+2</b> for a 4-chain &nbsp;·&nbsp; <b>+3</b> for a 5-chain &nbsp;·&nbsp; <b>+4</b> for a 6-chain (paid once for every draw the number sits in a repeating gap chain; no stacking of shorter chains inside a longer one) &nbsp;·&nbsp;
+      <b>+1</b> for a 2-chain &nbsp;·&nbsp; <b>+2</b> for a 3-chain &nbsp;·&nbsp; <b>+3</b> for a 4-chain &nbsp;·&nbsp; <b>+4</b> for a 5-chain &nbsp;·&nbsp; <b>+5</b> for a 6-chain (paid once for every draw the number sits in a repeating gap chain; no stacking of shorter chains inside a longer one) &nbsp;·&nbsp;
       <b>−1</b> flat if a number appears in none of draws 1–6.<br>
       <b>Punishment:</b> every number in the extra 8th (pre-window) draw that did <em>not</em> reappear anywhere across the 7-draw window takes a <b>−1</b>.
     </div>
@@ -581,7 +581,7 @@ const TOGGLE_LABELS={front:'Same Front Digit',back:'Same Back Digit',flip:'Flipp
 function computeAscension(chainsArr, ptsForLen){
   const bySig = new Map();
   chainsArr.forEach((chain,di)=>{
-    for(let L=3; L<=6; L++){
+    for(let L=2; L<=6; L++){
       for(let st=0; st+L<=chain.length; st++){
         const nums = chain.slice(st,st+L);
         const sig = L+':'+nums.slice(1).map((v,k)=>v-nums[k]).join(',');
@@ -616,7 +616,7 @@ function computeAscension(chainsArr, ptsForLen){
       const L = wins[0].L;
       const total = ptsForLen[L]*wins.length;
       points[n] = (points[n]||0) + total;
-      if(!byLen[n]) byLen[n] = {3:0,4:0,5:0,6:0};
+      if(!byLen[n]) byLen[n] = {2:0,3:0,4:0,5:0,6:0};
       byLen[n][L] += wins.length;
       const gaps = sig.split(':')[1].split(',').map(g=>'+'+g).join(' ');
       reasons[n].scored.push({L, pts:ptsForLen[L], total, gaps, wins:wins.map(o=>({di:o.di, nums:o.nums}))});
@@ -704,7 +704,7 @@ function computeScoreboard(){
   }
 
   // ── STEP 5b: ascension = repeating gap chains (draws 1–6 only, excludes the last draw) ──
-  const ptsForLen = {3:1,4:2,5:3,6:4};
+  const ptsForLen = {2:1,3:2,4:3,5:4,6:5};
   const asc = computeAscension(chains.slice(0,6), ptsForLen);
   const ascensionSet = new Set();
   for(let i=0;i<6;i++) for(const n of chains[i]) ascensionSet.add(n);
