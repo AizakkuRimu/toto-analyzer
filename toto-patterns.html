@@ -327,7 +327,7 @@ td.zero{color:var(--muted);}
     <p class="card-desc" style="margin-top:12px;">Every other number (not shown above) never appeared across draws 1–6 at all, so it takes the flat <b>−1</b> for this step.</p>
 
     <h4 style="margin:18px 0 6px;">Gap Chain Directory</h4>
-    <p class="card-desc">Every repeating gap chain found across draws 1–6 — same length, same gaps, showing up in two or more of those draws — with the actual numbers that formed it each time. This is the raw material the scoring above is built from.</p>
+    <p class="card-desc">Every 2- to 6-number window in each of the 7 draws in this window, with its gap pattern. A number shown in <span style="color:var(--gold);font-weight:700;">gold</span> actually scored from that window; Draw 7 (the most recent) is shown for reference only — it's excluded from Ascension scoring.</p>
     <div id="ascension-directory"></div>
   </div>
 
@@ -582,6 +582,21 @@ const TOGGLE_LABELS={front:'Same Front Digit',back:'Same Back Digit',flip:'Flipp
 // inside a chain with that signature in at least two different draws. Within one draw a number's
 // longest qualifying chain wins (a 6-chain swallows the 3/4/5-chains inside it); the number is paid once
 // for every draw it sits in a repeating chain.
+// Every window of length 2..6 within one sorted draw chain, with its gap signature.
+// A single draw of 7 numbers has multiple overlapping windows per length (e.g. a run of
+// 7 consecutive numbers has six different 2-chains, one at each position) — all are listed.
+function enumerateWindows(chain){
+  const wins = [];
+  for(let L=2; L<=6 && L<=chain.length; L++){
+    for(let st=0; st+L<=chain.length; st++){
+      const nums = chain.slice(st,st+L);
+      const gaps = nums.slice(1).map((v,k)=>v-nums[k]).map(g=>'+'+g).join(' ');
+      wins.push({L, nums, gaps});
+    }
+  }
+  return wins;
+}
+
 function computeAscension(chainsArr, ptsForLen){
   const bySig = new Map();
   chainsArr.forEach((chain,di)=>{
@@ -650,7 +665,7 @@ function computeScoreboard(){
   const result = {
     ready:false, window:[], draw8:null, chains:[], sets:[], windowUnion:new Set(),
     survival:{}, survivalDetail:{}, kinship:{}, kinshipReasons:{}, kinshipGroups:null,
-    ascension:{}, ascensionSet:new Set(), ascensionReasons:{}, ascensionDirectory:[], punishment:{}, punishmentDetail:[],
+    ascension:{}, ascensionSet:new Set(), ascensionReasons:{}, ascensionDirectory:[], ascensionWindowsByDraw:[], ascensionScoredLookup:new Set(), punishment:{}, punishmentDetail:[],
     step5:{}, ghost:{}, ghostReason:{}, ghostStreak:{}, total:{}, ranked:[], top5Prelim:[], top7:[]
   };
   if(draws.length < 7) return result;
@@ -729,6 +744,20 @@ function computeScoreboard(){
   result.ascensionByLen = asc.byLen;
   result.ascensionReasons = asc.reasons;
   result.ascensionDirectory = asc.directory;
+
+  // ── Gap Chain Directory (per-draw view): every 2–6 length window in every one of
+  // the 7 draws (Draw 7 = most recent, excluded from scoring but shown for reference),
+  // with a lookup of exactly which numbers scored in which draw ──
+  result.ascensionWindowsByDraw = chains.map(chain => enumerateWindows(chain));
+  const scoredLookup = new Set(); // 'di:n' for every (draw, number) that actually scored
+  for(const nStr in asc.reasons){
+    const n = Number(nStr);
+    for(const sc of asc.reasons[nStr].scored){
+      for(const win of sc.wins) scoredLookup.add(win.di+':'+n);
+    }
+  }
+  result.ascensionScoredLookup = scoredLookup;
+
 
   const step5={};
   for(let n=1;n<=49;n++) step5[n] = (result.ascension[n]||0) + (result.punishment[n]||0);
@@ -954,23 +983,39 @@ function renderAscensionDirectory(){
   const wrap = document.getElementById('ascension-directory');
   wrap.innerHTML = '';
   if(!board.ready) return;
-  const dir = board.ascensionDirectory || [];
-  if(!dir.length){
-    wrap.innerHTML = '<div class="chip">No gap chain repeats across draws 1–6.</div>';
+  const byDraw = board.ascensionWindowsByDraw || [];
+  if(!byDraw.length){
+    wrap.innerHTML = '<div class="chip">No draw data yet.</div>';
     return;
   }
-  for(const entry of dir){
-    const d = document.createElement('div');
-    d.style.margin = '8px 0';
-    d.style.padding = '8px 10px';
-    d.style.border = '1px solid var(--line, #444)';
-    d.style.borderRadius = '8px';
-    const occHtml = entry.occurrences.map(o =>
-      `<span class="tag">Draw ${o.di+1}: ${o.nums.join(' ')}</span>`
-    ).join(' ');
-    d.innerHTML = `<b>${entry.L}-chain</b> &nbsp; gaps <b>${entry.gaps}</b> &nbsp; <span style="opacity:.7">(${entry.occurrences.length} draws)</span><br><div style="margin-top:4px">${occHtml}</div>`;
-    wrap.appendChild(d);
-  }
+  const scored = board.ascensionScoredLookup || new Set();
+  byDraw.forEach((wins, di) => {
+    const section = document.createElement('div');
+    section.style.margin = '10px 0';
+    const excluded = di === 6;
+    const heading = document.createElement('h5');
+    heading.style.margin = '10px 0 4px';
+    heading.innerHTML = `Draw ${di+1}` + (excluded ? ' <span style="opacity:.6;font-weight:400">(most recent — excluded from Ascension scoring)</span>' : '');
+    section.appendChild(heading);
+
+    for(let L=2; L<=6; L++){
+      const atLen = wins.filter(w=>w.L===L);
+      if(!atLen.length) continue;
+      const row = document.createElement('div');
+      row.style.margin = '4px 0';
+      row.style.paddingLeft = '8px';
+      const chainsHtml = atLen.map(w => {
+        const numsHtml = w.nums.map(n => {
+          const isScored = !excluded && scored.has(di+':'+n);
+          return isScored ? `<b style="color:var(--gold);">${n}</b>` : `${n}`;
+        }).join(' ');
+        return `<span class="tag">${numsHtml} <span style="opacity:.6">(${w.gaps})</span></span>`;
+      }).join(' ');
+      row.innerHTML = `<b>${L}-chains:</b> ${chainsHtml}`;
+      section.appendChild(row);
+    }
+    wrap.appendChild(section);
+  });
 }
 
 function renderGhosts(){
