@@ -379,7 +379,7 @@ td.zero{color:var(--muted);}
   <!-- ═══ STEP 7: SCOUTING ═══ -->
   <div class="card">
     <h3>⑤ Scouting</h3>
-    <p class="card-desc">After the ghost step, the final rank list is scouted top to bottom for one number per bracket: <b>single digit</b>, <b>10s</b>, <b>20s</b>, <b>30s</b>, <b>40s</b>. Each pick must link to the numbers already chosen through a kinship rule (same front digit · same back digit · flip · neighbour); the <b>2 top-ranked numbers of each bracket are skipped</b>, then the first of the remaining ones that fits is picked (the 3rd, or the next one down if the 3rd doesn't link). Then <b>2 gap fillers</b> are taken from below the 40s pick (any bracket) that link to the chosen set, favouring ones that close a kinship rule still missing. If nothing below the 40s pick fits, the search starts again from the top of the rank list.</p>
+    <p class="card-desc">After the ghost step, the final rank list is scouted top to bottom for one number per bracket: <b>single digit</b>, <b>10s</b>, <b>20s</b>, <b>30s</b>, <b>40s</b>. Each pick must link to the numbers already chosen through a kinship rule (same front digit · same back digit · flip · neighbour); the top-ranked numbers of each bracket are skipped (<b>2</b> for singles, 10s and 20s; <b>3</b> for 30s and 40s), then the first of the remaining ones that fits is picked (the next one in line, or further down if it doesn't link). Then <b>2 gap fillers</b> are taken from below the 40s pick (any bracket) that link to the chosen set, favouring ones that close a kinship rule still missing. If nothing below the 40s pick fits, the search starts again from the top of the rank list.</p>
     <div class="score-table-wrap">
       <table class="score-table">
         <thead><tr><th>Role</th><th>#</th><th>Rank</th><th>Kinship links</th></tr></thead>
@@ -861,7 +861,7 @@ function computeScoreboard(){
 // ═══════════════════════════════════════════════════════════
 // STEP 7: SCOUTING
 // Walk the final rank list top -> bottom and pick one number per bracket, skipping the
-// 2 top-ranked numbers of each bracket and taking the first remaining one that fits:
+// top-ranked numbers of each bracket (2; 3 for the 30s and 40s) and taking the first remaining one that fits:
 // single digit (1-9), 10s, 20s, 30s, 40s. A bracket pick must link to the
 // numbers already chosen through one of the 4 kinship rules (same front digit,
 // same back digit, flip, neighbour). Then 2 more numbers from BELOW the 40s pick
@@ -875,7 +875,7 @@ const SCOUT_BRACKETS = [
   {key:'t30',    label:'30s',          lo:30, hi:39},
   {key:'t40',    label:'40s',          lo:40, hi:49}
 ];
-const SCOUT_SKIP = 2; // top-ranked numbers skipped of each bracket before one is picked
+const SCOUT_SKIP = {single:2, t10:2, t20:2, t30:3, t40:3}; // top-ranked numbers skipped per bracket of each bracket before one is picked
 const KIN_LABELS = {front:'front digit', back:'back digit', flip:'flip', neigh:'neighbour'};
 function kinLinks(n, chosen){
   const links=[];
@@ -903,8 +903,9 @@ function computeScouting(ranked){
     const cands = ranked.filter(n=>n>=b.lo && n<=b.hi);
     // skip the SCOUT_SKIP top-ranked numbers of the bracket, then take the first of the rest that fits
     // (single digit: no kinship gate; later brackets: must link to the chosen set)
-    const skippedNums = cands.slice(0, SCOUT_SKIP);
-    const rest = cands.slice(SCOUT_SKIP);
+    const skipN = SCOUT_SKIP[b.key];
+    const skippedNums = cands.slice(0, skipN);
+    const rest = cands.slice(skipN);
     let found=null, shortSkip=false;
     for(const n of rest){
       const links = kinLinks(n, chosen);
@@ -1191,7 +1192,7 @@ function renderScouting(){
       : (p.role==='Single digit' ? 'first pick — top-ranked single digit' : 'no kinship fit found — took top-ranked in bracket');
     const closes = p.closes && p.closes.length ? ' <span class="tag">closes: '+p.closes.map(r=>KIN_LABELS[r]).join(', ')+'</span>' : '';
     const top = p.fromTop ? ' <span class="tag">nothing fit below the 40s pick — taken from the top of the list</span>' : '';
-    const skip = p.skippedNums && p.skippedNums.length ? ' <span class="tag">skipped '+p.skippedNums.join(', ')+(p.shortSkip?' — bracket too small to skip 2':'')+'</span>' : '';
+    const skip = p.skippedNums && p.skippedNums.length ? ' <span class="tag">skipped '+p.skippedNums.join(', ')+(p.shortSkip?' — bracket too small to skip':'')+'</span>' : '';
     const tr=document.createElement('tr'); tr.className='top7';
     tr.innerHTML = `<td>${p.role}</td><td><span class="num-badge">${p.n}</span></td><td>#${p.rank}</td><td>${links}${closes}${skip}${top}</td>`;
     tbody.appendChild(tr);
