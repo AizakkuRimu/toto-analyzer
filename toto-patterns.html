@@ -235,6 +235,10 @@ td.zero{color:var(--muted);}
 }
 .pick-node.is-discard .n{color:var(--red);text-decoration:line-through;}
 
+.variant-block{margin-top:24px;padding-top:18px;border-top:1px dashed var(--border);}
+.variant-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.variant-title{font-family:var(--ff-head);font-size:20px;letter-spacing:.04em;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.variant-title .tag{font-family:var(--ff-body);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:none;}
 .card-head-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
 .card-head-row h3{margin-bottom:0;}
 .btn-copy{display:inline-flex;align-items:center;gap:7px;}
@@ -379,7 +383,7 @@ td.zero{color:var(--muted);}
   <!-- ═══ STEP 7: SCOUTING ═══ -->
   <div class="card">
     <h3>⑤ Scouting</h3>
-    <p class="card-desc">After the ghost step, the final rank list is scouted top to bottom for one number per bracket: <b>single digit</b>, <b>10s</b>, <b>20s</b>, <b>30s</b>, <b>40s</b>. The single digit, 10s, 20s and 30s picks must link to the numbers already chosen through a kinship rule (same front digit · same back digit · flip · neighbour); the 40s pick doesn't have to follow the kinship rule; the top-ranked numbers of each bracket are skipped (<b>2</b> for singles, 10s and 20s; <b>3</b> for 30s; <b>5</b> for 40s), then the first of the remaining ones that fits is picked (the next one in line, or further down if it doesn't link). Then <b>2 gap fillers</b> are taken from below the 40s pick (any bracket) that link to the chosen set, favouring ones that close a kinship rule still missing. If nothing below the 40s pick fits, the search starts again from the top of the rank list.</p>
+    <p class="card-desc">After the ghost step, the final rank list is scouted top to bottom for one number per bracket: <b>single digit</b>, <b>10s</b>, <b>20s</b>, <b>30s</b>, <b>40s</b>. The single digit, 10s, 20s and 30s picks must link to the numbers already chosen through a kinship rule (same front digit · same back digit · flip · neighbour); the 40s pick doesn't have to follow the kinship rule; the top-ranked numbers of each bracket are skipped (<b>2</b> for singles, 10s and 20s; <b>3</b> for 30s; <b>5</b> for 40s), then the first of the remaining ones that fits is picked (the next one in line, or further down if it doesn't link). Then <b>2 gap fillers</b> are taken from below the 40s pick (any bracket) that link to the chosen set, favouring ones that close a kinship rule still missing. If nothing below the 40s pick fits, the search starts again from the top of the rank list.<br><br><b>Variant sets:</b> three more sets of 7 are generated the same way, only with the skip counts shifted — <b>Skip −1</b> (1·1·1·2·4), <b>Skip −2</b> (0·0·0·1·3) and <b>Skip +1</b> (3·3·3·4·6). A skip never goes below 0.</p>
     <div class="score-table-wrap">
       <table class="score-table">
         <thead><tr><th>Role</th><th>#</th><th>Rank</th><th>Kinship links</th></tr></thead>
@@ -387,6 +391,7 @@ td.zero{color:var(--muted);}
       </table>
     </div>
     <div class="rule-box" id="scout-note"></div>
+    <div id="scout-variants"></div>
   </div>
 
   <!-- ═══ FINAL SCOREBOARD ═══ -->
@@ -398,10 +403,11 @@ td.zero{color:var(--muted);}
         Copy Pick
       </button>
     </div>
-    <p class="card-desc">All four categories summed. The gold rows are the scouted picks (step ⑤) for the next draw.</p>
+    <p class="card-desc">All four categories summed. The gold rows are the main scouted picks (step ⑤) for the next draw; the three skip-variant sets are listed under the main pick.</p>
     <div class="pick-strip" id="pick-strip"></div>
     <div class="rule-box" id="p-addpick-note"></div>
-    <div class="score-table-wrap">
+    <div id="variant-picks"></div>
+    <div class="score-table-wrap" style="margin-top:22px">
       <table class="score-table">
         <thead><tr><th>Rank</th><th>#</th><th>① Survival</th><th>② Kinship</th><th>③ Ascension+Punish</th><th>④ Ghost</th><th>TOTAL</th></tr></thead>
         <tbody id="final-tbody"></tbody>
@@ -717,7 +723,7 @@ function computeScoreboard(){
     ready:false, window:[], draw8:null, chains:[], sets:[], windowUnion:new Set(),
     survival:{}, survivalDetail:{}, kinship:{}, kinshipReasons:{}, kinshipGroups:null,
     ascension:{}, ascensionSet:new Set(), ascensionReasons:{}, ascensionDirectory:[], ascensionWindowsByDraw:[], ascensionScoredLookup:new Set(), punishment:{}, punishmentDetail:[],
-    step5:{}, ghost:{}, ghostReason:{}, ghostStreak:{}, total:{}, ranked:[], top5Prelim:[], top7:[], picks:[], scout:null
+    step5:{}, ghost:{}, ghostReason:{}, ghostStreak:{}, total:{}, ranked:[], top5Prelim:[], top7:[], picks:[], scout:null, variants:[]
   };
   if(draws.length < 7) return result;
 
@@ -854,6 +860,11 @@ function computeScoreboard(){
   result.scout = computeScouting(ranked);
   result.picks = result.scout.picks.map(p=>p.n);
   result.additionalPick = computeAdditionalPick(result.picks);
+  result.variants = SCOUT_VARIANTS.map(v=>{
+    const scout = computeScouting(ranked, v.delta);
+    const picks = scout.picks.map(p=>p.n);
+    return {...v, skips:skipsFor(v.delta), scout, picks, additionalPick: computeAdditionalPick(picks)};
+  });
   return result;
 }
 
@@ -875,6 +886,14 @@ const SCOUT_BRACKETS = [
   {key:'t30',    label:'30s',          lo:30, hi:39},
   {key:'t40',    label:'40s',          lo:40, hi:49}
 ];
+const SCOUT_VARIANTS = [
+  {key:'m1', label:'Skip −1', delta:-1},
+  {key:'m2', label:'Skip −2', delta:-2},
+  {key:'p1', label:'Skip +1', delta:+1}
+];
+function skipsFor(delta){
+  const o={}; for(const k in SCOUT_SKIP) o[k]=Math.max(0, SCOUT_SKIP[k]+delta); return o;
+}
 const SCOUT_SKIP = {single:2, t10:2, t20:2, t30:3, t40:5}; // top-ranked numbers skipped per bracket of each bracket before one is picked
 const KIN_LABELS = {front:'front digit', back:'back digit', flip:'flip', neigh:'neighbour'};
 function kinLinks(n, chosen){
@@ -895,7 +914,7 @@ function coveredRules(nums){
   }
   return cov;
 }
-function computeScouting(ranked){
+function computeScouting(ranked, skipDelta=0){
   const picks=[]; const chosen=[];
   let last40Rank=-1;
   const skippedAll=new Set();
@@ -903,7 +922,7 @@ function computeScouting(ranked){
     const cands = ranked.filter(n=>n>=b.lo && n<=b.hi);
     // skip the SCOUT_SKIP top-ranked numbers of the bracket, then take the first of the rest that fits
     // (single digit and 40s: no kinship gate; 10s, 20s, 30s: must link to the chosen set)
-    const skipN = SCOUT_SKIP[b.key];
+    const skipN = Math.max(0, SCOUT_SKIP[b.key] + skipDelta);
     const skippedNums = cands.slice(0, skipN);
     const rest = cands.slice(skipN);
     let found=null, shortSkip=false;
@@ -1181,12 +1200,10 @@ function renderGhosts(){
 }
 
 
-function renderScouting(){
-  const tbody=document.getElementById('scout-tbody');
-  const note=document.getElementById('scout-note');
+function renderScoutInto(tbody, note, sc){
   tbody.innerHTML=''; note.innerHTML='';
-  if(!board.ready || !board.scout) return;
-  for(const p of board.scout.picks){
+  if(!sc) return;
+  for(const p of sc.picks){
     const links = p.links.length
       ? p.links.map(l=>KIN_LABELS[l.rule]+' ↔ '+l.with).join(' · ')
       : (p.role==='Single digit' ? 'first pick — no kinship check' : p.role==='40s' ? 'no kinship check for the 40s pick' : 'no kinship fit found — took top-ranked in bracket');
@@ -1197,36 +1214,83 @@ function renderScouting(){
     tr.innerHTML = `<td>${p.role}</td><td><span class="num-badge">${p.n}</span></td><td>#${p.rank}</td><td>${links}${closes}${skip}${top}</td>`;
     tbody.appendChild(tr);
   }
-  const sc=board.scout;
   note.innerHTML = `Rules covered by the chosen set: <b>${sc.covered.length?sc.covered.map(r=>KIN_LABELS[r]).join(', '):'none'}</b>` +
     (sc.missing.length ? ` · still missing: <b>${sc.missing.map(r=>KIN_LABELS[r]).join(', ')}</b>` : ' · all 4 kinship rules covered ✓') +
     (sc.picks.length<7 ? `<br>Only ${sc.picks.length} numbers could be scouted under these rules.` : '');
 }
 
+function skipSummary(sk){
+  return `skips — single ${sk.single} · 10s ${sk.t10} · 20s ${sk.t20} · 30s ${sk.t30} · 40s ${sk.t40}`;
+}
+
+function renderScouting(){
+  const tbody=document.getElementById('scout-tbody');
+  const note=document.getElementById('scout-note');
+  const vwrap=document.getElementById('scout-variants');
+  tbody.innerHTML=''; note.innerHTML=''; vwrap.innerHTML='';
+  if(!board.ready || !board.scout) return;
+  renderScoutInto(tbody, note, board.scout);
+  for(const v of board.variants){
+    const sec=document.createElement('div');
+    sec.className='variant-block';
+    sec.innerHTML = `
+      <div class="variant-head"><div class="variant-title">${v.label} <span class="tag">${skipSummary(v.skips)}</span></div></div>
+      <div class="score-table-wrap"><table class="score-table">
+        <thead><tr><th>Role</th><th>#</th><th>Rank</th><th>Kinship links</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="rule-box" style="margin-top:14px;margin-bottom:0"></div>`;
+    vwrap.appendChild(sec);
+    renderScoutInto(sec.querySelector('tbody'), sec.querySelector('.rule-box'), v.scout);
+  }
+}
+
+function buildPickStrip(wrap, picks, scout, ap){
+  picks.forEach((n,i)=>{
+    const d=document.createElement('div');
+    d.className='pick-node' + (ap && n===ap.mostAdd ? ' is-add' : '') + (ap && n===ap.leastAdd ? ' is-discard' : '');
+    d.innerHTML = `<div class="n">${n}</div><div class="r">${scout.picks[i].role==='Single digit'?'1–9':scout.picks[i].role}</div>`;
+    wrap.appendChild(d);
+  });
+}
+
+function addNoteHTML(ap){
+  if(!ap) return '';
+  const basisWord = ap.usedFallback ? 'a main winning number' : 'the additional number';
+  const mostCount = ap.usedFallback ? ap.winCount[ap.mostAdd] : ap.addCount[ap.mostAdd];
+  const leastCount = ap.usedFallback ? ap.winCount[ap.leastAdd] : ap.addCount[ap.leastAdd];
+  return `<b>${ap.mostAdd}</b> came up as ${basisWord} <b>${mostCount}×</b> in the last ${ap.windowSize} draws — the most among the scouted picks → kept, marked <code>(${ap.mostAdd})</code>.<br>` +
+    `<b>${ap.leastAdd}</b> came up ${leastCount}× — the least among the scouted picks → marked <code>&lt;${ap.leastAdd}&gt;</code> for discard.` +
+    (ap.usedFallback ? '<br>None of the picks appeared as an additional number in that window, so this fell back to overall winning-number frequency.' : '');
+}
+
+const COPY_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
 function renderFinalScoreboard(){
   const pickWrap = document.getElementById('pick-strip');
   const tbody = document.getElementById('final-tbody');
   const noteWrap = document.getElementById('p-addpick-note');
-  pickWrap.innerHTML=''; tbody.innerHTML=''; noteWrap.innerHTML='';
+  const vWrap = document.getElementById('variant-picks');
+  pickWrap.innerHTML=''; tbody.innerHTML=''; noteWrap.innerHTML=''; vWrap.innerHTML='';
   if(!board.ready) return;
 
-  const ap = board.additionalPick;
-  board.picks.forEach((n,i)=>{
-    const d=document.createElement('div');
-    d.className='pick-node' + (ap && n===ap.mostAdd ? ' is-add' : '') + (ap && n===ap.leastAdd ? ' is-discard' : '');
-    d.innerHTML = `<div class="n">${n}</div><div class="r">${board.scout.picks[i].role==='Single digit'?'1–9':board.scout.picks[i].role}</div>`;
-    pickWrap.appendChild(d);
-  });
+  buildPickStrip(pickWrap, board.picks, board.scout, board.additionalPick);
+  noteWrap.innerHTML = addNoteHTML(board.additionalPick);
 
-  if(ap){
-    const basisWord = ap.usedFallback ? 'a main winning number' : 'the additional number';
-    const mostCount = ap.usedFallback ? ap.winCount[ap.mostAdd] : ap.addCount[ap.mostAdd];
-    const leastCount = ap.usedFallback ? ap.winCount[ap.leastAdd] : ap.addCount[ap.leastAdd];
-    noteWrap.innerHTML =
-      `<b>${ap.mostAdd}</b> came up as ${basisWord} <b>${mostCount}×</b> in the last ${ap.windowSize} draws — the most among the scouted picks → kept, marked <code>(${ap.mostAdd})</code>.<br>` +
-      `<b>${ap.leastAdd}</b> came up ${leastCount}× — the least among the scouted picks → marked <code>&lt;${ap.leastAdd}&gt;</code> for discard.` +
-      (ap.usedFallback ? '<br>None of the picks appeared as an additional number in that window, so this fell back to overall winning-number frequency.' : '');
-  }
+  board.variants.forEach((v,vi)=>{
+    const sec=document.createElement('div');
+    sec.className='variant-block';
+    sec.innerHTML = `
+      <div class="variant-head">
+        <div class="variant-title">${v.label} <span class="tag">${skipSummary(v.skips)}</span></div>
+        <button class="btn btn-ghost btn-copy" data-variant="${vi}">${COPY_ICON} Copy Pick</button>
+      </div>
+      <div class="pick-strip"></div>
+      <div class="rule-box" style="margin-bottom:0"></div>`;
+    vWrap.appendChild(sec);
+    buildPickStrip(sec.querySelector('.pick-strip'), v.picks, v.scout, v.additionalPick);
+    sec.querySelector('.rule-box').innerHTML = addNoteHTML(v.additionalPick);
+  });
 
   board.ranked.forEach((n,i)=>{
     const tr=document.createElement('tr');
@@ -1326,22 +1390,21 @@ document.getElementById('p-showmore-btn').addEventListener('click', ()=>{
 // ═══════════════════════════════════════════════════════════
 // COPY PICK — "date: n1, n2, (add-pick), ..., <discard>"
 // ═══════════════════════════════════════════════════════════
-function buildCopyText(){
-  if(!board.ready) return '';
-  const ap = board.additionalPick;
-  const nums = [...board.picks].sort((a,b)=>a-b);
+function buildCopyText(set, label){
+  set = set || board;
+  if(!board.ready || !set.picks || !set.picks.length) return '';
+  const ap = set.additionalPick;
+  const nums = [...set.picks].sort((a,b)=>a-b);
   const parts = nums.map(n=>{
     if(ap && n===ap.mostAdd) return `(${n})`;
     if(ap && n===ap.leastAdd) return `<${n}>`;
     return String(n);
   });
   const dateStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
-  return `${dateStr}: ${parts.join(', ')}`;
+  return `${dateStr}${label?' ['+label+']':''}: ${parts.join(', ')}`;
 }
 
-document.getElementById('p-copy-btn').addEventListener('click', async ()=>{
-  const btn = document.getElementById('p-copy-btn');
-  const text = buildCopyText();
+async function copyWithFeedback(btn, text){
   if(!text) return;
   try{
     await navigator.clipboard.writeText(text);
@@ -1355,6 +1418,17 @@ document.getElementById('p-copy-btn').addEventListener('click', async ()=>{
   const orig = btn.innerHTML;
   btn.innerHTML = 'Copied!';
   setTimeout(()=>{ btn.innerHTML = orig; }, 1500);
+}
+
+document.getElementById('p-copy-btn').addEventListener('click', ()=>{
+  copyWithFeedback(document.getElementById('p-copy-btn'), buildCopyText());
+});
+
+document.getElementById('variant-picks').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-variant]');
+  if(!btn) return;
+  const v = board.variants[+btn.dataset.variant];
+  if(v) copyWithFeedback(btn, buildCopyText(v, v.label));
 });
 
 // initial empty render while CSV loads
